@@ -172,3 +172,9 @@ FAIL
 FAIL	github.com/ToQoz/gopwt/_example	0.012s
 exit status 1
 ```
+
+## See Also
+
+- [Why does Go not have assertions?](http://golang.org/doc/faq#assertions)
+- http://dontmindthelanguage.wordpress.com/2009/12/11/groovy-1-7-power-assert/
+- https://github.com/twada/power-assert
