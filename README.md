@@ -1,9 +1,25 @@
 # gopwt
 
-## Usage
+## Getting Started
 
 ```
 $ go get github.com/ToQoz/gopwt/...
+$ cd your-go-project-path
+$ vi main_test.go
+$ cat main_test.go
+package main
+
+import (
+	"github.com/ToQoz/gopwt/assert"
+	"testing"
+)
+
+func TestFoo(t *testing.T) {
+	a := "a"
+	b := "b"
+	assert.OK(t, a == b)
+}
+$ gopwt
 ```
 
 ## Attention
