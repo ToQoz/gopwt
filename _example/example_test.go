@@ -46,3 +46,26 @@ func TestNestedCallExpr(t *testing.T) {
 
 	assert.OK(t, rev(rev(rev(true))))
 }
+
+func TestCallWithNonIdempotentFunc(t *testing.T) {
+	i := 0
+	incl := func() int {
+		i++
+		return i
+	}
+
+	assert.OK(t, incl()+incl() == incl()+incl())
+	assert.OK(t, incl() == incl())
+	assert.OK(t, incl() == incl())
+	assert.OK(t, incl() == incl())
+	assert.OK(t, incl() == incl())
+	assert.OK(t, (incl() == incl()) != (incl() == incl()))
+
+	i2 := 0
+	incl2 := func(i3 int) int {
+		i2 += i3
+		return i2
+	}
+
+	assert.OK(t, incl2(incl2(2)) == 10)
+}

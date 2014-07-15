@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -27,13 +28,13 @@ func main() {
 
 	termw = getTermCols(os.Stdin.Fd())
 
-	tempDir, err := ioutil.TempDir(os.TempDir(), "")
+	tempGoPath, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		fmt.Println(err.Error())
 		exitCode = 1
 		return
 	}
-	defer os.RemoveAll(tempDir)
+	defer os.RemoveAll(tempGoPath)
 
 	root := flag.Arg(0)
 
@@ -44,10 +45,25 @@ func main() {
 		return
 	}
 
-	tempGoPath := filepath.Join(tempDir)
+	err = rewrite(tempGoPath, pkgInfo)
+	if err != nil {
+		fmt.Println(err.Error())
+		exitCode = 1
+		return
+	}
+
+	err = runTest(tempGoPath, pkgInfo, os.Stdout, os.Stderr)
+	if err != nil {
+		fmt.Println(err.Error())
+		exitCode = 1
+		return
+	}
+}
+
+func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 	tempGoSrcDir := filepath.Join(tempGoPath, "src")
 
-	err = filepath.Walk(pkgInfo.dirPath, func(path string, fInfo os.FileInfo, err error) error {
+	err := filepath.Walk(pkgInfo.dirPath, func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 			return nil
 		}
@@ -97,21 +113,15 @@ func main() {
 
 		return nil
 	})
+
 	if err != nil {
-		fmt.Println(err.Error())
-		exitCode = 1
-		return
+		return err
 	}
 
-	err = runTest(tempGoPath, pkgInfo)
-	if err != nil {
-		fmt.Println(err.Error())
-		exitCode = 1
-	}
-
+	return nil
 }
 
-func runTest(goPath string, pkgInfo *packageInfo) error {
+func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) error {
 	err := os.Setenv("GOPATH", goPath+":"+os.Getenv("GOPATH"))
 	if err != nil {
 		return err
@@ -122,8 +132,8 @@ func runTest(goPath string, pkgInfo *packageInfo) error {
 		cmd.Args = append(cmd.Args, "-v")
 	}
 	cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err = cmd.Run()
 	if err != nil {
 		return err

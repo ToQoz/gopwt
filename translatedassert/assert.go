@@ -4,9 +4,12 @@ package translatedassert
 import (
 	"fmt"
 	"github.com/mattn/go-runewidth"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+var cachedFuncRet = map[string]map[int]interface{}{}
 
 type posValuePair struct {
 	Pos   int
@@ -21,12 +24,12 @@ func NewPosValuePair(pos int, v interface{}) posValuePair {
 
 // OK has nodoc
 // **This is not for human**
-func OK(t *testing.T, e bool, header string, termw int, pvPairs ...posValuePair) {
+func OK(t *testing.T, e bool, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
 	if e {
 		return
 	}
 
-	output := header + "\n" + format(pvPairs)
+	output := fmt.Sprintf("%s %s:%d\n%s", header, filename, line, origexpr) + "\n" + format(pvPairs)
 
 	lines := []string{}
 
@@ -47,7 +50,80 @@ func OK(t *testing.T, e bool, header string, termw int, pvPairs ...posValuePair)
 	}
 
 	t.Error(strings.Join(lines, "\n"))
+	deleteCachedFuncRetsForFileline(filename, line)
 }
+
+// --------------------------------------------------------------------------------
+// Reflect
+// --------------------------------------------------------------------------------
+
+// MFCall momorize and call func
+func MFCall(filename string, line, col int, f reflect.Value, args ...reflect.Value) []reflect.Value {
+	rets := getCachedFuncRetsForFileline(filename, line)
+
+	if _, ok := rets[col]; !ok {
+		for i, a := range args {
+			// hack to passing nil...
+			if !a.IsValid() {
+				args[i] = reflectNilValue(f.Type().In(i))
+			}
+		}
+
+		ret := FRVInterface(f.Call(args))
+		rets[col] = ret
+	}
+
+	return []reflect.Value{reflect.ValueOf(rets[col])}
+}
+
+func getCachedFuncRetsForFileline(filename string, line int) map[int]interface{} {
+	key := fmt.Sprintf("%s:%d", filename, line)
+
+	if _, ok := cachedFuncRet[key]; !ok {
+		cachedFuncRet[key] = map[int]interface{}{}
+	}
+
+	return cachedFuncRet[key]
+}
+
+func deleteCachedFuncRetsForFileline(filename string, line int) {
+	key := fmt.Sprintf("%s:%d", filename, line)
+	delete(cachedFuncRet, key)
+}
+
+// RVOf is reflect.ValueOf
+func RVOf(a interface{}) reflect.Value {
+	return reflect.ValueOf(a)
+}
+
+// RVBool returns reflect value as bool
+func RVBool(rv reflect.Value) bool {
+	return rv.Bool()
+}
+
+// FRVBool returns first of reflect values as bool
+func FRVBool(rvs []reflect.Value) bool {
+	return RVBool(rvs[0])
+}
+
+// FRVInterface returns first of reflect values as interface{}
+func FRVInterface(rvs []reflect.Value) interface{} {
+	rv := rvs[0]
+
+	if !rv.IsValid() {
+		return nil
+	}
+
+	return rv.Interface()
+}
+
+func reflectNilValue(t reflect.Type) reflect.Value {
+	return reflect.New(t).Elem()
+}
+
+// --------------------------------------------------------------------------------
+// Format
+// --------------------------------------------------------------------------------
 
 func format(pvPairs []posValuePair) string {
 	buf := make([]byte, 0, 50*len(pvPairs)*len(pvPairs)) // Try to avoid more allocations

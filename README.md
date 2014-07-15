@@ -4,6 +4,8 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 
 ## Getting Started
 
+### Install and Try
+
 ```
 $ go get github.com/ToQoz/gopwt/...
 $ cd your-go-project-path
@@ -24,42 +26,9 @@ func TestFoo(t *testing.T) {
 $ gopwt
 ```
 
-## Attention
+### Update
 
-Calling non-idempotent func in `assert.OK()` make a difference between real value and output value.(I'm trying to fix)
-
-For example.
-
-```go
-
-package main
-
-import (
-	"github.com/ToQoz/gopwt/assert"
-	"testing"
-)
-
-func TestBad(t *testing.T) {
-	i := 0
-	incl := func() int {
-		i++
-		return i
-	}
-
-	assert.OK(t, incl() == incl())
-}
-```
-
-```
-
---- FAIL: TestBad (0.00 seconds)
-	assert.go:49: [FAIL] /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/badexample_test.go:15
-		assert.OK(t, incl() == incl())
-		             |      |  |
-		             |      |  6
-		             |      false
-		             3
-```
+`go get -u github.com/ToQoz/gopwt/...`
 
 ## Example
 
