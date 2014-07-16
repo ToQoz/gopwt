@@ -28,6 +28,11 @@ func rewritePackage(dirPath, importPath string, tempGoSrcDir string) error {
 			return nil
 		}
 
+		pathFromImportDir, err := filepath.Rel(dirPath, path)
+		if err != nil {
+			return err
+		}
+
 		if fInfo.IsDir() {
 			rel, err := filepath.Rel(dirPath, path)
 			if err != nil {
@@ -40,7 +45,7 @@ func rewritePackage(dirPath, importPath string, tempGoSrcDir string) error {
 
 			// copy all files in <dirPath>/testdata/**/*
 			if strings.Split(rel, "/")[0] == "testdata" {
-				err = os.MkdirAll(filepath.Join(tempGoSrcDir, importPath), os.ModePerm)
+				err = os.MkdirAll(filepath.Join(tempGoSrcDir, importPath, pathFromImportDir), os.ModePerm)
 				if err != nil {
 					return err
 				}
@@ -51,7 +56,7 @@ func rewritePackage(dirPath, importPath string, tempGoSrcDir string) error {
 			return filepath.SkipDir
 		}
 
-		out, err := os.Create(filepath.Join(tempGoSrcDir, importPath, filepath.Base(path)))
+		out, err := os.Create(filepath.Join(tempGoSrcDir, importPath, pathFromImportDir))
 		if err != nil {
 			return err
 		}
