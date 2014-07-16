@@ -29,6 +29,15 @@ func TestExtractPrintExprs_UnaryExpr(t *testing.T) {
 	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
 }
 
+func TestExtractPrintExprs_StarExpr(t *testing.T) {
+	ps := extractPrintExprs(nil, mustParseExpr("*a"))
+	assert.OK(t, len(ps) == 2)
+	assert.OK(t, ps[0].Pos == 1)
+	assert.OK(t, ps[0].Expr.(*ast.StarExpr).X.(*ast.Ident).Name == "a")
+	assert.OK(t, ps[1].Pos == 2)
+	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
+}
+
 func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 	ps := extractPrintExprs(nil, mustParseExpr("ary[i] == ary2[i2]"))
 	assert.OK(t, len(ps) == 5)
