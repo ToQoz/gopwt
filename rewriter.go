@@ -311,10 +311,16 @@ func extractPrintExprs(parent ast.Expr, n ast.Expr) []printExpr {
 		ps = append(ps, newPrintExpr(n.Sel.Pos(), n))
 	case *ast.CallExpr:
 		n := n.(*ast.CallExpr)
-
 		ps = append(ps, newPrintExpr(n.Pos(), n))
 		for _, arg := range n.Args {
 			ps = append(ps, extractPrintExprs(n, arg)...)
+		}
+	case *ast.SliceExpr:
+		n := n.(*ast.SliceExpr)
+		ps = append(ps, extractPrintExprs(n, n.Low)...)
+		ps = append(ps, extractPrintExprs(n, n.High)...)
+		if n.Slice3 {
+			ps = append(ps, extractPrintExprs(n, n.Max)...)
 		}
 	}
 
