@@ -38,6 +38,24 @@ func TestExtractPrintExprs_StarExpr(t *testing.T) {
 	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
 }
 
+func TestExtractPrintExprs_SliceExpr(t *testing.T) {
+	ps := extractPrintExprs(nil, mustParseExpr(`"foo"[a1:a2]`))
+	assert.OK(t, len(ps) == 2)
+	assert.OK(t, ps[0].Pos == len(`"foo"[`)+1)
+	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "a1")
+	assert.OK(t, ps[1].Pos == len(`"foo"[a1:`)+1)
+	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a2")
+
+	ps = extractPrintExprs(nil, mustParseExpr(`"foo"[a1:a2:a3]`))
+	assert.OK(t, len(ps) == 3)
+	assert.OK(t, ps[0].Pos == len(`"foo"[`)+1)
+	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "a1")
+	assert.OK(t, ps[1].Pos == len(`"foo"[a1:`)+1)
+	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a2")
+	assert.OK(t, ps[2].Pos == len(`"foo"[a1:a2:`)+1)
+	assert.OK(t, ps[2].Expr.(*ast.Ident).Name == "a3")
+}
+
 func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 	ps := extractPrintExprs(nil, mustParseExpr("ary[i] == ary2[i2]"))
 	assert.OK(t, len(ps) == 5)
