@@ -280,6 +280,9 @@ func extractPrintExprs(parent ast.Expr, n ast.Expr) []printExpr {
 		ps = append(ps, extractPrintExprs(n, n.Value)...)
 	case *ast.Ident:
 		ps = append(ps, newPrintExpr(n.Pos(), n))
+	case *ast.ParenExpr:
+		n := n.(*ast.ParenExpr)
+		ps = append(ps, extractPrintExprs(n, n.X)...)
 	case *ast.BinaryExpr:
 		n := n.(*ast.BinaryExpr)
 		ps = append(ps, extractPrintExprs(n, n.X)...)

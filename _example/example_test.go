@@ -14,6 +14,7 @@ func TestBasicLit(t *testing.T) {
 	b := 2
 	c := 3
 	assert.OK(t, a+c == b)
+	assert.OK(t, (a+c)+a == b)
 	assert.OK(t, `foo
 bar` == "bar")
 }
