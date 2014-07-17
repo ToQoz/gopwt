@@ -210,6 +210,10 @@ Done:
 func translateAllAsserts(fset *token.FileSet, a *ast.File) error {
 	ast.Inspect(a, func(n ast.Node) bool {
 		if n, ok := n.(*ast.CallExpr); ok {
+			if _, ok := n.Fun.(*ast.FuncLit); ok {
+				return true
+			}
+
 			// skip inspecting children in n
 			if !isAssert(assertImportIdent, n) {
 				return false
