@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/printer"
@@ -131,13 +130,11 @@ func rewriteFile(path, importPath string, out io.Writer) error {
 
 	err = translateAllAsserts(fset, a)
 	if err != nil {
-		fmt.Println("error")
 		return err
 	}
 
 	err = printer.Fprint(out, fset, a)
 	if err != nil {
-		fmt.Println(err.Error())
 		return err
 	}
 	return nil
@@ -254,7 +251,6 @@ func translateAllAsserts(fset *token.FileSet, a ast.Node) error {
 			// So call panic on failing.
 			err := printer.Fprint(buf, token.NewFileSet(), n)
 			if err != nil {
-				fmt.Println(err.Error())
 				panic(err)
 			}
 
@@ -262,7 +258,6 @@ func translateAllAsserts(fset *token.FileSet, a ast.Node) error {
 			// So call panic on failing.
 			formatted, err := parser.ParseExpr(buf.String())
 			if err != nil {
-				fmt.Println(err.Error())
 				panic(err)
 			}
 			*n = *formatted.(*ast.CallExpr)
