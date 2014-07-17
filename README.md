@@ -26,7 +26,7 @@ $ gopwt
 
 ## Attention
 
-Calling non-idempotent func in `assert.OK()` make a difference between real value and output value.(I'm trying to fix)
+Calling non-idempotent func in `assert.OK()` make a difference between real value and output value.(I'm trying to fix on https://github.com/ToQoz/gopwt/pull/10)
 
 For example.
 
