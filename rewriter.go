@@ -350,7 +350,11 @@ func extractPrintExprs(filename string, line int, parent ast.Expr, n ast.Expr) [
 		x = extractPrintExprs(filename, line, n, n.X)
 		y = extractPrintExprs(filename, line, n, n.Y)
 
-		newExpr := replaceBinaryExprInParent(parent, n)
+		newExpr := createUntypedExprFromBinaryExpr(n)
+		if newExpr != n {
+			replaceBinaryExpr(parent, n, newExpr)
+		}
+
 		ps = append(ps, x...)
 		ps = append(ps, newPrintExpr(n.OpPos, newExpr))
 		ps = append(ps, y...)
@@ -397,67 +401,56 @@ func extractPrintExprs(filename string, line int, parent ast.Expr, n ast.Expr) [
 	return ps
 }
 
-// replaceBinaryExprInParent replaces binaryExpr by operator-func(impled by translatedassert)'s callExpr if its operator can't take interface{}
-// http://golang.org/ref/spec#Operators_and_Delimiters
-// +    sum                    integers, floats, complex values, strings
-// -    difference             integers, floats, complex values
-// *    product                integers, floats, complex values
-// /    quotient               integers, floats, complex values
-// %    remainder              integers
-
-// &    bitwise AND            integers
-// |    bitwise OR             integers
-// ^    bitwise XOR            integers
-// &^   bit clear (AND NOT)    integers
-
-// <<   left shift             integer << unsigned integer
-// >>   right shift            integer >> unsigned integer
-func replaceBinaryExprInParent(parent ast.Node, n *ast.BinaryExpr) ast.Expr {
-	replace := func(parent ast.Node, n *ast.BinaryExpr, newExpr ast.Expr) {
-		switch parent.(type) {
-		case *ast.CallExpr:
-			parent := parent.(*ast.CallExpr)
-			for i, arg := range parent.Args {
-				if n == arg {
-					parent.Args[i] = newExpr
-					return
-				}
-			}
-		case *ast.KeyValueExpr:
-			parent := parent.(*ast.KeyValueExpr)
-			if parent.Key == n {
-				parent.Key = newExpr
-				return
-			} else if parent.Value == n {
-				parent.Value = newExpr
+func replaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Expr) {
+	switch parent.(type) {
+	case *ast.CallExpr:
+		parent := parent.(*ast.CallExpr)
+		for i, arg := range parent.Args {
+			if arg == oldExpr {
+				parent.Args[i] = newExpr
 				return
 			}
-		case *ast.IndexExpr:
-			parent := parent.(*ast.IndexExpr)
-			if parent.Index == n {
-				parent.Index = newExpr
-				return
-			}
-		case *ast.ParenExpr:
-			parent := parent.(*ast.ParenExpr)
-			if parent.X == n {
-				parent.X = newExpr
-				return
-			}
-		case *ast.BinaryExpr:
-			parent := parent.(*ast.BinaryExpr)
-			if parent.X == n {
-				parent.X = newExpr
-				return
-			} else if parent.Y == n {
-				parent.Y = newExpr
-				return
-			}
-		default:
-			panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+		}
+	case *ast.KeyValueExpr:
+		parent := parent.(*ast.KeyValueExpr)
+		switch oldExpr {
+		case parent.Key:
+			parent.Key = newExpr
+			return
+		case parent.Value:
+			parent.Value = newExpr
+			return
+		}
+	case *ast.IndexExpr:
+		parent := parent.(*ast.IndexExpr)
+		if parent.Index == oldExpr {
+			parent.Index = newExpr
+			return
+		}
+	case *ast.ParenExpr:
+		parent := parent.(*ast.ParenExpr)
+		if parent.X == oldExpr {
+			parent.X = newExpr
+			return
+		}
+	case *ast.BinaryExpr:
+		parent := parent.(*ast.BinaryExpr)
+		switch oldExpr {
+		case parent.X:
+			parent.X = newExpr
+			return
+		case parent.Y:
+			parent.Y = newExpr
+			return
 		}
 	}
 
+	panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+}
+
+// createUntypedExprFromBinaryExpr creates untyped operator-func(translatedassert.Op*()) from BinaryExpr
+// if given BinaryExpr is untyped, returns it.
+func createUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 	createFuncOp := func(opName string, x ast.Expr, y ast.Expr) *ast.CallExpr {
 		return &ast.CallExpr{
 			Fun:  &ast.SelectorExpr{X: translatedassertImportIdent, Sel: &ast.Ident{Name: "Op" + opName}},
@@ -465,53 +458,56 @@ func replaceBinaryExprInParent(parent ast.Node, n *ast.BinaryExpr) ast.Expr {
 		}
 	}
 
-	var newExpr ast.Expr
+	// http://golang.org/ref/spec#Operators_and_Delimiters
+	// +    sum                    integers, floats, complex values, strings
+	// -    difference             integers, floats, complex values
+	// *    product                integers, floats, complex values
+	// /    quotient               integers, floats, complex values
+	// %    remainder              integers
 
+	// &    bitwise AND            integers
+	// |    bitwise OR             integers
+	// ^    bitwise XOR            integers
+	// &^   bit clear (AND NOT)    integers
+
+	// <<   left shift             integer << unsigned integer
+	// >>   right shift            integer >> unsigned integer
+
+	// http://golang.org/ref/spec#Logical_operators
+	// Logical operators apply to boolean values and yield a result of the same type as the operands. The right operand is evaluated conditionally.
+
+	// &&    conditional AND    p && q  is  "if p then q else false"
+	// ||    conditional OR     p || q  is  "if p then true else q"
 	switch n.Op {
 	case token.ADD: // +
-		newExpr = createFuncOp("ADD", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("ADD", n.X, n.Y)
 	case token.SUB: // -
-		newExpr = createFuncOp("SUB", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("SUB", n.X, n.Y)
 	case token.MUL: // *
-		newExpr = createFuncOp("MUL", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("MUL", n.X, n.Y)
 	case token.QUO: // /
-		newExpr = createFuncOp("QUO", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("QUO", n.X, n.Y)
 	case token.REM: // %
-		newExpr = createFuncOp("REM", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("REM", n.X, n.Y)
 	case token.AND: // &
-		newExpr = createFuncOp("AND", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("AND", n.X, n.Y)
 	case token.OR: // |
-		newExpr = createFuncOp("OR", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("OR", n.X, n.Y)
 	case token.XOR: // ^
-		newExpr = createFuncOp("XOR", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("XOR", n.X, n.Y)
 	case token.AND_NOT: // &^
-		newExpr = createFuncOp("ANDNOT", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("ANDNOT", n.X, n.Y)
 	case token.SHL: // <<
-		newExpr = createFuncOp("SHL", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("SHL", n.X, n.Y)
 	case token.SHR: // >>
-		newExpr = createFuncOp("SHR", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("SHR", n.X, n.Y)
 	case token.LAND: // &&
-		newExpr = createFuncOp("LAND", n.X, n.Y)
-		replace(parent, n, newExpr)
+		return createFuncOp("LAND", n.X, n.Y)
 	case token.LOR: // ||
-		newExpr = createFuncOp("LOR", n.X, n.Y)
-		replace(parent, n, newExpr)
-	default:
-		newExpr = n
+		return createFuncOp("LOR", n.X, n.Y)
 	}
 
-	return newExpr
+	return n
 }
 
 func replaceAllRawStringLitByStringLit(root ast.Node) {
@@ -556,7 +552,7 @@ func isMapType(n ast.Node) bool {
 }
 
 func isRawStringLit(n *ast.BasicLit) bool {
-	return strings.HasPrefix(n.Value, "`") && strings.HasSuffix(n.Value, "`")
+	return n.Kind == token.STRING && strings.HasPrefix(n.Value, "`") && strings.HasSuffix(n.Value, "`")
 }
 
 // --------------------------------------------------------------------------------
