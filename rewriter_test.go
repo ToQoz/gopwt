@@ -10,6 +10,21 @@ import (
 	"testing"
 )
 
+func TestCreateReflectTypeExprFromTypeExpr(t *testing.T) {
+	// built in type
+	assert.OK(t, "translatedassert.RVOf(new(string)).Elem().Type()" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("string"))))
+	assert.OK(t, "translatedassert.RVOf(new(int)).Elem().Type()" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("int"))))
+	// chan
+	assert.OK(t, "translatedassert.RVOf(new(chan int)).Elem().Type()" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("chan int"))))
+	// map, slice
+	assert.OK(t, "translatedassert.RTOf([]string{})" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("[]string"))))
+	assert.OK(t, "translatedassert.RTOf(map[string]string{})" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("map[string]string"))))
+	// func
+	assert.OK(t, "translatedassert.RTOf(func(){})" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("func()"))))
+	// other type
+	assert.OK(t, "translatedassert.RTOf(foo{})" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("foo"))))
+}
+
 func TestExtractPrintExprs_SingleLineStringLit(t *testing.T) {
 	ps := extractPrintExprs("", 0, nil, mustParseExpr(`"foo" == "bar"`))
 	assert.OK(t, len(ps) == 1)

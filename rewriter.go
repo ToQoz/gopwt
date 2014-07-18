@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/printer"
@@ -269,6 +270,7 @@ func translateAllAsserts(fset *token.FileSet, a ast.Node) error {
 			n.Args = append(n.Args, &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(termw)})
 			n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(filename, line, n, n.Args[1]))...)
 			n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
+			return false
 		}
 
 		return true
@@ -369,10 +371,15 @@ func extractPrintExprs(filename string, line int, parent ast.Expr, n ast.Expr) [
 	case *ast.CallExpr:
 		n := n.(*ast.CallExpr)
 		if isBuiltinFunc(n) { // don't memorize buildin methods
-			ps = append(ps, newPrintExpr(n.Pos(), n))
+
+			newExpr := createUntypedCallExprFromBuiltinCallExpr(n)
+
+			ps = append(ps, newPrintExpr(n.Pos(), newExpr))
 			for _, arg := range n.Args {
 				ps = append(ps, extractPrintExprs(filename, line, n, arg)...)
 			}
+
+			*n = *newExpr
 		} else {
 			var memorized *ast.CallExpr
 
@@ -446,6 +453,85 @@ func replaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Exp
 	}
 
 	panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+}
+
+func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
+	createAltBuiltin := func(bfuncName string, args []ast.Expr) *ast.CallExpr {
+		return &ast.CallExpr{
+			Fun:  &ast.SelectorExpr{X: translatedassertImportIdent, Sel: &ast.Ident{Name: "B" + bfuncName}},
+			Args: args,
+		}
+	}
+
+	name := n.Fun.(*ast.Ident).Name
+
+	switch name {
+	case "append", "cap", "complex", "copy", "imag", "len", "real":
+		return createAltBuiltin(name, n.Args)
+	case "new":
+		return createAltBuiltin(name, []ast.Expr{createReflectTypeExprFromTypeExpr(n.Args[0])})
+	case "make":
+		args := []ast.Expr{}
+		args = append(args, createReflectTypeExprFromTypeExpr(n.Args[0]))
+		args = append(args, n.Args[1:]...)
+		return createAltBuiltin(name, args)
+	default:
+		panic(fmt.Errorf("%s can't be used in assert", name))
+	}
+}
+
+func createReflectTypeExprFromTypeExpr(n ast.Expr) ast.Expr {
+	canUseCompositeLit := true
+
+	if n, ok := n.(*ast.Ident); ok {
+		switch n.Name {
+		case "string", "rune",
+			"uint", "uint8", "uint16", "uint32", "uint64",
+			"int8", "int32", "int64", "int",
+			"float32", "float64",
+			"complex64", "complex128",
+			"bool", "uintptr", "error":
+
+			canUseCompositeLit = false
+		}
+	}
+
+	if _, ok := n.(*ast.ChanType); ok {
+		canUseCompositeLit = false
+	}
+
+	if !canUseCompositeLit {
+		return &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X: &ast.CallExpr{
+					Fun: &ast.SelectorExpr{
+						X: &ast.CallExpr{
+							Fun: &ast.SelectorExpr{
+								X:   translatedassertImportIdent,
+								Sel: &ast.Ident{Name: "RVOf"},
+							},
+							Args: []ast.Expr{
+								&ast.CallExpr{
+									Fun:  &ast.Ident{Name: "new"},
+									Args: []ast.Expr{n},
+								},
+							},
+						},
+						Sel: &ast.Ident{Name: "Elem"},
+					},
+				},
+				Sel: &ast.Ident{Name: "Type"},
+			},
+		}
+	}
+
+	return &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   translatedassertImportIdent,
+			Sel: &ast.Ident{Name: "RTOf"},
+		},
+		Args: []ast.Expr{&ast.CompositeLit{Type: n}},
+	}
 }
 
 // createUntypedExprFromBinaryExpr creates untyped operator-func(translatedassert.Op*()) from BinaryExpr

@@ -11,6 +11,8 @@ func OpADD(x interface{}, y interface{}) interface{} {
 		return x.(uint32) + y.(uint32)
 	case uint64:
 		return x.(uint64) + y.(uint64)
+	case uint:
+		return x.(uint) + y.(uint)
 	case int8:
 		return x.(int8) + y.(int8)
 	case int16:
@@ -47,6 +49,8 @@ func OpSUB(x interface{}, y interface{}) interface{} {
 		return x.(uint32) - y.(uint32)
 	case uint64:
 		return x.(uint64) - y.(uint64)
+	case uint:
+		return x.(uint) - y.(uint)
 	case int8:
 		return x.(int8) - y.(int8)
 	case int16:
@@ -81,6 +85,8 @@ func OpMUL(x interface{}, y interface{}) interface{} {
 		return x.(uint32) * y.(uint32)
 	case uint64:
 		return x.(uint64) * y.(uint64)
+	case uint:
+		return x.(uint) * y.(uint)
 	case int8:
 		return x.(int8) * y.(int8)
 	case int16:
@@ -115,6 +121,8 @@ func OpQUO(x interface{}, y interface{}) interface{} {
 		return x.(uint32) / y.(uint32)
 	case uint64:
 		return x.(uint64) / y.(uint64)
+	case uint:
+		return x.(uint) / y.(uint)
 	case int8:
 		return x.(int8) / y.(int8)
 	case int16:
@@ -149,6 +157,8 @@ func OpREM(x interface{}, y interface{}) interface{} {
 		return x.(uint32) % y.(uint32)
 	case uint64:
 		return x.(uint64) % y.(uint64)
+	case uint:
+		return x.(uint) % y.(uint)
 	case int8:
 		return x.(int8) % y.(int8)
 	case int16:
@@ -176,6 +186,8 @@ func OpAND(x interface{}, y interface{}) interface{} {
 		return x.(uint32) & y.(uint32)
 	case uint64:
 		return x.(uint64) & y.(uint64)
+	case uint:
+		return x.(uint) & y.(uint)
 	case int8:
 		return x.(int8) & y.(int8)
 	case int16:
@@ -202,6 +214,8 @@ func OpOR(x interface{}, y interface{}) interface{} {
 		return x.(uint32) | y.(uint32)
 	case uint64:
 		return x.(uint64) | y.(uint64)
+	case uint:
+		return x.(uint) | y.(uint)
 	case int8:
 		return x.(int8) | y.(int8)
 	case int16:
@@ -228,6 +242,8 @@ func OpXOR(x interface{}, y interface{}) interface{} {
 		return x.(uint32) ^ y.(uint32)
 	case uint64:
 		return x.(uint64) ^ y.(uint64)
+	case uint:
+		return x.(uint) ^ y.(uint)
 	case int8:
 		return x.(int8) ^ y.(int8)
 	case int16:
@@ -254,6 +270,8 @@ func OpANDNOT(x interface{}, y interface{}) interface{} { // nolint
 		return x.(uint32) &^ y.(uint32)
 	case uint64:
 		return x.(uint64) &^ y.(uint64)
+	case uint:
+		return x.(uint) &^ y.(uint)
 	case int8:
 		return x.(int8) &^ y.(int8)
 	case int16:
@@ -284,6 +302,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case uint16:
 		x := x.(uint16)
@@ -297,6 +317,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case uint32:
 		x := x.(uint32)
@@ -310,6 +332,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case uint64:
 		x := x.(uint64)
@@ -323,6 +347,23 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
+		}
+	case uint:
+		x := x.(uint)
+
+		switch y.(type) {
+		case uint8:
+			return x << y.(uint8)
+		case uint16:
+			return x << y.(uint16)
+		case uint32:
+			return x << y.(uint32)
+		case uint64:
+			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case int8:
 		x := x.(int8)
@@ -336,6 +377,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case int16:
 		x := x.(int16)
@@ -349,6 +392,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case int32:
 		x := x.(int32)
@@ -362,6 +407,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case int64:
 		x := x.(int64)
@@ -375,6 +422,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	case int:
 		x := x.(int)
@@ -388,6 +437,8 @@ func OpSHL(x interface{}, y interface{}) interface{} {
 			return x << y.(uint32)
 		case uint64:
 			return x << y.(uint64)
+		case uint:
+			return x << y.(uint)
 		}
 	}
 
@@ -409,6 +460,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case uint16:
 		x := x.(uint16)
@@ -422,6 +475,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case uint32:
 		x := x.(uint32)
@@ -435,6 +490,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case uint64:
 		x := x.(uint64)
@@ -448,6 +505,23 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
+		}
+	case uint:
+		x := x.(uint)
+
+		switch y.(type) {
+		case uint8:
+			return x >> y.(uint8)
+		case uint16:
+			return x >> y.(uint16)
+		case uint32:
+			return x >> y.(uint32)
+		case uint64:
+			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case int8:
 		x := x.(int8)
@@ -461,6 +535,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case int16:
 		x := x.(int16)
@@ -474,6 +550,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case int32:
 		x := x.(int32)
@@ -487,6 +565,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case int64:
 		x := x.(int64)
@@ -500,6 +580,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	case int:
 		x := x.(int)
@@ -513,6 +595,8 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 			return x >> y.(uint32)
 		case uint64:
 			return x >> y.(uint64)
+		case uint:
+			return x >> y.(uint)
 		}
 	}
 
@@ -520,7 +604,7 @@ func OpSHR(x interface{}, y interface{}) interface{} {
 }
 
 // OpLAND has nodoc
-func OpLAND(x interface{}, y interface{}) interface{} {
+func OpLAND(x interface{}, y interface{}) bool {
 	switch x.(type) {
 	case bool:
 		return x.(bool) && y.(bool)
@@ -530,7 +614,7 @@ func OpLAND(x interface{}, y interface{}) interface{} {
 }
 
 // OpLOR has nodoc
-func OpLOR(x interface{}, y interface{}) interface{} {
+func OpLOR(x interface{}, y interface{}) bool {
 	switch x.(type) {
 	case bool:
 		return x.(bool) || y.(bool)

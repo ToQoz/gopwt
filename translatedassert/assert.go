@@ -96,6 +96,11 @@ func RVOf(a interface{}) reflect.Value {
 	return reflect.ValueOf(a)
 }
 
+// RTOf is reflect.TypeOf
+func RTOf(a interface{}) reflect.Type {
+	return reflect.TypeOf(a)
+}
+
 // RVBool returns reflect value as bool
 func RVBool(rv reflect.Value) bool {
 	return rv.Bool()
