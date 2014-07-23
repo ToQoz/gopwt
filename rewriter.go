@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"code.google.com/p/go.tools/go/gcimporter"
+	"code.google.com/p/go.tools/go/types"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -37,6 +39,7 @@ var (
 		"real",
 		"recover",
 	}
+	typesInfo *types.Info
 )
 
 func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
@@ -59,17 +62,13 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			return filepath.SkipDir
 		}
 
-		if !isTestGoFile(path) {
+		if !isGoFile2(path) {
 			return nil
 		}
 
 		a, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			return err
-		}
-
-		if getAssertImport(a) == nil {
-			return nil
 		}
 
 		files = append(files, a)
@@ -79,23 +78,33 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
+	typesInfo = getTypeInfo(importPath, fset, files)
+
 	// Rewrite files
 	for _, f := range files {
-		// Truncate
-		out, err := os.Create(fset.File(f.Package).Name())
-		if err != nil {
-			return err
+		path := fset.File(f.Package).Name()
+
+		if !isTestGoFile(path) {
+			continue
 		}
-		defer out.Close()
 
 		assertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := getAssertImport(f)
+		if assertImport == nil {
+			continue
+		}
 		assertImport.Path.Value = `"github.com/ToQoz/gopwt/translatedassert"`
 		if assertImport.Name != nil {
 			assertImportIdent = assertImport.Name
 			assertImport.Name = translatedassertImportIdent
 		}
 
+		// Truncate
+		out, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
 		err = rewriteFile(fset, f, out)
 		if err != nil {
 			return err
@@ -352,7 +361,6 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 	case *ast.CallExpr:
 		n := n.(*ast.CallExpr)
 		if isBuiltinFunc(n) { // don't memorize buildin methods
-
 			newExpr := createUntypedCallExprFromBuiltinCallExpr(n)
 
 			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr))
@@ -361,7 +369,50 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 			}
 
 			*n = *newExpr
+		} else if isTypeConversion(typesInfo, n) {
+			// T(v) can take only one argument.
+			if len(n.Args) > 1 {
+				panic("too many arguments for type conversion")
+			} else if len(n.Args) < 1 {
+				panic("missing argument for type conversion")
+			}
+
+			argsPrints := extractPrintExprs(filename, line, offset, n, n.Args[0])
+
+			newExpr := &ast.CallExpr{
+				Fun: &ast.SelectorExpr{
+					X:   translatedassertImportIdent,
+					Sel: &ast.Ident{Name: "RVInterface"},
+				},
+				Args: []ast.Expr{
+					&ast.CallExpr{
+						Fun: &ast.SelectorExpr{
+							X: &ast.CallExpr{
+								Fun: &ast.SelectorExpr{
+									X:   translatedassertImportIdent,
+									Sel: &ast.Ident{Name: "RVOf"},
+								},
+								Args: []ast.Expr{n.Args[0]},
+							},
+							Sel: &ast.Ident{Name: "Convert"},
+						},
+						Args: []ast.Expr{
+							createReflectTypeExprFromTypeExpr(n.Fun),
+						},
+					},
+				},
+			}
+
+			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr))
+			ps = append(ps, argsPrints...)
+
+			*n = *newExpr
 		} else {
+			argsPrints := []printExpr{}
+			for _, arg := range n.Args {
+				argsPrints = append(argsPrints, extractPrintExprs(filename, line, offset, n, arg)...)
+			}
+
 			var memorized *ast.CallExpr
 
 			if p, ok := parent.(*ast.CallExpr); ok && isAssert(assertImportIdent, p) {
@@ -371,9 +422,7 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 			}
 
 			ps = append(ps, newPrintExpr(n.Pos()-offset, memorized))
-			for _, arg := range n.Args {
-				ps = append(ps, extractPrintExprs(filename, line, offset, nil, arg)...)
-			}
+			ps = append(ps, argsPrints...)
 
 			*n = *memorized
 		}
@@ -436,6 +485,100 @@ func replaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Exp
 	panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
 }
 
+func getTypeInfo(importDir string, fset *token.FileSet, files []*ast.File) *types.Info {
+	typesConfig := types.Config{}
+	// I gave up to loading pkg from source.(by using "code.google.com/p/go.tools/go/loader")
+	// 	typesConfig.Import = func(imports map[string]*types.Package, path string) (*types.Package, error) {
+	// 		// Import from source if fail to import from binary
+	// 		pkg, err := gcimporter.Import(imports, path)
+	// 		if err == nil {
+	// 			return pkg, nil
+	// 		}
+	//
+	// 		lConfig := loader.Config{}
+	// 		lConfig.TypeChecker = typesConfig
+	// 		lConfig.Build = &build.Default
+	// 		lConfig.SourceImports = true
+	// 		lConfig.Import(path)
+	//
+	// 		prog, err := lConfig.Load()
+	// 		if err != nil {
+	// 			return nil, err
+	// 		}
+	// 		fmt.Println(prog.Imported[path].Types)
+	// 		return prog.Imported[path].Pkg, nil
+	// 	}
+	// Because
+	//   - it is slow.
+	//   - i met strange errors.
+	//       (e.g. github.com/ToQoz/gopwt/rewriter.go:201:29: cannot pass argument token.NewFileSet() (value of type *go/token.FileSet) to parameter of type *go/token.FileSet)
+	typesConfig.Import = gcimporter.Import
+
+	pkg := types.NewPackage(importDir, "")
+	info := &types.Info{
+		Types:      map[ast.Expr]types.TypeAndValue{},
+		Defs:       map[*ast.Ident]types.Object{},
+		Uses:       map[*ast.Ident]types.Object{},
+		Implicits:  map[ast.Node]types.Object{},
+		Selections: map[*ast.SelectorExpr]*types.Selection{},
+		Scopes:     map[ast.Node]*types.Scope{},
+		InitOrder:  []*types.Initializer{},
+	}
+	err := types.NewChecker(&typesConfig, fset, pkg, info).Files(files)
+	if err != nil {
+		fmt.Println("Error in checker: " + importDir)
+		fmt.Println(err.Error())
+		panic(err)
+	}
+
+	return info
+}
+
+func determinantExprOfIsTypeConversion(e ast.Expr) ast.Expr {
+	switch e.(type) {
+	case *ast.ParenExpr:
+		return determinantExprOfIsTypeConversion(e.(*ast.ParenExpr).X)
+	case *ast.StarExpr:
+		return determinantExprOfIsTypeConversion(e.(*ast.StarExpr).X)
+	case *ast.CallExpr:
+		return determinantExprOfIsTypeConversion(e.(*ast.CallExpr).Fun)
+	case *ast.SelectorExpr:
+		return e.(*ast.SelectorExpr).Sel
+	default:
+		return e
+	}
+}
+
+func isTypeConversion(info *types.Info, e *ast.CallExpr) bool {
+	if typesInfo == nil {
+		return false
+	}
+
+	funcOrType := determinantExprOfIsTypeConversion(e)
+
+	switch funcOrType.(type) {
+	case *ast.ChanType, *ast.FuncType, *ast.MapType, *ast.ArrayType, *ast.StructType, *ast.InterfaceType:
+		return true
+	case *ast.Ident:
+		id := funcOrType.(*ast.Ident)
+
+		if t, ok := info.Types[id]; ok {
+			return t.IsType()
+		}
+
+		if o := info.ObjectOf(id); o != nil {
+			switch o.(type) {
+			case *types.TypeName:
+				return true
+			default:
+				return false
+			}
+		}
+	}
+
+	panic("unexpected error")
+}
+
 func replaceAllRawStringLitByStringLit(root ast.Node) {
 	ast.Inspect(root, func(n ast.Node) bool {
 		if n, ok := n.(*ast.BasicLit); ok {
@@ -472,6 +615,11 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 	}
 
 	return nil
+}
+
+// FIXME
+func isGoFile2(name string) bool {
+	return strings.HasSuffix(name, ".go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
 }
 
 func isTestGoFile(name string) bool {

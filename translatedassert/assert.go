@@ -111,15 +111,20 @@ func FRVBool(rvs []reflect.Value) bool {
 	return RVBool(rvs[0])
 }
 
-// FRVInterface returns first of reflect values as interface{}
-func FRVInterface(rvs []reflect.Value) interface{} {
-	rv := rvs[0]
-
+// RVInterface returns reflect value as interface{}
+func RVInterface(rv reflect.Value) interface{} {
 	if !rv.IsValid() {
 		return nil
 	}
 
 	return rv.Interface()
+}
+
+// FRVInterface returns first of reflect values as interface{}
+func FRVInterface(rvs []reflect.Value) interface{} {
+	rv := rvs[0]
+
+	return RVInterface(rv)
 }
 
 func reflectNilValue(t reflect.Type) reflect.Value {

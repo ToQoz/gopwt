@@ -10,6 +10,23 @@ import (
 	"testing"
 )
 
+func TestDontPanic_OnTypeConversion(t *testing.T) {
+	a := func() rune {
+		return 'a'
+	}
+	assert.OK(t, string(a()) == string(a()))
+
+	c := 0
+	incl := func() int {
+		c++
+		return c
+	}
+
+	assert.OK(t, incl() == incl()-1)
+	assert.OK(t, int32(incl()) == int32(incl()-1))
+	assert.OK(t, int32(incl()) == int32(incl()-1))
+}
+
 func TestCreateReflectTypeExprFromTypeExpr(t *testing.T) {
 	// built in type
 	assert.OK(t, "translatedassert.RVOf(new(string)).Elem().Type()" == astToCode(createReflectTypeExprFromTypeExpr(mustParseExpr("string"))))

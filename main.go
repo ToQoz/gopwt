@@ -45,6 +45,14 @@ func main() {
 		return
 	}
 
+	// Create binary before type assuming from ast.Node(in rewrite.go)
+	err = runInstall(pkgInfo, os.Stdout, os.Stderr)
+	if err != nil {
+		fmt.Println(err.Error())
+		exitCode = 1
+		return
+	}
+
 	err = rewrite(tempGoPath, pkgInfo)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -121,6 +129,17 @@ func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 	return nil
 }
 
+func runInstall(pkgInfo *packageInfo, stdout, stderr io.Writer) error {
+	cmd := exec.Command("go", "install")
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	if *verbose {
+		cmd.Args = append(cmd.Args, "-v")
+	}
+	cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
+	return cmd.Run()
+}
+
 func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) error {
 	err := os.Setenv("GOPATH", goPath+":"+os.Getenv("GOPATH"))
 	if err != nil {
@@ -134,12 +153,7 @@ func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) erro
 	cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Run()
 }
 
 func containsGoFile(dir string) (bool, error) {
