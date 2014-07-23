@@ -1,0 +1,18 @@
+language: go
+go:
+  - 1.1
+  - 1.2
+  - tip
+before_script:
+  - go get code.google.com/p/go.tools/cmd/cover
+  - go get github.com/mattn/goveralls
+  - go get -v ./...
+script:
+  - make test
+  - ./coveralls
+notifications:
+  email:
+    recipients:
+      - toqoz403@gmail.com
+    on_success: change
+    on_failure: always
