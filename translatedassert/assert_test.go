@@ -2,9 +2,42 @@ package translatedassert
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestReflectNilValue(t *testing.T) {
+	type foo struct{}
+
+	f := reflect.ValueOf(func(f *foo) {
+		if f != nil {
+			t.Error("translatedassert.reflectNilValue should return nil")
+		}
+	})
+	f.Call([]reflect.Value{reflectNilValue(f.Type().In(0))})
+
+	f = reflect.ValueOf(func(f interface{}) {
+		if f != nil {
+			t.Error("translatedassert.reflectNilValue should return nil")
+		}
+	})
+	f.Call([]reflect.Value{reflectNilValue(f.Type().In(0))})
+
+	f = reflect.ValueOf(func(f []string) {
+		if f != nil {
+			t.Error("translatedassert.reflectNilValue should return nil")
+		}
+	})
+	f.Call([]reflect.Value{reflectNilValue(f.Type().In(0))})
+
+	f = reflect.ValueOf(func(f map[string]string) {
+		if f != nil {
+			t.Error("translatedassert.reflectNilValue should return nil")
+		}
+	})
+	f.Call([]reflect.Value{reflectNilValue(f.Type().In(0))})
+}
 
 func TestFormat(t *testing.T) {
 	pvs := []posValuePair{
