@@ -99,11 +99,12 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			assertImport.Name = translatedassertImportIdent
 		}
 
-		// Truncate
-		out, err := os.Create(path)
+		fi, err := os.Stat(path)
 		if err != nil {
 			return err
 		}
+
+		out, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, fi.Mode())
 		defer out.Close()
 		err = rewriteFile(fset, f, out)
 		if err != nil {
@@ -124,6 +125,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		if err != nil {
 			return err
 		}
+		outPath := filepath.Join(tempGoSrcDir, importPath, pathFromImportDir)
 
 		if fInfo.IsDir() {
 			if path == pkgDir {
@@ -131,21 +133,22 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			}
 
 			// copy all files in <pkgDir>/testdata/**/*
-			if strings.HasPrefix(path, filepath.Join(pkgDir, "testdata")+string(filepath.Separator)) {
+			if strings.Split(pathFromImportDir, string(filepath.Separator))[0] == "testdata" {
+				di, err := os.Stat(filepath.Dir(path))
+				if err != nil {
+					return err
+				}
+				err = os.Mkdir(filepath.Dir(outPath), di.Mode())
+				if err != nil {
+					return err
+				}
 				return nil
 			}
 
 			return filepath.SkipDir
 		}
 
-		outPath := filepath.Join(tempGoSrcDir, importPath, pathFromImportDir)
-		if _, err := os.Stat(filepath.Dir(outPath)); err == nil {
-			err = os.MkdirAll(filepath.Dir(outPath), os.ModePerm)
-			if err != nil {
-				return err
-			}
-		}
-		out, err := os.Create(outPath)
+		out, err := os.OpenFile(outPath, os.O_RDWR|os.O_CREATE, fInfo.Mode())
 		if err != nil {
 			return err
 		}
