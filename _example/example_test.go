@@ -30,7 +30,10 @@ func TestMapType(t *testing.T) {
 
 func TestArrayType(t *testing.T) {
 	index := 1
-	assert.OK(t, []int{1, 2}[index] == 3)
+	assert.OK(t, []int{
+		1,
+		2,
+	}[index] == 3)
 }
 
 func TestStructType(t *testing.T) {
