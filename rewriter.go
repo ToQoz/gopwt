@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/parser"
 	"go/printer"
 	"go/token"
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -78,6 +80,25 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
+	// Create binary before type assuming from ast.Node(in rewrite.go)
+	install := exec.Command("go", "install")
+	install.Stdout = os.Stdout
+	install.Stderr = os.Stderr
+	if *verbose {
+		install.Args = append(install.Args, "-v")
+	}
+
+	deps, err := findDeps(importPath, tempGoSrcDir)
+	if err != nil {
+		return err
+	}
+
+	install.Args = append(install.Args, deps...)
+	err = install.Run()
+	if err != nil {
+		return err
+	}
+
 	typesInfo = getTypeInfo(importPath, fset, files)
 
 	// Rewrite files
@@ -113,6 +134,40 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	}
 
 	return nil
+}
+
+func findDeps(importPath, srcDir string) ([]string, error) {
+	deps := []string{}
+
+	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, imp := range pkg.Imports {
+		if imp == importPath {
+			continue
+		}
+		deps = append(deps, imp)
+	}
+
+	for _, imp := range pkg.TestImports {
+		if imp == importPath {
+			continue
+		}
+
+		f := false
+		for _, arg := range deps {
+			if arg == imp {
+				f = true
+			}
+		}
+
+		if !f {
+			deps = append(deps, imp)
+		}
+	}
+	return deps, nil
 }
 
 func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
@@ -529,7 +584,6 @@ func getTypeInfo(importDir string, fset *token.FileSet, files []*ast.File) *type
 	}
 	err := types.NewChecker(&typesConfig, fset, pkg, info).Files(files)
 	if err != nil {
-		fmt.Println("Error in checker: " + importDir)
 		fmt.Println(err.Error())
 		panic(err)
 	}
