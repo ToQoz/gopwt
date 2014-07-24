@@ -6,10 +6,12 @@ import (
 	"github.com/mattn/go-runewidth"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 )
 
 var cachedFuncRet = map[string]map[int]interface{}{}
+var cachedFuncRetMutex = &sync.Mutex{}
 
 type posValuePair struct {
 	Pos   int
@@ -50,7 +52,14 @@ func OK(t *testing.T, e bool, header, filename string, line int, origexpr string
 	}
 
 	t.Error(strings.Join(lines, "\n"))
-	deleteCachedFuncRetsForFileline(filename, line)
+
+	cachedFuncRetMutex.Lock()
+	defer cachedFuncRetMutex.Unlock()
+
+	key := fmt.Sprintf("%s:%d", filename, line)
+	if _, ok := cachedFuncRet[key]; ok {
+		delete(cachedFuncRet, key)
+	}
 }
 
 // --------------------------------------------------------------------------------
@@ -59,7 +68,16 @@ func OK(t *testing.T, e bool, header, filename string, line int, origexpr string
 
 // MFCall momorize and call func
 func MFCall(filename string, line, col int, f reflect.Value, args ...reflect.Value) []reflect.Value {
-	rets := getCachedFuncRetsForFileline(filename, line)
+	cachedFuncRetMutex.Lock()
+	defer cachedFuncRetMutex.Unlock()
+
+	key := fmt.Sprintf("%s:%d", filename, line)
+
+	if _, ok := cachedFuncRet[key]; !ok {
+		cachedFuncRet[key] = map[int]interface{}{}
+	}
+
+	rets := cachedFuncRet[key]
 
 	if _, ok := rets[col]; !ok {
 		for i, a := range args {
@@ -74,21 +92,6 @@ func MFCall(filename string, line, col int, f reflect.Value, args ...reflect.Val
 	}
 
 	return []reflect.Value{reflect.ValueOf(rets[col])}
-}
-
-func getCachedFuncRetsForFileline(filename string, line int) map[int]interface{} {
-	key := fmt.Sprintf("%s:%d", filename, line)
-
-	if _, ok := cachedFuncRet[key]; !ok {
-		cachedFuncRet[key] = map[int]interface{}{}
-	}
-
-	return cachedFuncRet[key]
-}
-
-func deleteCachedFuncRetsForFileline(filename string, line int) {
-	key := fmt.Sprintf("%s:%d", filename, line)
-	delete(cachedFuncRet, key)
 }
 
 // RVOf is reflect.ValueOf
