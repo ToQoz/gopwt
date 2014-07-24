@@ -75,7 +75,7 @@ func findImportPathByPath(path string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("%s is not in $GOPATH", path)
+	return "", fmt.Errorf("%s is not found in $GOPATH/src(%q)", path, build.Default.SrcDirs())
 }
 
 func findPathByImportPath(importPath string) (string, error) {
@@ -85,5 +85,5 @@ func findPathByImportPath(importPath string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("package %s is not found in $GOPATH", importPath)
+	return "", fmt.Errorf("package %s is not found in $GOPATH/src(%q)", importPath, build.Default.SrcDirs())
 }
