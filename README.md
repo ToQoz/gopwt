@@ -10,7 +10,7 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 
 ```
 $ go get github.com/ToQoz/gopwt/...
-$ cd your-go-project-path
+$ cd your-go-project-path(in $GOPATH/src)
 $ vi main_test.go
 $ cat main_test.go
 package main
