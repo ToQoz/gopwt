@@ -8,6 +8,27 @@ import (
 	"strings"
 )
 
+var (
+	builtinFuncs = []string{
+		"append",
+		"cap",
+		"close",
+		"complex",
+		"copy",
+		"delete",
+		"imag",
+		"len",
+		"make",
+		"new",
+		"panic",
+		"print",
+		"println",
+		"real",
+		"recover",
+	}
+)
+
+// replaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
 func replaceAllRawStringLitByStringLit(root ast.Node) {
 	ast.Inspect(root, func(n ast.Node) bool {
 		if n, ok := n.(*ast.BasicLit); ok {
@@ -20,6 +41,8 @@ func replaceAllRawStringLitByStringLit(root ast.Node) {
 	})
 }
 
+// getAssertImport returns *ast.ImportSpec of "github.com/ToQoz/gopwt/assert"
+// if it is not found, this returns nil
 func getAssertImport(a *ast.File) *ast.ImportSpec {
 	for _, decl := range a.Decls {
 		decl, ok := decl.(*ast.GenDecl)
@@ -46,6 +69,7 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 	return nil
 }
 
+// isAssert returns ok if given CallExpr is github.com/ToQoz/gopwt/assert.OK
 func isAssert(x *ast.Ident, c *ast.CallExpr) bool {
 	if s, ok := c.Fun.(*ast.SelectorExpr); ok {
 		return s.X.(*ast.Ident).Name == x.Name && s.Sel.Name == "OK"
@@ -101,60 +125,6 @@ func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
 		return createAltBuiltin(name, args)
 	default:
 		panic(fmt.Errorf("%s can't be used in assert", name))
-	}
-}
-
-func createReflectTypeExprFromTypeExpr(n ast.Expr) ast.Expr {
-	canUseCompositeLit := true
-
-	if n, ok := n.(*ast.Ident); ok {
-		switch n.Name {
-		case "string", "rune",
-			"uint", "uint8", "uint16", "uint32", "uint64",
-			"int8", "int32", "int64", "int",
-			"float32", "float64",
-			"complex64", "complex128",
-			"bool", "uintptr", "error":
-
-			canUseCompositeLit = false
-		}
-	}
-
-	if _, ok := n.(*ast.ChanType); ok {
-		canUseCompositeLit = false
-	}
-
-	if !canUseCompositeLit {
-		return &ast.CallExpr{
-			Fun: &ast.SelectorExpr{
-				X: &ast.CallExpr{
-					Fun: &ast.SelectorExpr{
-						X: &ast.CallExpr{
-							Fun: &ast.SelectorExpr{
-								X:   translatedassertImportIdent,
-								Sel: &ast.Ident{Name: "RVOf"},
-							},
-							Args: []ast.Expr{
-								&ast.CallExpr{
-									Fun:  &ast.Ident{Name: "new"},
-									Args: []ast.Expr{n},
-								},
-							},
-						},
-						Sel: &ast.Ident{Name: "Elem"},
-					},
-				},
-				Sel: &ast.Ident{Name: "Type"},
-			},
-		}
-	}
-
-	return &ast.CallExpr{
-		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
-			Sel: &ast.Ident{Name: "RTOf"},
-		},
-		Args: []ast.Expr{&ast.CompositeLit{Type: n}},
 	}
 }
 
@@ -231,25 +201,13 @@ func createMemorizedFuncCall(filename string, line int, n *ast.CallExpr, returnT
 			&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(filename)},
 			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(line)},
 			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(n.Pos()))},
-			&ast.CallExpr{
-				Fun: &ast.SelectorExpr{
-					X:   translatedassertImportIdent,
-					Sel: &ast.Ident{Name: "RVOf"},
-				},
-				Args: []ast.Expr{n.Fun},
-			},
+			createReflectValueOfExpr(n.Fun),
 		},
 	}
 
 	args := []ast.Expr{}
 	for _, a := range n.Args {
-		args = append(args, &ast.CallExpr{
-			Fun: &ast.SelectorExpr{
-				X:   translatedassertImportIdent,
-				Sel: &ast.Ident{Name: "RVOf"},
-			},
-			Args: []ast.Expr{a},
-		})
+		args = append(args, createReflectValueOfExpr(a))
 	}
 	c.Args = append(c.Args, args...)
 
@@ -258,9 +216,90 @@ func createMemorizedFuncCall(filename string, line int, n *ast.CallExpr, returnT
 			X:   translatedassertImportIdent,
 			Sel: &ast.Ident{Name: "FRV" + returnType},
 		},
-		Args: []ast.Expr{
-			c,
+		Args: []ast.Expr{c},
+	}
+}
+
+// createReflectTypeExprFromTypeExpr create ast of reflect.Type from ast of type.
+func createReflectTypeExprFromTypeExpr(t ast.Expr) ast.Expr {
+	canUseCompositeLit := true
+
+	if t, ok := t.(*ast.Ident); ok {
+		switch t.Name {
+		case "string", "rune",
+			"uint", "uint8", "uint16", "uint32", "uint64",
+			"int8", "int32", "int64", "int",
+			"float32", "float64",
+			"complex64", "complex128",
+			"bool", "uintptr", "error":
+
+			canUseCompositeLit = false
+		}
+	}
+
+	if _, ok := t.(*ast.ChanType); ok {
+		canUseCompositeLit = false
+	}
+
+	if !canUseCompositeLit {
+		rv := &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X: createReflectValueOfExpr(&ast.CallExpr{
+					Fun:  &ast.Ident{Name: "new"},
+					Args: []ast.Expr{t},
+				}),
+				Sel: &ast.Ident{Name: "Elem"},
+			},
+		}
+
+		return &ast.CallExpr{
+			Fun: &ast.SelectorExpr{
+				X:   rv,
+				Sel: &ast.Ident{Name: "Type"},
+			},
+		}
+	}
+
+	return createReflectTypeOfExpr(&ast.CompositeLit{Type: t})
+}
+
+func createReflectInterfaceExpr(rv ast.Expr) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   translatedassertImportIdent,
+			Sel: &ast.Ident{Name: "RVInterface"},
 		},
+		Args: []ast.Expr{rv},
+	}
+}
+
+func createReflectBoolExpr(rv ast.Expr) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   translatedassertImportIdent,
+			Sel: &ast.Ident{Name: "RVBool"},
+		},
+		Args: []ast.Expr{rv},
+	}
+}
+
+func createReflectValueOfExpr(v ast.Expr) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   translatedassertImportIdent,
+			Sel: &ast.Ident{Name: "RVOf"},
+		},
+		Args: []ast.Expr{v},
+	}
+}
+
+func createReflectTypeOfExpr(v ast.Expr) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun: &ast.SelectorExpr{
+			X:   translatedassertImportIdent,
+			Sel: &ast.Ident{Name: "RTOf"},
+		},
+		Args: []ast.Expr{v},
 	}
 }
 

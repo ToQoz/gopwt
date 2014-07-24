@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"code.google.com/p/go.tools/go/gcimporter"
 	"code.google.com/p/go.tools/go/types"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -23,25 +22,7 @@ import (
 var (
 	translatedassertImportIdent = &ast.Ident{Name: "translatedassert"}
 	assertImportIdent           = &ast.Ident{Name: "assert"}
-	errAssertImportNotFound     = errors.New("github.com/ToQoz/gopwt/assert is not found in imports")
-	builtinFuncs                = []string{
-		"append",
-		"cap",
-		"close",
-		"complex",
-		"copy",
-		"delete",
-		"imag",
-		"len",
-		"make",
-		"new",
-		"panic",
-		"print",
-		"println",
-		"real",
-		"recover",
-	}
-	typesInfo *types.Info
+	typesInfo                   *types.Info
 )
 
 func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
@@ -374,21 +355,7 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 		n := n.(*ast.UnaryExpr)
 		x := extractPrintExprs(filename, line, offset, n, n.X)
 
-		n.X = &ast.CallExpr{
-			Fun: &ast.SelectorExpr{
-				X:   translatedassertImportIdent,
-				Sel: &ast.Ident{Name: "RVBool"},
-			},
-			Args: []ast.Expr{
-				&ast.CallExpr{
-					Fun: &ast.SelectorExpr{
-						X:   translatedassertImportIdent,
-						Sel: &ast.Ident{Name: "RVOf"},
-					},
-					Args: []ast.Expr{n.X},
-				},
-			},
-		}
+		n.X = createReflectBoolExpr(createReflectValueOfExpr(n.X))
 
 		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
 		ps = append(ps, x...)
@@ -437,29 +404,15 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 
 			argsPrints := extractPrintExprs(filename, line, offset, n, n.Args[0])
 
-			newExpr := &ast.CallExpr{
+			newExpr := createReflectInterfaceExpr(&ast.CallExpr{
 				Fun: &ast.SelectorExpr{
-					X:   translatedassertImportIdent,
-					Sel: &ast.Ident{Name: "RVInterface"},
+					X:   createReflectValueOfExpr(n.Args[0]),
+					Sel: &ast.Ident{Name: "Convert"},
 				},
 				Args: []ast.Expr{
-					&ast.CallExpr{
-						Fun: &ast.SelectorExpr{
-							X: &ast.CallExpr{
-								Fun: &ast.SelectorExpr{
-									X:   translatedassertImportIdent,
-									Sel: &ast.Ident{Name: "RVOf"},
-								},
-								Args: []ast.Expr{n.Args[0]},
-							},
-							Sel: &ast.Ident{Name: "Convert"},
-						},
-						Args: []ast.Expr{
-							createReflectTypeExprFromTypeExpr(n.Fun),
-						},
-					},
+					createReflectTypeExprFromTypeExpr(n.Fun),
 				},
-			}
+			})
 
 			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr))
 			ps = append(ps, argsPrints...)
