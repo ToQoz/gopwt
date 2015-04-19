@@ -19,20 +19,20 @@ var (
 )
 
 func main() {
-	exitCode := 0
-	defer func() {
-		os.Exit(exitCode)
-	}()
-
+	if err := doMain(); err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(2)
+		return
+	}
+}
+func doMain() error {
 	flag.Parse()
 
 	termw = getTermCols(os.Stdin.Fd())
 
 	tempGoPath, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
-		fmt.Println(err.Error())
-		exitCode = 1
-		return
+		return err
 	}
 	defer os.RemoveAll(tempGoPath)
 
@@ -40,24 +40,20 @@ func main() {
 
 	pkgInfo, err := newPackageInfo(root)
 	if err != nil {
-		fmt.Println(err.Error())
-		exitCode = 1
-		return
+		return err
 	}
 
 	err = rewrite(tempGoPath, pkgInfo)
 	if err != nil {
-		fmt.Println(err.Error())
-		exitCode = 1
-		return
+		return err
 	}
 
 	err = runTest(tempGoPath, pkgInfo, os.Stdout, os.Stderr)
 	if err != nil {
-		fmt.Println(err.Error())
-		exitCode = 1
-		return
+		return err
 	}
+
+	return nil
 }
 
 func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
