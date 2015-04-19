@@ -2,14 +2,14 @@ package main
 
 import (
 	"bytes"
-	"golang.org/x/tools/go/gcimporter"
-	"golang.org/x/tools/go/types"
 	"fmt"
 	"go/ast"
 	"go/build"
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"golang.org/x/tools/go/gcimporter"
+	"golang.org/x/tools/go/types"
 	"io"
 	"io/ioutil"
 	"os"
