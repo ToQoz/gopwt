@@ -174,7 +174,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 				if err != nil {
 					return err
 				}
-				err = os.Mkdir(filepath.Dir(outPath), di.Mode())
+				err = os.Mkdir(outPath, di.Mode())
 				if err != nil {
 					return err
 				}
