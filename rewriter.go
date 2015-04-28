@@ -169,16 +169,19 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			}
 
 			// copy all files in <pkgDir>/testdata/**/*
-			if strings.Split(pathFromImportDir, string(filepath.Separator))[0] == "testdata" {
-				di, err := os.Stat(filepath.Dir(path))
-				if err != nil {
-					return err
+			for _, tdata := range strings.Split(*testdata, ",") {
+				if strings.Split(pathFromImportDir, string(filepath.Separator))[0] == tdata {
+					fmt.Println(pathFromImportDir)
+					di, err := os.Stat(filepath.Dir(path))
+					if err != nil {
+						return err
+					}
+					err = os.Mkdir(outPath, di.Mode())
+					if err != nil {
+						return err
+					}
+					return nil
 				}
-				err = os.Mkdir(outPath, di.Mode())
-				if err != nil {
-					return err
-				}
-				return nil
 			}
 
 			return filepath.SkipDir

@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	termw   = 0
-	verbose = flag.Bool("v", false, "This will be passed to `go test`")
+	termw    = 0
+	verbose  = flag.Bool("v", false, "This will be passed to `go test`")
+	testdata = flag.String("testdata", "testdata", "name of test data directories. if you treat multiple names, seprate by comma")
 )
 
 func main() {
@@ -86,8 +87,10 @@ func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 			return err
 		}
 
-		if strings.Split(rel, "/")[0] == "testdata" {
-			return filepath.SkipDir
+		for _, tdata := range strings.Split(*testdata, ",") {
+			if strings.Split(rel, "/")[0] == tdata {
+				return filepath.SkipDir
+			}
 		}
 
 		if rel != "." {
