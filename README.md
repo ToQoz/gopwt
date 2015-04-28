@@ -10,7 +10,7 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 
 ```
 Usage of gopwt:
-  -testdata="testdata": name of test data directories. if you treat multiple names, seprate by comma
+  -testdata="testdata": name of test data directories. e.g. -testdata testdata,migrations
   -v=false: This will be passed to `go test`
 ```
 

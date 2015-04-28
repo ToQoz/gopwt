@@ -16,7 +16,7 @@ import (
 var (
 	termw    = 0
 	verbose  = flag.Bool("v", false, "This will be passed to `go test`")
-	testdata = flag.String("testdata", "testdata", "name of test data directories. if you treat multiple names, seprate by comma")
+	testdata = flag.String("testdata", "testdata", "name of test data directories. e.g. -testdata testdata,migrations")
 )
 
 func main() {
