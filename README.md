@@ -6,6 +6,14 @@
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
+## Usage
+
+```
+Usage of gopwt:
+  -testdata="testdata": name of test data directories. if you treat multiple names, seprate by comma
+  -v=false: This will be passed to `go test`
+```
+
 ## Getting Started
 
 ### Install and Try
