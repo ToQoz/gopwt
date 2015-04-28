@@ -68,11 +68,16 @@ func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 			return nil
 		}
 
-		c, err := containsGoFile(path)
+		files, err := ioutil.ReadDir(path)
 		if err != nil {
 			return err
 		}
-		if !c {
+		if !containsGoFile(files) {
+			// sub-packages maybe have gofiles,
+			// if itself don't has gofiles
+			if containsDirectory(files) {
+				return nil
+			}
 			return filepath.SkipDir
 		}
 
@@ -133,19 +138,24 @@ func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) erro
 	return cmd.Run()
 }
 
-func containsGoFile(dir string) (bool, error) {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return false, err
-	}
-
+func containsDirectory(files []os.FileInfo) bool {
 	for _, f := range files {
-		if isGoFile(f) {
-			return true, nil
+		if f.IsDir() {
+			return true
 		}
 	}
 
-	return false, nil
+	return false
+}
+
+func containsGoFile(files []os.FileInfo) bool {
+	for _, f := range files {
+		if isGoFile(f) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isGoFile(f os.FileInfo) bool {
