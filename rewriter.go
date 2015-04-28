@@ -343,6 +343,14 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 
 		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.Value)...)
 	case *ast.Ident:
+		// HACK:
+		// skip ident type is invalid
+		// e.g. pkg.ErrNoRows
+		//      ^^^
+		// I'm searchng more better ways....
+		if basic, ok := typesInfo.TypeOf(n).(*types.Basic); ok && basic.Kind() == types.Invalid {
+			return ps
+		}
 		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
 	case *ast.ParenExpr:
 		n := n.(*ast.ParenExpr)

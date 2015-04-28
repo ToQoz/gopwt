@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/ToQoz/gopwt/assert"
 	"reflect"
 	"testing"
@@ -71,4 +73,8 @@ func TestCallWithNonIdempotentFunc(t *testing.T) {
 	}
 
 	assert.OK(t, incl2(incl2(2)) == 10)
+}
+
+func TestPkgValue(t *testing.T) {
+	assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
 }
