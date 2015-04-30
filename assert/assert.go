@@ -22,6 +22,22 @@ If you need more information, see http://github.com/ToQoz/gopwt
 `)
 }
 
+// Require assert given bool is true.
+// The difference from OK is Require calls t.Skip after t.Error on fail.
+// This will be translate to `translatedassert.Require` by gopwt.
+func Require(t *testing.T, ok bool) {
+	if ok {
+		return
+	}
+
+	t.Error(`[FAIL Assersion] ` + callerLine(1) + `
+
+Please run tests by command "gopwt". It give you power.
+If you need more information, see http://github.com/ToQoz/gopwt
+`)
+	t.Skip("skip by gopwt/assert.Require")
+}
+
 func callerLine(skip int) string {
 	_, file, lnum, ok := runtime.Caller(skip + 1)
 

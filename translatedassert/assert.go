@@ -62,6 +62,15 @@ func OK(t *testing.T, e bool, header, filename string, line int, origexpr string
 	}
 }
 
+// Require has nodoc
+// **This is not for human**
+func Require(t *testing.T, e bool, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
+	OK(t, e, header, filename, line, origexpr, termw, pvPairs...)
+	if !e {
+		t.Skip("skip by gopwt/assert.Require")
+	}
+}
+
 // --------------------------------------------------------------------------------
 // Reflect
 // --------------------------------------------------------------------------------

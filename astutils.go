@@ -69,11 +69,11 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 	return nil
 }
 
-// isAssert returns ok if given CallExpr is github.com/ToQoz/gopwt/assert.OK
+// isAssert returns ok if given CallExpr is github.com/ToQoz/gopwt/assert.OK or Require
 func isAssert(x *ast.Ident, c *ast.CallExpr) bool {
 	if s, ok := c.Fun.(*ast.SelectorExpr); ok {
 		if xident, ok := s.X.(*ast.Ident); ok {
-			return xident.Name == x.Name && s.Sel.Name == "OK"
+			return xident.Name == x.Name && (s.Sel.Name == "OK" || s.Sel.Name == "Require")
 		}
 	}
 
