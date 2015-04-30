@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/mattn/go-isatty"
 	"io"
 	"io/ioutil"
 	"os"
@@ -29,7 +30,9 @@ func main() {
 func doMain() error {
 	flag.Parse()
 
-	termw = getTermCols(os.Stdin.Fd())
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		termw = getTermCols(os.Stdin.Fd())
+	}
 
 	tempGoPath, err := ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
