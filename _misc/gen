@@ -17,7 +17,7 @@ echo "" >> $out
 echo '```' >> $out
 echo '$ gopwt' >> $out
 cd _example
-gopwt >> $out 2>&1
+gopwt 2>&1 | sed -e 's,FAIL .*/src,FAIL /.../src,' >> $out
 echo '```' >> $out
 echo "" >> $out
 
