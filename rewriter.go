@@ -277,46 +277,7 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 				return false
 			}
 
-			file := fset.File(n.Pos())
-			filename := file.Name()
-			line := file.Line(n.Pos())
-
-			b := []byte{}
-			buf := bytes.NewBuffer(b)
-			// This printing **must** success.(valid expr -> code)
-			// So call panic on failing.
-			err := printer.Fprint(buf, token.NewFileSet(), n)
-			if err != nil {
-				panic(err)
-			}
-
-			// OK(t, a == b, "message", "message-2")
-			// ---> OK(t, a == b, []string{"messages", "message-2"})
-			testingT := n.Args[0]
-			testExpr := n.Args[1]
-			messages := createArrayTypeCompositLit("string")
-			if len(n.Args) > 2 {
-				for _, msg := range n.Args[2:] {
-					messages.Elts = append(messages.Elts, msg)
-				}
-			}
-			n.Args = []ast.Expr{testingT}
-			n.Args = append(n.Args, testExpr)
-			n.Args = append(n.Args, messages)
-
-			// header
-			n.Args = append(n.Args, createRawStringLit("FAIL"))
-			// filename
-			n.Args = append(n.Args, createRawStringLit(filename))
-			// line
-			n.Args = append(n.Args, &ast.BasicLit{Value: strconv.Itoa(line), Kind: token.INT})
-			// string of original expr
-			n.Args = append(n.Args, createRawStringLit(buf.String()))
-			// terminal width
-			n.Args = append(n.Args, &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(termw)})
-			// pos-value pairs
-			n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(filename, line, n.Pos()-1, n, n.Args[2]))...)
-			n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
+			rewriteAssert(fset.File(n.Pos()), n)
 			return false
 		}
 
@@ -328,6 +289,46 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+// rewriteAssert rewrites assert to translatedassert
+func rewriteAssert(file *token.File, n *ast.CallExpr) {
+	filename := file.Name()
+	line := file.Line(n.Pos())
+
+	b := []byte{}
+	buf := bytes.NewBuffer(b)
+	// printing valid expr must success
+	must(printer.Fprint(buf, token.NewFileSet(), n))
+	originalExprString := buf.String()
+
+	// OK(t, a == b, "message", "message-2")
+	// ---> OK(t, a == b, []string{"messages", "message-2"})
+	testingT := n.Args[0]
+	testExpr := n.Args[1]
+	messages := createArrayTypeCompositLit("string")
+	if len(n.Args) > 2 {
+		for _, msg := range n.Args[2:] {
+			messages.Elts = append(messages.Elts, msg)
+		}
+	}
+	n.Args = []ast.Expr{testingT}
+	n.Args = append(n.Args, testExpr)
+	n.Args = append(n.Args, messages)
+
+	// header
+	n.Args = append(n.Args, createRawStringLit("FAIL"))
+	// filename
+	n.Args = append(n.Args, createRawStringLit(filename))
+	// line
+	n.Args = append(n.Args, &ast.BasicLit{Value: strconv.Itoa(line), Kind: token.INT})
+	// string of original expr
+	n.Args = append(n.Args, createRawStringLit(originalExprString))
+	// terminal width
+	n.Args = append(n.Args, &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(termw)})
+	// pos-value pairs
+	n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(filename, line, n.Pos()-1, n, n.Args[1]))...)
+	n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
 }
 
 type printExpr struct {
