@@ -26,7 +26,7 @@ func NewPosValuePair(pos int, v interface{}) posValuePair {
 
 // OK has nodoc
 // **This is not for human**
-func OK(t *testing.T, messages []string, e bool, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
+func OK(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
 	if e {
 		return
 	}
@@ -71,8 +71,8 @@ func OK(t *testing.T, messages []string, e bool, header, filename string, line i
 
 // Require has nodoc
 // **This is not for human**
-func Require(t *testing.T, messages []string, e bool, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
-	OK(t, messages, e, header, filename, line, origexpr, termw, pvPairs...)
+func Require(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
+	OK(t, e, messages, header, filename, line, origexpr, termw, pvPairs...)
 	if !e {
 		t.Skip("skip by gopwt/assert.Require")
 	}

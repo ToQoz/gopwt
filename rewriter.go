@@ -290,8 +290,8 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 				panic(err)
 			}
 
-			// OK(t, a == b, "message")
-			// ---> OK(t, []string{"messages"}, a == b)
+			// OK(t, a == b, "message", "message-2")
+			// ---> OK(t, a == b, []string{"messages", "message-2"})
 			testingT := n.Args[0]
 			testExpr := n.Args[1]
 			messages := createArrayTypeCompositLit("string")
@@ -301,8 +301,8 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 				}
 			}
 			n.Args = []ast.Expr{testingT}
-			n.Args = append(n.Args, messages)
 			n.Args = append(n.Args, testExpr)
+			n.Args = append(n.Args, messages)
 
 			// header
 			n.Args = append(n.Args, createRawStringLit("FAIL"))
