@@ -52,9 +52,9 @@ func OK(t *testing.T, messages []string, e bool, header, filename string, line i
 	}
 
 	if len(messages) > 0 {
-		lines = append(lines, "Error Message:")
+		lines = append(lines, "Assersion messages:")
 		for _, msg := range messages {
-			lines = append(lines, "\t"+msg)
+			lines = append(lines, "\t- "+msg)
 		}
 	}
 
