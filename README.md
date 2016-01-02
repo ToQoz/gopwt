@@ -43,7 +43,6 @@ $ gopwt
 `go get -u github.com/ToQoz/gopwt/...`
 
 ## Example
-
 ```go
 package main
 
@@ -54,6 +53,12 @@ import (
 	"reflect"
 	"testing"
 )
+
+func TestWithMessage(t *testing.T) {
+	var receiver *struct{}
+	receiver = nil
+	assert.OK(t, receiver != nil, "receiver should not be nil")
+}
 
 func TestBasicLit(t *testing.T) {
 	assert.OK(t, "a" == "b")
@@ -129,19 +134,28 @@ func TestPkgValue(t *testing.T) {
 
 ```
 $ gopwt
-
---- FAIL: TestBasicLit-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:12
+--- FAIL: TestWithMessage (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:14
+		assert.OK(t, receiver != nil, "receiver should not be nil")
+		             |        |  |
+		             |        |  <nil>
+		             |        false
+		             (*struct {})(nil)
+		
+		Error Message:
+			receiver should not be nil
+--- FAIL: TestBasicLit (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:17
 		assert.OK(t, "a" == "b")
 		                 |
 		                 false
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:13
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:18
 		assert.OK(t, 1 == 2)
 		               |
 		               false
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:17
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:22
 		assert.OK(t, a+c == b)
 		             ||| |  |
 		             ||| |  2
@@ -150,7 +164,7 @@ $ gopwt
 		             |4
 		             1
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:18
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:23
 		assert.OK(t, (a+c)+a == b)
 		              ||| || |  |
 		              ||| || |  2
@@ -161,43 +175,43 @@ $ gopwt
 		              |4
 		              1
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:19
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:24
 		assert.OK(t, "foo\nbar" == "bar")
 		             |          |
 		             |          false
 		             "foo
 		             bar"
 		
---- FAIL: TestMapType-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:24
+--- FAIL: TestMapType (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:29
 		assert.OK(t, reflect.DeepEqual(map[string]string{}, map[string]string{"a": "a", k: v}))
 		             |                                                                  |  |
 		             |                                                                  |  "b------value"
 		             |                                                                  "b--------key"
 		             false
 		
---- FAIL: TestArrayType-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:28
+--- FAIL: TestArrayType (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:33
 		assert.OK(t, []int{1, 2}[index] == 3)
 		                         |      |
 		                         |      false
 		                         1
 		
---- FAIL: TestStructType-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:32
+--- FAIL: TestStructType (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:37
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{foox}, struct{ Name string }{"foo"}))
 		             |                                       |
 		             |                                       "foo------x"
 		             false
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:33
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:38
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{Name: foox}, struct{ Name string }{Name: "foo"}))
 		             |                                             |
 		             |                                             "foo------x"
 		             false
 		
---- FAIL: TestNestedCallExpr-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:39
+--- FAIL: TestNestedCallExpr (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:44
 		assert.OK(t, rev(rev(rev(true))))
 		             |   |   |   |
 		             |   |   |   true
@@ -205,8 +219,8 @@ $ gopwt
 		             |   true
 		             false
 		
---- FAIL: TestCallWithNonIdempotentFunc-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:47
+--- FAIL: TestCallWithNonIdempotentFunc (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:52
 		assert.OK(t, incl()+incl() == incl()+incl())
 		             |     ||      |  |     ||
 		             |     ||      |  |     |4
@@ -217,35 +231,35 @@ $ gopwt
 		             |     3
 		             1
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:48
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:53
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  6
 		             |      false
 		             5
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:49
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:54
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  8
 		             |      false
 		             7
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:50
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:55
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  10
 		             |      false
 		             9
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:51
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:56
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  12
 		             |      false
 		             11
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:52
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:57
 		assert.OK(t, (incl() == incl()) != (incl() == incl()))
 		              |      |  |       |   |      |  |
 		              |      |  |       |   |      |  16
@@ -256,15 +270,15 @@ $ gopwt
 		              |      false
 		              13
 		
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:58
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:63
 		assert.OK(t, incl2(incl2(2)) == 10)
 		             |     |         |
 		             |     |         false
 		             |     2
 		             4
 		
---- FAIL: TestPkgValue-8 (0.00s)
-	assert.go:54: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/487860611/src/github.com/ToQoz/gopwt/_example/example_test.go:61
+--- FAIL: TestPkgValue (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/672436411/src/github.com/ToQoz/gopwt/_example/example_test.go:66
 		assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
 		                 |         |  |
 		                 |         |  &errors.errorString{s:"error"}
@@ -272,7 +286,7 @@ $ gopwt
 		                 &errors.errorString{s:"sql: no rows in result set"}
 		
 FAIL
-FAIL	github.com/ToQoz/gopwt/_example	0.008s
+FAIL	github.com/ToQoz/gopwt/_example	0.007s
 exit status 1
 ```
 
