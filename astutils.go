@@ -329,3 +329,14 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 func createRawStringLit(s string) *ast.BasicLit {
 	return &ast.BasicLit{Kind: token.STRING, Value: "`" + s + "`"}
 }
+
+func createArrayTypeCompositLit(typ string) *ast.CompositeLit {
+	return &ast.CompositeLit{
+		Type: &ast.ArrayType{
+			Elt: &ast.Ident{
+				Name: typ,
+			},
+		},
+		Elts: []ast.Expr{},
+	}
+}
