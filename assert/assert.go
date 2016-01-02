@@ -10,7 +10,7 @@ import (
 
 // OK assert given bool is true.
 // This will be translate to `translatedassert.OK` by gopwt.
-func OK(t *testing.T, ok bool) {
+func OK(t *testing.T, ok bool, messages ...string) {
 	if ok {
 		return
 	}
@@ -25,7 +25,7 @@ If you need more information, see http://github.com/ToQoz/gopwt
 // Require assert given bool is true.
 // The difference from OK is Require calls t.Skip after t.Error on fail.
 // This will be translate to `translatedassert.Require` by gopwt.
-func Require(t *testing.T, ok bool) {
+func Require(t *testing.T, ok bool, messages ...string) {
 	if ok {
 		return
 	}

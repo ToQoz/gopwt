@@ -8,6 +8,12 @@ import (
 	"testing"
 )
 
+func TestWithMessage(t *testing.T) {
+	var receiver *struct{}
+	receiver = nil
+	assert.OK(t, receiver != nil, "receiver should not be nil")
+}
+
 func TestBasicLit(t *testing.T) {
 	assert.OK(t, "a" == "b")
 	assert.OK(t, 1 == 2)

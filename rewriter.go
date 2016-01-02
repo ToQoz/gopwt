@@ -290,12 +290,32 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 				panic(err)
 			}
 
+			// OK(t, a == b, "message")
+			// ---> OK(t, []string{"messages"}, a == b)
+			testingT := n.Args[0]
+			testExpr := n.Args[1]
+			messages := createArrayTypeCompositLit("string")
+			if len(n.Args) > 2 {
+				for _, msg := range n.Args[2:] {
+					messages.Elts = append(messages.Elts, msg)
+				}
+			}
+			n.Args = []ast.Expr{testingT}
+			n.Args = append(n.Args, messages)
+			n.Args = append(n.Args, testExpr)
+
+			// header
 			n.Args = append(n.Args, createRawStringLit("FAIL"))
+			// filename
 			n.Args = append(n.Args, createRawStringLit(filename))
+			// line
 			n.Args = append(n.Args, &ast.BasicLit{Value: strconv.Itoa(line), Kind: token.INT})
+			// string of original expr
 			n.Args = append(n.Args, createRawStringLit(buf.String()))
+			// terminal width
 			n.Args = append(n.Args, &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(termw)})
-			n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(filename, line, n.Pos()-1, n, n.Args[1]))...)
+			// pos-value pairs
+			n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(filename, line, n.Pos()-1, n, n.Args[2]))...)
 			n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
 			return false
 		}
