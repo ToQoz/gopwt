@@ -1,0 +1,24 @@
+#!/bin/bash
+
+root=$(cd $(dirname $0) && pwd)/..
+out=$root/README.md
+
+cat $root/_misc/readme.header.md > $out
+
+# example code
+echo "" >> $out
+echo "## Example" >> $out
+echo '```go' >> $out
+cat _example/example_test.go >> $out
+echo '```' >> $out
+
+# example result
+echo "" >> $out
+echo '```' >> $out
+echo '$ gopwt' >> $out
+cd _example
+gopwt >> $out 2>&1
+echo '```' >> $out
+echo "" >> $out
+
+cat $root/_misc/readme.footer.md >> $out
