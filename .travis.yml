@@ -11,9 +11,7 @@ before_script:
   - go get -v ./...
 script:
   - make test
-  - curl https://gocover.io/github.com/toqoz/gopwt && sleep 3
-  - curl https://gocover.io/github.com/toqoz/gopwt/assert && sleep 3
-  - curl https://gocover.io/github.com/toqoz/gopwt/translatedassert && sleep 3
+  - curl https://gocover.io/_/github.com/toqoz/gopwt && sleep 3
 notifications:
   email:
     recipients:
