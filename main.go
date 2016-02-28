@@ -30,7 +30,7 @@ func main() {
 }
 func doMain() error {
 	if runtime.Version() == "go1.4" {
-		return fmt.Errorf("go1.4 is not supported. please bump to go1.4.1")
+		return fmt.Errorf("go1.4 is not supported. please bump to go1.4.1 or later")
 	}
 
 	flag.Parse()
