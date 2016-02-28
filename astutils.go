@@ -28,6 +28,54 @@ var (
 	}
 )
 
+// replaceBinaryExpr replace oldExpr by newExpr in parent
+func replaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Expr) {
+	switch parent.(type) {
+	case *ast.CallExpr:
+		parent := parent.(*ast.CallExpr)
+		for i, arg := range parent.Args {
+			if arg == oldExpr {
+				parent.Args[i] = newExpr
+				return
+			}
+		}
+	case *ast.KeyValueExpr:
+		parent := parent.(*ast.KeyValueExpr)
+		switch oldExpr {
+		case parent.Key:
+			parent.Key = newExpr
+			return
+		case parent.Value:
+			parent.Value = newExpr
+			return
+		}
+	case *ast.IndexExpr:
+		parent := parent.(*ast.IndexExpr)
+		if parent.Index == oldExpr {
+			parent.Index = newExpr
+			return
+		}
+	case *ast.ParenExpr:
+		parent := parent.(*ast.ParenExpr)
+		if parent.X == oldExpr {
+			parent.X = newExpr
+			return
+		}
+	case *ast.BinaryExpr:
+		parent := parent.(*ast.BinaryExpr)
+		switch oldExpr {
+		case parent.X:
+			parent.X = newExpr
+			return
+		case parent.Y:
+			parent.Y = newExpr
+			return
+		}
+	}
+
+	panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+}
+
 // replaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
 func replaceAllRawStringLitByStringLit(root ast.Node) {
 	ast.Inspect(root, func(n ast.Node) bool {
