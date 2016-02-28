@@ -24,7 +24,7 @@ func isTestGoFile(name string) bool {
 
 func isGoFile(f os.FileInfo) bool {
 	name := f.Name()
-	return !f.IsDir() && !strings.HasPrefix(name, ".") && strings.HasSuffix(name, ".go")
+	return !f.IsDir() && isGoFile2(name)
 }
 
 func containsDirectory(files []os.FileInfo) bool {

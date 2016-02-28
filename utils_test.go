@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/ToQoz/gopwt/assert"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -47,4 +49,30 @@ func TestIsTestGoFile(t *testing.T) {
 	assert.OK(t, isTestGoFile("_a.go") == false, "_a.go is not test go file")
 	assert.OK(t, isTestGoFile("a.goki") == false, "a.goki is not test go file")
 	assert.OK(t, isTestGoFile("a") == false, "a is not test go file")
+}
+
+func TestContainsGoFile(t *testing.T) {
+	var files []os.FileInfo
+	var err error
+
+	files, err = ioutil.ReadDir("./testdata/go_files")
+	assert.Require(t, err == nil)
+	assert.OK(t, containsGoFile(files) == true, "./testdata/go_files contains go files")
+
+	files, err = ioutil.ReadDir("./testdata/no_go_files")
+	assert.Require(t, err == nil)
+	assert.OK(t, containsGoFile(files) == false, "./testdata/no_go_files don't contains go files")
+}
+
+func TestContainDirectory(t *testing.T) {
+	var files []os.FileInfo
+	var err error
+
+	files, err = ioutil.ReadDir("./testdata/dirs")
+	assert.Require(t, err == nil)
+	assert.OK(t, containsDirectory(files) == true, "./testdata/dirs contains directories")
+
+	files, err = ioutil.ReadDir("./testdata/no_dirs")
+	assert.Require(t, err == nil)
+	assert.OK(t, containsDirectory(files) == false, "./testdata/no_go_files don't contains directories")
 }

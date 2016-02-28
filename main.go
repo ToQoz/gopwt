@@ -80,8 +80,7 @@ func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 			return err
 		}
 		if !containsGoFile(files) {
-			// sub-packages maybe have gofiles,
-			// if itself don't has gofiles
+			// sub-packages maybe have gofiles, even if itself don't has gofiles
 			if containsDirectory(files) {
 				return nil
 			}
