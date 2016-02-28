@@ -326,8 +326,45 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 	return args
 }
 
-func createRawStringLit(s string) *ast.BasicLit {
-	return &ast.BasicLit{Kind: token.STRING, Value: "`" + s + "`"}
+// VALUE:"foo"     ---> AST:`foo`
+// VALUE:"foo`bar" ---> AST:`foo` + "`" + `bar` (because we can't escape ` in ``)
+func createRawStringLit(s string) ast.Expr {
+	segments := strings.Split(s, "`")
+
+	if len(segments) == 1 {
+		return &ast.BasicLit{Kind: token.STRING, Value: "`" + segments[0] + "`"}
+	}
+
+	rootBinary := &ast.BinaryExpr{
+		Op: token.ADD,
+	}
+	binary := rootBinary
+	for i, _ := range segments {
+		// reverse for
+		seg := segments[len(segments)-1-i]
+
+		if i == 0 {
+			binary.Y = &ast.BasicLit{Kind: token.STRING, Value: "`" + segments[len(segments)-1] + "`"}
+		} else if i == len(segments)-1 {
+			binary.X = &ast.BinaryExpr{
+				X:  &ast.BasicLit{Kind: token.STRING, Value: "`" + seg + "`"},
+				Y:  &ast.BasicLit{Kind: token.STRING, Value: `"` + "`" + `"`},
+				Op: token.ADD,
+			}
+		} else {
+			binary.X = &ast.BinaryExpr{
+				X: &ast.BinaryExpr{
+					Y:  &ast.BasicLit{Kind: token.STRING, Value: "`" + seg + "`"},
+					Op: token.ADD,
+				},
+				Y:  &ast.BasicLit{Kind: token.STRING, Value: `"` + "`" + `"`},
+				Op: token.ADD,
+			}
+			binary = binary.X.(*ast.BinaryExpr).X.(*ast.BinaryExpr)
+		}
+	}
+
+	return rootBinary
 }
 
 func createArrayTypeCompositLit(typ string) *ast.CompositeLit {

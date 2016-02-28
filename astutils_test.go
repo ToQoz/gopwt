@@ -4,6 +4,7 @@ import (
 	"github.com/ToQoz/gopwt/assert"
 	"go/ast"
 	"go/parser"
+	"strings"
 	"testing"
 )
 
@@ -31,6 +32,14 @@ func TestReplaceAllRawStringLitByStringLit(t *testing.T) {
 	assert.OK(t, astToCode(n) == `func() string {
 	return "raw\"string"
 }`)
+}
+
+func TestCreateRawStringLit(t *testing.T) {
+	bq := "\"`\"" // back quote string literal "`"
+	assert.OK(t, astToCode(createRawStringLit("foo")) == "`foo`")
+	assert.OK(t, astToCode(createRawStringLit("foo`bar")) == strings.Join([]string{"`foo`", "`bar`"}, " + "+bq+" + "))
+	assert.OK(t, astToCode(createRawStringLit("f`o`o")) == strings.Join([]string{"`f`", "`o`", "`o`"}, " + "+bq+" + "))
+	assert.OK(t, astToCode(createRawStringLit("`ba`ba`ba`")) == strings.Join([]string{"``", "`ba`", "`ba`", "`ba`", "``"}, " + "+bq+" + "))
 }
 
 func TestCreateUntypedCallExprFromBuiltinCallExpr(t *testing.T) {
