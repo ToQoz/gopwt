@@ -2,7 +2,12 @@
 
 [![Drone Build Status](https://drone.io/github.com/ToQoz/gopwt/status.png)](https://drone.io/github.com/ToQoz/gopwt/latest)
 [![Travis-CI Build Status](https://travis-ci.org/ToQoz/gopwt.svg?branch=master)](https://travis-ci.org/ToQoz/gopwt)
-[![Coverage Status](https://img.shields.io/coveralls/ToQoz/gopwt.svg)](https://coveralls.io/r/ToQoz/gopwt?branch=master)
+
+|package|coverage|
+|-------|-----|
+|[gopwt](/)|![](https://gocover.io/_badge/github.com/toqoz/gopwt)|
+|[gopwt/assert](/assert)|![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?test)|
+|[gopwt/translatedassert](/translatedassert)|![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 

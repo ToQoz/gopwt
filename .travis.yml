@@ -8,12 +8,12 @@ go:
   - tip
 sudo: false
 before_script:
-  - go get golang.org/x/tools/cmd/cover
-  - go get github.com/mattn/goveralls
   - go get -v ./...
 script:
   - make test
-  - ./coveralls
+  - curl https://gocover.io/github.com/toqoz/gopwt
+  - curl https://gocover.io/github.com/toqoz/gopwt/assert
+  - curl https://gocover.io/github.com/toqoz/gopwt/translatedassert
 notifications:
   email:
     recipients:
