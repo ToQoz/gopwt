@@ -24,6 +24,36 @@ func TestIsAssert_Regression(t *testing.T) {
 	isAssert(assertImportIdent, exprs.(*ast.CallExpr))
 }
 
+func TestReplaceBinaryExpr(t *testing.T) {
+	var parent ast.Expr
+	var bin *ast.BinaryExpr
+
+	parent = mustParseExpr("a(b+c)")
+	bin = parent.(*ast.CallExpr).Args[0].(*ast.BinaryExpr)
+	replaceBinaryExpr(parent, bin, mustParseExpr("x(1, 2)"))
+	assert.OK(t, astToCode(parent) == "a(x(1, 2))")
+
+	parent = mustParseExpr("struct{a int}{a: 1+2}").(*ast.CompositeLit).Elts[0]
+	bin = parent.(*ast.KeyValueExpr).Value.(*ast.BinaryExpr)
+	replaceBinaryExpr(parent, bin, mustParseExpr("x(1, 2)"))
+	assert.OK(t, astToCode(parent) == "a: x(1, 2)")
+
+	parent = mustParseExpr("a[1+2]")
+	bin = parent.(*ast.IndexExpr).Index.(*ast.BinaryExpr)
+	replaceBinaryExpr(parent, bin, mustParseExpr("x(1, 2)"))
+	assert.OK(t, astToCode(parent) == "a[x(1, 2)]")
+
+	parent = mustParseExpr("(1+2)")
+	bin = parent.(*ast.ParenExpr).X.(*ast.BinaryExpr)
+	replaceBinaryExpr(parent, bin, mustParseExpr("x(1, 2)"))
+	assert.OK(t, astToCode(parent) == "(x(1, 2))")
+
+	parent = mustParseExpr("1+1+2")
+	bin = parent.(*ast.BinaryExpr).X.(*ast.BinaryExpr)
+	replaceBinaryExpr(parent, bin, mustParseExpr("x(1, 2)"))
+	assert.OK(t, astToCode(parent) == "x(1, 2) + 2")
+}
+
 func TestReplaceAllRawStringLitByStringLit(t *testing.T) {
 	n := mustParseExpr(`func() string {
 		return ` + "`" + `raw"string` + "`" + `
