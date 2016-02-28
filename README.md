@@ -13,7 +13,7 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 
 ## Supported go versions
 
-See [/travis.yml]
+See [.travis.yml](/.travis.yml)
 
 ## Usage
 
