@@ -63,6 +63,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 	// Create binary before type assuming from ast.Node(in rewrite.go)
 	install := exec.Command("go", "install")
+	install.Dir = pkgDir
 	install.Stdout = os.Stdout
 	install.Stderr = os.Stderr
 	if *verbose {
