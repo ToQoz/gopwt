@@ -633,12 +633,3 @@ func isTypeConversion(info *types.Info, e *ast.CallExpr) bool {
 
 	panic("unexpected error")
 }
-
-// FIXME
-func isGoFile2(name string) bool {
-	return strings.HasSuffix(name, ".go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
-}
-
-func isTestGoFile(name string) bool {
-	return strings.HasSuffix(name, "_test.go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
-}
