@@ -67,7 +67,15 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
+	deps, err := findDeps(importPath, tempGoSrcDir)
+	if err != nil {
+		return err
+	}
 	if installable {
+		deps = append(deps, ".")
+	}
+
+	if len(deps) > 0 {
 		// Create binary before type assuming from ast.Node
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
@@ -75,11 +83,6 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		install.Stderr = os.Stderr
 		if *verbose {
 			install.Args = append(install.Args, "-v")
-		}
-
-		deps, err := findDeps(importPath, tempGoSrcDir)
-		if err != nil {
-			return err
 		}
 
 		install.Args = append(install.Args, deps...)
