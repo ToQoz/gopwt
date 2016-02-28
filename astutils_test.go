@@ -33,6 +33,34 @@ func TestReplaceAllRawStringLitByStringLit(t *testing.T) {
 }`)
 }
 
+func TestCreateUntypedCallExprFromBuiltinCallExpr(t *testing.T) {
+	var expr ast.Expr
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("make(typ)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Bmake(translatedassert.RTOf(typ{}))")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("new(typ)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Bnew(translatedassert.RTOf(typ{}))")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("cap(a)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Bcap(a)")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("complex(a, b)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Bcomplex(a, b)")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("copy(a, b)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Bcopy(a, b)")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("imag(a)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Bimag(a)")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("len(a)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Blen(a)")
+
+	expr = createUntypedCallExprFromBuiltinCallExpr(mustParseExpr("real(a)").(*ast.CallExpr))
+	assert.OK(t, astToCode(expr) == "translatedassert.Breal(a)")
+}
+
 func TestCreateUntypedExprFromBinaryExpr(t *testing.T) {
 	var f *ast.CallExpr
 
