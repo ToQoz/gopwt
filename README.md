@@ -5,9 +5,9 @@
 
 |package|coverage|
 |-------|-----|
-|[gopwt](/)|![](https://gocover.io/_badge/github.com/toqoz/gopwt)|
-|[gopwt/assert](/assert)|![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert)|
-|[gopwt/translatedassert](/translatedassert)|![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert)|
+|[gopwt v0.0.3](/)|![](https://gocover.io/_badge/github.com/toqoz/gopwt?v0.0.3)|
+|[gopwt/assert v0.0.3](/assert)|![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?v0.0.3)|
+|[gopwt/translatedassert v0.0.3](/translatedassert)|![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?v0.0.3)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
