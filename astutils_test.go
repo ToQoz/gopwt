@@ -23,6 +23,16 @@ func TestIsAssert_Regression(t *testing.T) {
 	isAssert(assertImportIdent, exprs.(*ast.CallExpr))
 }
 
+func TestReplaceAllRawStringLitByStringLit(t *testing.T) {
+	n := mustParseExpr(`func() string {
+		return ` + "`" + `raw"string` + "`" + `
+		}`)
+	replaceAllRawStringLitByStringLit(n)
+	assert.OK(t, astToCode(n) == `func() string {
+	return "raw\"string"
+}`)
+}
+
 func TestCreateUntypedExprFromBinaryExpr(t *testing.T) {
 	var f *ast.CallExpr
 
