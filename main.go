@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -28,6 +29,10 @@ func main() {
 	}
 }
 func doMain() error {
+	if runtime.Version() == "go1.4" {
+		return fmt.Errorf("go1.4 is not supported. please bump to go1.4.1")
+	}
+
 	flag.Parse()
 
 	if isatty.IsTerminal(os.Stdout.Fd()) {
