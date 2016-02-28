@@ -24,9 +24,9 @@ Usage of gopwt:
 
 ```
 $ go get github.com/ToQoz/gopwt/...
-$ cd your-go-project-path(in $GOPATH/src)
-$ vi main_test.go
-$ cat main_test.go
+$ mkdir $GOPATH/src/gopwtexample
+$ cd $GOPATH/src/gopwtexample
+$ cat <<EOF > main_test.go
 package main
 
 import (
@@ -37,9 +37,23 @@ import (
 func TestFoo(t *testing.T) {
 	a := "a"
 	b := "b"
-	assert.OK(t, a == b)
+	assert.OK(t, a == b, "a should equal to b")
 }
+EOF
 $ gopwt
+--- FAIL: TestFoo (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/109993308/src/github.com/ToQoz/gopwtexample/main_test.go:11
+		assert.OK(t, a == b, "a should equal to b")
+		             | |  |
+		             | |  "b"
+		             | false
+		             "a"
+
+		Assersion messages:
+			- a should equal to b
+FAIL
+FAIL    github.com/ToQoz/gopwtexample        0.008s
+exit status 1
 ```
 
 ### Update
