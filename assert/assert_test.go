@@ -20,12 +20,12 @@ func (t *testingDummy) Skip(args ...interface{}) {
 func TestOK(t *testing.T) {
 	td := &testingDummy{}
 
-	_ok(t, true)
+	_ok(t, true, "caller line")
 	if td.errorCalled {
 		t.Error("t.Error should not be called if ok")
 	}
 
-	_ok(td, false)
+	_ok(td, false, "caller line")
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
@@ -34,7 +34,7 @@ func TestOK(t *testing.T) {
 func TestRequired(t *testing.T) {
 	td := &testingDummy{}
 
-	_require(t, true)
+	_require(t, true, "caller line")
 	if td.errorCalled {
 		t.Error("t.Error should not be called if ok")
 	}
@@ -42,7 +42,7 @@ func TestRequired(t *testing.T) {
 		t.Error("t.Skip should not be called if ok")
 	}
 
-	_require(td, false)
+	_require(td, false, "caller line")
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
