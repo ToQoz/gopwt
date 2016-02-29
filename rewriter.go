@@ -10,7 +10,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -32,7 +31,6 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	fset := token.NewFileSet()
 	files := []*ast.File{}
 	root := filepath.Join(tempGoSrcDir, importPath)
-	installable := false
 
 	err = filepath.Walk(root, func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.IsDir() {
@@ -47,10 +45,6 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			return nil
 		}
 
-		if !strings.HasSuffix(path, "_test.go") {
-			installable = true
-		}
-
 		a, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			return err
@@ -63,32 +57,10 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
-	deps, err := findDeps(importPath, tempGoSrcDir)
+	typesInfo, err = getTypeInfo(pkgDir, importPath, tempGoSrcDir, fset, files)
 	if err != nil {
 		return err
 	}
-	if installable {
-		deps = append(deps, ".")
-	}
-
-	if len(deps) > 0 {
-		// Create binary before type assuming from ast.Node
-		install := exec.Command("go", "install")
-		install.Dir = pkgDir
-		install.Stdout = os.Stdout
-		install.Stderr = os.Stderr
-		if *verbose {
-			install.Args = append(install.Args, "-v")
-		}
-
-		install.Args = append(install.Args, deps...)
-		err = install.Run()
-		if err != nil {
-			return err
-		}
-	}
-
-	typesInfo = getTypeInfo(importPath, fset, files)
 
 	// Rewrite files
 	for _, f := range files {

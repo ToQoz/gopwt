@@ -1,16 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"golang.org/x/tools/go/gcimporter"
 	"golang.org/x/tools/go/types"
+	"os"
+	"os/exec"
+	"strings"
 )
 
 var typesInfo *types.Info
 
-func getTypeInfo(importDir string, fset *token.FileSet, files []*ast.File) *types.Info {
+func getTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
 	typesConfig := types.Config{}
 	// I gave up to loading pkg from source.(by using "code.google.com/p/go.tools/go/loader")
 	// 	typesConfig.Import = func(imports map[string]*types.Package, path string) (*types.Package, error) {
@@ -37,9 +39,37 @@ func getTypeInfo(importDir string, fset *token.FileSet, files []*ast.File) *type
 	//   - it is slow.
 	//   - i met strange errors.
 	//       (e.g. github.com/ToQoz/gopwt/rewriter.go:201:29: cannot pass argument token.NewFileSet() (value of type *go/token.FileSet) to parameter of type *go/token.FileSet)
-	typesConfig.Import = gcimporter.Import
 
-	pkg := types.NewPackage(importDir, "")
+	// Install binaries
+	deps, err := findDeps(importPath, tempGoSrcDir)
+	if err != nil {
+		return nil, err
+	}
+	fset.Iterate(func(f *token.File) bool {
+		if isGoFile2(f.Name()) && !strings.HasSuffix(f.Name(), "_test.go") {
+			// install self
+			deps = append(deps, ".")
+			return false
+		}
+		return true
+	})
+	if len(deps) > 0 {
+		install := exec.Command("go", "install")
+		install.Dir = pkgDir
+		install.Stdout = os.Stdout
+		install.Stderr = os.Stderr
+		if *verbose {
+			install.Args = append(install.Args, "-v")
+		}
+		install.Args = append(install.Args, deps...)
+		if err := install.Run(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Assume types from ast.Node
+	typesConfig.Import = gcimporter.Import
+	pkg := types.NewPackage(importPath, "")
 	info := &types.Info{
 		Types:      map[ast.Expr]types.TypeAndValue{},
 		Defs:       map[*ast.Ident]types.Object{},
@@ -49,13 +79,12 @@ func getTypeInfo(importDir string, fset *token.FileSet, files []*ast.File) *type
 		Scopes:     map[ast.Node]*types.Scope{},
 		InitOrder:  []*types.Initializer{},
 	}
-	err := types.NewChecker(&typesConfig, fset, pkg, info).Files(files)
+	err = types.NewChecker(&typesConfig, fset, pkg, info).Files(files)
 	if err != nil {
-		fmt.Println(err.Error())
-		panic(err)
+		return nil, err
 	}
 
-	return info
+	return info, nil
 }
 
 func determinantExprOfIsTypeConversion(e ast.Expr) ast.Expr {
