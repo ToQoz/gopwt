@@ -9,8 +9,6 @@ import (
 	"os/exec"
 )
 
-var typesInfo *types.Info
-
 func getTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
 	typesConfig := types.Config{}
 	// I gave up to loading pkg from source.(by using "code.google.com/p/go.tools/go/loader")
@@ -98,7 +96,7 @@ func determinantExprOfIsTypeConversion(e ast.Expr) ast.Expr {
 }
 
 func isTypeConversion(info *types.Info, e *ast.CallExpr) bool {
-	if typesInfo == nil {
+	if info == nil {
 		return false
 	}
 

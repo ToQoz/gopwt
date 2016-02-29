@@ -57,7 +57,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
-	typesInfo, err = getTypeInfo(pkgDir, importPath, tempGoSrcDir, fset, files)
+	typesInfo, err := getTypeInfo(pkgDir, importPath, tempGoSrcDir, fset, files)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 		out, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, fi.Mode())
 		defer out.Close()
-		err = rewriteFile(fset, f, out)
+		err = rewriteFile(typesInfo, fset, f, out)
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,7 @@ func copyFile(path string, out io.Writer) error {
 	return nil
 }
 
-func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
+func rewriteFile(typesInfo *types.Info, fset *token.FileSet, a *ast.File, out io.Writer) error {
 	ast.Inspect(a, func(n ast.Node) bool {
 		switch n.(type) {
 		case *ast.CallExpr:
@@ -224,7 +224,7 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 				return false
 			}
 
-			rewriteAssert(fset.File(n.Pos()), n)
+			rewriteAssert(typesInfo, fset.File(n.Pos()), n)
 			return false
 		}
 
@@ -239,7 +239,7 @@ func rewriteFile(fset *token.FileSet, a *ast.File, out io.Writer) error {
 }
 
 // rewriteAssert rewrites assert to translatedassert
-func rewriteAssert(file *token.File, n *ast.CallExpr) {
+func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
 	filename := file.Name()
 	line := file.Line(n.Pos())
 
@@ -274,7 +274,7 @@ func rewriteAssert(file *token.File, n *ast.CallExpr) {
 	// terminal width
 	n.Args = append(n.Args, &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(termw)})
 	// pos-value pairs
-	n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(filename, line, n.Pos()-1, n, n.Args[1]))...)
+	n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(typesInfo, filename, line, n.Pos()-1, n, n.Args[1]))...)
 	n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
 }
 
@@ -287,7 +287,7 @@ func newPrintExpr(pos token.Pos, e ast.Expr) printExpr {
 	return printExpr{Pos: int(pos), Expr: e}
 }
 
-func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.Expr, n ast.Expr) []printExpr {
+func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset token.Pos, parent ast.Expr, n ast.Expr) []printExpr {
 	ps := []printExpr{}
 
 	switch n.(type) {
@@ -302,16 +302,16 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 		n := n.(*ast.CompositeLit)
 
 		for _, elt := range n.Elts {
-			ps = append(ps, extractPrintExprs(filename, line, offset, n, elt)...)
+			ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, elt)...)
 		}
 	case *ast.KeyValueExpr:
 		n := n.(*ast.KeyValueExpr)
 
 		if isMapType(parent) {
-			ps = append(ps, extractPrintExprs(filename, line, offset, n, n.Key)...)
+			ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Key)...)
 		}
 
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.Value)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Value)...)
 	case *ast.Ident:
 		// HACK:
 		// skip ident type is invalid
@@ -326,14 +326,14 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
 	case *ast.ParenExpr:
 		n := n.(*ast.ParenExpr)
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.X)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
 	case *ast.StarExpr:
 		n := n.(*ast.StarExpr)
 		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.X)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
 	case *ast.UnaryExpr:
 		n := n.(*ast.UnaryExpr)
-		x := extractPrintExprs(filename, line, offset, n, n.X)
+		x := extractPrintExprs(typesInfo, filename, line, offset, n, n.X)
 
 		n.X = createReflectBoolExpr(createReflectValueOfExpr(n.X))
 
@@ -344,8 +344,8 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 
 		var x, y []printExpr
 
-		x = extractPrintExprs(filename, line, offset, n, n.X)
-		y = extractPrintExprs(filename, line, offset, n, n.Y)
+		x = extractPrintExprs(typesInfo, filename, line, offset, n, n.X)
+		y = extractPrintExprs(typesInfo, filename, line, offset, n, n.Y)
 
 		newExpr := createUntypedExprFromBinaryExpr(n)
 		if newExpr != n {
@@ -357,11 +357,11 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 		ps = append(ps, y...)
 	case *ast.IndexExpr:
 		n := n.(*ast.IndexExpr)
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.X)...)
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.Index)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Index)...)
 	case *ast.SelectorExpr:
 		n := n.(*ast.SelectorExpr)
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.X)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
 		ps = append(ps, newPrintExpr(n.Sel.Pos()-offset, n))
 	case *ast.CallExpr:
 		n := n.(*ast.CallExpr)
@@ -370,7 +370,7 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 
 			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr))
 			for _, arg := range n.Args {
-				ps = append(ps, extractPrintExprs(filename, line, offset, n, arg)...)
+				ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, arg)...)
 			}
 
 			*n = *newExpr
@@ -382,7 +382,7 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 				panic("missing argument for type conversion")
 			}
 
-			argsPrints := extractPrintExprs(filename, line, offset, n, n.Args[0])
+			argsPrints := extractPrintExprs(typesInfo, filename, line, offset, n, n.Args[0])
 
 			newExpr := createReflectInterfaceExpr(&ast.CallExpr{
 				Fun: &ast.SelectorExpr{
@@ -401,7 +401,7 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 		} else {
 			argsPrints := []printExpr{}
 			for _, arg := range n.Args {
-				argsPrints = append(argsPrints, extractPrintExprs(filename, line, offset, n, arg)...)
+				argsPrints = append(argsPrints, extractPrintExprs(typesInfo, filename, line, offset, n, arg)...)
 			}
 
 			var memorized *ast.CallExpr
@@ -419,10 +419,10 @@ func extractPrintExprs(filename string, line int, offset token.Pos, parent ast.E
 		}
 	case *ast.SliceExpr:
 		n := n.(*ast.SliceExpr)
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.Low)...)
-		ps = append(ps, extractPrintExprs(filename, line, offset, n, n.High)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Low)...)
+		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.High)...)
 		if n.Slice3 {
-			ps = append(ps, extractPrintExprs(filename, line, offset, n, n.Max)...)
+			ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Max)...)
 		}
 	}
 
