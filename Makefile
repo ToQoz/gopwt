@@ -5,3 +5,5 @@ gopwt: *.go
 	go build
 test: gopwt
 	./gopwt $(VERBOSE_FLAG) $(TESTPKG)
+test-all: gopwt
+	_misc/test-all

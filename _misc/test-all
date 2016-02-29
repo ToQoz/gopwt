@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+cwd=$(pwd)
+tmpdir=$(mktemp -d)
+
+cleanup() {
+  retval=$?
+  rm -rf $tmpdir
+  exit $retval
+}
+trap cleanup INT QUIT TERM EXIT
+
+t() {
+  GOPATH=$tmpdir/$1
+
+  pkgpath=$GOPATH/src/github.com/ToQoz/gopwt
+
+  cd $cwd
+  eval "$(gimme $1)"
+  mkdir -p $pkgpath
+  cp -R ./* $pkgpath/
+  cd $pkgpath
+  go get ./...
+  go build
+  ./gopwt ./...
+}
+
+t 1.2
+t 1.3
+t 1.4.1
+t 1.5
+t 1.6
