@@ -5,9 +5,9 @@
 
 |package|coverage|
 |-------|-----|
-|gopwt v0.0.3 | [![](https://gocover.io/_badge/github.com/toqoz/gopwt?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt)|
-|gopwt/assert v0.0.3 | [![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert v0.0.3 | [![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|gopwt GIT_LATEST_TAG| [![](https://gocover.io/_badge/github.com/toqoz/gopwt?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt)|
+|gopwt/assert GIT_LATEST_TAG| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt/assert)|
+|gopwt/translatedassert GIT_LATEST_TAG| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
