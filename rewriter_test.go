@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"io/ioutil"
 	"testing"
 )
 
@@ -25,6 +26,24 @@ func TestDontPanic_OnTypeConversion(t *testing.T) {
 	assert.OK(t, incl() == incl()-1)
 	assert.OK(t, int32(incl()) == int32(incl()-1))
 	assert.OK(t, int32(incl()) == int32(incl()-1))
+}
+
+func TestRewriteFile(t *testing.T) {
+	var file string
+
+	file = "./testdata/rewrite_file_tests/simple.go"
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, file, nil, 0)
+	assert.Require(t, err == nil)
+
+	expected, err := readFileString(file + ".tr.txt")
+	assert.Require(t, err == nil)
+
+	buf := bytes.NewBuffer([]byte{})
+	rewriteFile(fset, f, buf)
+	got := buf.String()
+
+	assert.OK(t, got == expected)
 }
 
 func TestCreateReflectTypeExprFromTypeExpr(t *testing.T) {
@@ -234,4 +253,12 @@ func mustParseExpr(s string) ast.Expr {
 	}
 
 	return e
+}
+
+func readFileString(file string) (string, error) {
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
