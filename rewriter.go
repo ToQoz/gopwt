@@ -105,6 +105,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			continue
 		}
 		assertImport.Path.Value = `"github.com/ToQoz/gopwt/translatedassert"`
+
 		if assertImport.Name != nil {
 			assertImportIdent = assertImport.Name
 			assertImport.Name = translatedassertImportIdent

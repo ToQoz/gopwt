@@ -4,6 +4,7 @@ import (
 	"github.com/ToQoz/gopwt/assert"
 	"go/ast"
 	"go/parser"
+	"go/token"
 	"strings"
 	"testing"
 )
@@ -22,6 +23,28 @@ func TestIsAssert_Regression(t *testing.T) {
 
 	// Check no panic on isAssert when *ast.SelectorExpr.X is not *ast.Ident
 	isAssert(assertImportIdent, exprs.(*ast.CallExpr))
+}
+
+func TestGetAssertImport(t *testing.T) {
+	var f *ast.File
+	var err error
+	var importSpec *ast.ImportSpec
+
+	// default import
+	f, err = parser.ParseFile(token.NewFileSet(), "./testdata/get_asert_import_tests/default_import.go", nil, 0)
+	assert.Require(t, err == nil)
+
+	importSpec = getAssertImport(f)
+	assert.OK(t, importSpec.Name == nil)
+	assert.OK(t, importSpec.Path.Value == `"github.com/ToQoz/gopwt/assert"`)
+
+	// named import
+	f, err = parser.ParseFile(token.NewFileSet(), "./testdata/get_asert_import_tests/named_import.go", nil, 0)
+	assert.Require(t, err == nil)
+
+	importSpec = getAssertImport(f)
+	assert.OK(t, importSpec.Name.Name == `powerAssert`)
+	assert.OK(t, importSpec.Path.Value == `"github.com/ToQoz/gopwt/assert"`)
 }
 
 func TestReplaceBinaryExpr(t *testing.T) {
