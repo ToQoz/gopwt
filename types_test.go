@@ -11,6 +11,22 @@ import (
 	"testing"
 )
 
+func TestDeterminantExprOfIsTypeConversion(t *testing.T) {
+	var d ast.Expr
+
+	d = determinantExprOfIsTypeConversion(mustParseExpr("(string(x))"))
+	assert.OK(t, astToCode(d) == "string")
+
+	d = determinantExprOfIsTypeConversion(mustParseExpr("*string(x)"))
+	assert.OK(t, astToCode(d) == "string")
+
+	d = determinantExprOfIsTypeConversion(mustParseExpr("string(x)"))
+	assert.OK(t, astToCode(d) == "string")
+
+	d = determinantExprOfIsTypeConversion(mustParseExpr("http.Handler(x)"))
+	assert.OK(t, astToCode(d) == "Handler")
+}
+
 func TestIsTypeConversion(t *testing.T) {
 	// go install fails under ./testdata
 	//   (go install: no install location for directory github.com/ToQoz/gopwt/testdata/is_type_conversion_test outside GOPATH)
