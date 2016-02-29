@@ -33,28 +33,40 @@ func TestMust(t *testing.T) {
 	}()
 }
 
-func TestIsGoFile2(t *testing.T) {
-	assert.OK(t, isGoFile2("a.go") == true, "a.go is go file")
-	assert.OK(t, isGoFile2("a_test.go") == true, "a_test.go is go file")
+func TestIsGoFileName(t *testing.T) {
+	assert.OK(t, isGoFileName("a.go") == true, "a.go is go file")
+	assert.OK(t, isGoFileName("a_test.go") == true, "a_test.go is go file")
 
-	assert.OK(t, isGoFile2(".a.go") == false, ".a.go is not go file")
-	assert.OK(t, isGoFile2("_a.go") == false, "_a.go is not go file")
-	assert.OK(t, isGoFile2("a.goki") == false, "a.goki is not go file")
-	assert.OK(t, isGoFile2("a") == false, "a is not go file")
+	assert.OK(t, isGoFileName(".a.go") == false, ".a.go is not go file")
+	assert.OK(t, isGoFileName("_a.go") == false, "_a.go is not go file")
+	assert.OK(t, isGoFileName("a.goki") == false, "a.goki is not go file")
+	assert.OK(t, isGoFileName("a") == false, "a is not go file")
 }
 
-func TestIsTestGoFile(t *testing.T) {
-	assert.OK(t, isTestGoFile("a_test.go") == true, "a_test.go is test go file")
+func TestIsTestGoFileName(t *testing.T) {
+	assert.OK(t, isTestGoFileName("a_test.go") == true, "a_test.go is test go file")
 
-	assert.OK(t, isTestGoFile("a.go") == false, "a.go is test go file")
-	assert.OK(t, isGoFile2(".a_test.go") == false, ".a_test.go is not go file")
-	assert.OK(t, isGoFile2("_a_test.go") == false, "_a_test.go is not go file")
-	assert.OK(t, isTestGoFile("_a.go") == false, "_a.go is not test go file")
-	assert.OK(t, isTestGoFile("a.goki") == false, "a.goki is not test go file")
-	assert.OK(t, isTestGoFile("a") == false, "a is not test go file")
+	assert.OK(t, isTestGoFileName("a.go") == false, "a.go is test go file")
+	assert.OK(t, isTestGoFileName(".a_test.go") == false, ".a_test.go is not go file")
+	assert.OK(t, isTestGoFileName("_a_test.go") == false, "_a_test.go is not go file")
+	assert.OK(t, isTestGoFileName("_a.go") == false, "_a.go is not test go file")
+	assert.OK(t, isTestGoFileName("a.goki") == false, "a.goki is not test go file")
+	assert.OK(t, isTestGoFileName("a") == false, "a is not test go file")
 }
 
-func TestContainsGoFile2(t *testing.T) {
+func TestIsBuildableFileName(t *testing.T) {
+	assert.OK(t, isBuildableFileName("a.go") == true, "a.go is buildable")
+
+	assert.OK(t, isBuildableFileName("a_test.go") == false, "a_test.go is not buildable")
+	assert.OK(t, isBuildableFileName(".a_test.go") == false, ".a_test.go is not buildable")
+	assert.OK(t, isBuildableFileName("_a_test.go") == false, "_a_test.go is not buildable")
+	assert.OK(t, isBuildableFileName("_a.go") == false, "_a.go is not buildable")
+	assert.OK(t, isBuildableFileName("_a.go") == false, "_a.goki is not buildable")
+	assert.OK(t, isBuildableFileName("a.goki") == false, "a.goki is not buildable")
+	assert.OK(t, isBuildableFileName("a") == false, "a is not buildable")
+}
+
+func TestContainsBuildable(t *testing.T) {
 	var fset *token.FileSet
 	var dir string
 	var files []os.FileInfo
@@ -64,7 +76,7 @@ func TestContainsGoFile2(t *testing.T) {
 		files, err = ioutil.ReadDir(dir)
 		assert.OK(t, err == nil)
 		for _, f := range files {
-			if isGoFile2(f.Name()) {
+			if isGoFileName(f.Name()) {
 				file := filepath.Join(dir, f.Name())
 				_, err := parser.ParseFile(fset, file, nil, 0)
 				assert.OK(t, err == nil)
@@ -75,12 +87,12 @@ func TestContainsGoFile2(t *testing.T) {
 	dir = filepath.Join("testdata", "go_files")
 	fset = token.NewFileSet()
 	parse(dir, fset)
-	assert.OK(t, containsGoFile2(fset) == true, "testdata/go_files contains go files")
+	assert.OK(t, isBuildableFileSet(fset) == true, "testdata/go_files contains go files")
 
 	dir = filepath.Join("testdata", "no_go_files")
 	fset = token.NewFileSet()
 	parse(dir, fset)
-	assert.OK(t, containsGoFile2(fset) == false, "testdata/no_go_files contains go files")
+	assert.OK(t, isBuildableFileSet(fset) == false, "testdata/no_go_files contains go files")
 }
 
 func TestContainsGoFile(t *testing.T) {

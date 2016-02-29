@@ -41,7 +41,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			return filepath.SkipDir
 		}
 
-		if !isGoFile2(path) {
+		if !isGoFileName(path) {
 			return nil
 		}
 
@@ -66,7 +66,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	for _, f := range files {
 		path := fset.File(f.Package).Name()
 
-		if !isTestGoFile(path) {
+		if !isTestGoFileName(path) {
 			continue
 		}
 
@@ -139,7 +139,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		}
 		defer out.Close()
 
-		if !isTestGoFile(path) {
+		if !isTestGoFileName(path) {
 			return copyFile(path, out)
 		}
 

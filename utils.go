@@ -15,22 +15,6 @@ func must(err error) {
 	}
 }
 
-// FIXME: naming
-func isGoFile2(name string) bool {
-	name = filepath.Base(name)
-	return strings.HasSuffix(name, ".go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
-}
-
-func isTestGoFile(name string) bool {
-	name = filepath.Base(name)
-	return strings.HasSuffix(name, "_test.go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
-}
-
-func isGoFile(f os.FileInfo) bool {
-	name := f.Name()
-	return !f.IsDir() && isGoFile2(name)
-}
-
 func containsDirectory(files []os.FileInfo) bool {
 	for _, f := range files {
 		if f.IsDir() {
@@ -51,11 +35,34 @@ func containsGoFile(files []os.FileInfo) bool {
 	return false
 }
 
-// FIXME: naming
-func containsGoFile2(s *token.FileSet) bool {
+func isGoFile(f os.FileInfo) bool {
+	name := f.Name()
+	return !f.IsDir() && isGoFileName(name)
+}
+
+func isTestGoFile(f os.FileInfo) bool {
+	name := f.Name()
+	return !f.IsDir() && isTestGoFileName(name)
+}
+
+func isGoFileName(name string) bool {
+	name = filepath.Base(name)
+	return strings.HasSuffix(name, ".go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
+}
+
+func isTestGoFileName(name string) bool {
+	name = filepath.Base(name)
+	return strings.HasSuffix(name, "_test.go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
+}
+
+func isBuildableFileName(name string) bool {
+	return isGoFileName(name) && !isTestGoFileName(name)
+}
+
+func isBuildableFileSet(s *token.FileSet) bool {
 	contains := false
 	s.Iterate(func(f *token.File) bool {
-		if isGoFile2(f.Name()) && !isTestGoFile(f.Name()) {
+		if isBuildableFileName(f.Name()) {
 			contains = true
 			return false
 		}

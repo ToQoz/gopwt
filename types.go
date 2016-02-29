@@ -44,7 +44,7 @@ func getTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	if err != nil {
 		return nil, err
 	}
-	if containsGoFile2(fset) {
+	if isBuildableFileSet(fset) {
 		// install self
 		deps = append(deps, ".")
 	}
