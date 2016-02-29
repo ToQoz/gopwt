@@ -24,11 +24,20 @@ func _ok(t testingInterface, ok bool, callerLine string, messages ...string) {
 		return
 	}
 
-	t.Error(`[FAIL Assersion] ` + callerLine + `
+	msg := `[FAIL Assersion] ` + callerLine + `
 
 Please run tests by command "gopwt". It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
-`)
+`
+
+	if len(messages) > 0 {
+		msg += "\nAssersionMessage:\n"
+		for _, m := range messages {
+			msg += "\t- " + m
+		}
+	}
+
+	t.Error(msg)
 }
 
 // Require assert given bool is true.
@@ -43,11 +52,20 @@ func _require(t testingInterface, ok bool, callerLine string, messages ...string
 		return
 	}
 
-	t.Error(`[FAIL Assersion] ` + callerLine + `
+	msg := `[FAIL Assersion] ` + callerLine + `
 
 Please run tests by command "gopwt". It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
-`)
+`
+
+	if len(messages) > 0 {
+		msg += "\nAssersionMessage:\n"
+		for _, m := range messages {
+			msg += "\t- " + m
+		}
+	}
+
+	t.Error(msg)
 	t.Skip("skip by gopwt/assert.Require")
 }
 
