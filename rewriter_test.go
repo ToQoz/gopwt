@@ -28,6 +28,25 @@ func TestDontPanic_OnTypeConversion(t *testing.T) {
 	assert.OK(t, int32(incl()) == int32(incl()-1))
 }
 
+func TestCopyFile(t *testing.T) {
+	buf := bytes.NewBuffer([]byte{})
+	copyFile("./testdata/rewrite_file_tests/simple.go", buf)
+
+	assert.OK(t, buf.String() == `package main
+
+import (
+	"github.com/ToQoz/gopwt/assert"
+	"testing"
+)
+
+func TestSimple(t *testing.T) {
+	func() {
+		assert.OK(t, 1 == 1, "1 is 1")
+	}()
+}
+`)
+}
+
 func TestRewriteFile(t *testing.T) {
 	var file string
 
