@@ -37,4 +37,9 @@ func TestIsTypeConversion(t *testing.T) {
 	assert.OK(t, isTypeConversion(types, stringConv) == true, "string(x) is type conversion")
 	bytesConv := stringConv.Args[0].(*ast.CallExpr)
 	assert.OK(t, isTypeConversion(types, bytesConv) == true, "[]byte(x) is type conversion")
+
+	// fmt.Println(http.Handler(nil))
+	expr = f.Decls[1].(*ast.FuncDecl).Body.List[1].(*ast.ExprStmt).X
+	httpHandlerConv := expr.(*ast.CallExpr).Args[0].(*ast.CallExpr)
+	assert.OK(t, isTypeConversion(types, httpHandlerConv) == true, "http.Handler(x) is type conversion")
 }
