@@ -2,9 +2,18 @@
 
 [![Drone Build Status](https://drone.io/github.com/ToQoz/gopwt/status.png)](https://drone.io/github.com/ToQoz/gopwt/latest)
 [![Travis-CI Build Status](https://travis-ci.org/ToQoz/gopwt.svg?branch=master)](https://travis-ci.org/ToQoz/gopwt)
-[![Coverage Status](https://img.shields.io/coveralls/ToQoz/gopwt.svg)](https://coveralls.io/r/ToQoz/gopwt?branch=master)
+
+|package|coverage|
+|-------|-----|
+|gopwt v0.0.3 | [![](https://gocover.io/_badge/github.com/toqoz/gopwt?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt)|
+|gopwt/assert v0.0.3 | [![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt/assert)|
+|gopwt/translatedassert v0.0.3 | [![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?GIT_LATEST_TAG)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
+
+## Supported go versions
+
+See [.travis.yml](/.travis.yml)
 
 ## Usage
 
@@ -20,9 +29,9 @@ Usage of gopwt:
 
 ```
 $ go get github.com/ToQoz/gopwt/...
-$ cd your-go-project-path(in $GOPATH/src)
-$ vi main_test.go
-$ cat main_test.go
+$ mkdir $GOPATH/src/gopwtexample
+$ cd $GOPATH/src/gopwtexample
+$ cat <<EOF > main_test.go
 package main
 
 import (
@@ -33,9 +42,23 @@ import (
 func TestFoo(t *testing.T) {
 	a := "a"
 	b := "b"
-	assert.OK(t, a == b)
+	assert.OK(t, a == b, "a should equal to b")
 }
+EOF
 $ gopwt
+--- FAIL: TestFoo (0.00s)
+	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/109993308/src/github.com/ToQoz/gopwtexample/main_test.go:11
+		assert.OK(t, a == b, "a should equal to b")
+		             | |  |
+		             | |  "b"
+		             | false
+		             "a"
+
+		Assersion messages:
+			- a should equal to b
+FAIL
+FAIL    github.com/ToQoz/gopwtexample        0.008s
+exit status 1
 ```
 
 ### Update

@@ -309,7 +309,7 @@ $ gopwt
 		                 &errors.errorString{s:"sql: no rows in result set"}
 		
 FAIL
-FAIL	github.com/ToQoz/gopwt/_example	0.008s
+FAIL	github.com/ToQoz/gopwt/_example
 exit status 1
 ```
 

@@ -3,7 +3,8 @@
 root=$(cd $(dirname $0) && pwd)/..
 out=$root/README.md
 
-cat $root/_misc/readme.header.md > $out
+git_latest_tag=$(git describe --tags --abbrev=0)
+cat $root/_misc/readme.header.md | sed -e "s/GIT_LATEST_TAG/$git_latest_tag/g" > $out
 
 # example code
 echo "" >> $out
@@ -17,7 +18,7 @@ echo "" >> $out
 echo '```' >> $out
 echo '$ gopwt' >> $out
 cd _example
-gopwt 2>&1 | sed -e 's,FAIL .*/src,FAIL /.../src,' >> $out
+gopwt 2>&1 | sed -e "s,FAIL .*/src,FAIL /.../src,g; s/	[0-9\.]*s$//g" >> $out
 echo '```' >> $out
 echo "" >> $out
 
