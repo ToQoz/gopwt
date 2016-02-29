@@ -52,7 +52,7 @@ func TestPackageInfoGoTestArg(t *testing.T) {
 }
 
 func TestFindDeps(t *testing.T) {
-	deps, err := findDeps("./find_deps_tests", "/Users/toqoz/_go/src/github.com/ToQoz/gopwt/testdata")
+	deps, err := findDeps("./find_deps_tests", "./testdata")
 	assert.Require(t, err == nil, "findDeps should be success")
 	assert.OK(t, reflect.DeepEqual(deps, []string{"fmt", "github.com/ToQoz/gopwt/assert", "strings", "testing"}))
 }
