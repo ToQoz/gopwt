@@ -87,3 +87,37 @@ func findPathByImportPath(importPath string) (string, error) {
 
 	return "", fmt.Errorf("package %s is not found in $GOPATH/src(%q)", importPath, build.Default.SrcDirs())
 }
+
+func findDeps(importPath, srcDir string) ([]string, error) {
+	deps := []string{}
+
+	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, imp := range pkg.Imports {
+		if imp == importPath {
+			continue
+		}
+		deps = append(deps, imp)
+	}
+
+	for _, imp := range pkg.TestImports {
+		if imp == importPath {
+			continue
+		}
+
+		f := false
+		for _, arg := range deps {
+			if arg == imp {
+				f = true
+			}
+		}
+
+		if !f {
+			deps = append(deps, imp)
+		}
+	}
+	return deps, nil
+}

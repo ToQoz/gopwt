@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"go/ast"
-	"go/build"
 	"go/parser"
 	"go/printer"
 	"go/token"
@@ -125,40 +124,6 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	}
 
 	return nil
-}
-
-func findDeps(importPath, srcDir string) ([]string, error) {
-	deps := []string{}
-
-	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, imp := range pkg.Imports {
-		if imp == importPath {
-			continue
-		}
-		deps = append(deps, imp)
-	}
-
-	for _, imp := range pkg.TestImports {
-		if imp == importPath {
-			continue
-		}
-
-		f := false
-		for _, arg := range deps {
-			if arg == imp {
-				f = true
-			}
-		}
-
-		if !f {
-			deps = append(deps, imp)
-		}
-	}
-	return deps, nil
 }
 
 func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
