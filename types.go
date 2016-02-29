@@ -7,7 +7,6 @@ import (
 	"golang.org/x/tools/go/types"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 var typesInfo *types.Info
@@ -45,14 +44,10 @@ func getTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	if err != nil {
 		return nil, err
 	}
-	fset.Iterate(func(f *token.File) bool {
-		if isGoFile2(f.Name()) && !strings.HasSuffix(f.Name(), "_test.go") {
-			// install self
-			deps = append(deps, ".")
-			return false
-		}
-		return true
-	})
+	if containsGoFile2(fset) {
+		// install self
+		deps = append(deps, ".")
+	}
 	if len(deps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir

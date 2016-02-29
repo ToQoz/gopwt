@@ -1,7 +1,9 @@
 package main
 
 import (
+	"go/token"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -13,12 +15,14 @@ func must(err error) {
 	}
 }
 
-// FIXME
+// FIXME: naming
 func isGoFile2(name string) bool {
+	name = filepath.Base(name)
 	return strings.HasSuffix(name, ".go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
 }
 
 func isTestGoFile(name string) bool {
+	name = filepath.Base(name)
 	return strings.HasSuffix(name, "_test.go") && !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
 }
 
@@ -45,6 +49,19 @@ func containsGoFile(files []os.FileInfo) bool {
 	}
 
 	return false
+}
+
+// FIXME: naming
+func containsGoFile2(s *token.FileSet) bool {
+	contains := false
+	s.Iterate(func(f *token.File) bool {
+		if isGoFile2(f.Name()) && !isTestGoFile(f.Name()) {
+			contains = true
+			return false
+		}
+		return true
+	})
+	return contains
 }
 
 func getTermCols(fd uintptr) int {

@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/ToQoz/gopwt/assert"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -49,6 +52,35 @@ func TestIsTestGoFile(t *testing.T) {
 	assert.OK(t, isTestGoFile("_a.go") == false, "_a.go is not test go file")
 	assert.OK(t, isTestGoFile("a.goki") == false, "a.goki is not test go file")
 	assert.OK(t, isTestGoFile("a") == false, "a is not test go file")
+}
+
+func TestContainsGoFile2(t *testing.T) {
+	var fset *token.FileSet
+	var dir string
+	var files []os.FileInfo
+	var err error
+
+	parse := func(dir string, fset *token.FileSet) {
+		files, err = ioutil.ReadDir(dir)
+		assert.OK(t, err == nil)
+		for _, f := range files {
+			if isGoFile2(f.Name()) {
+				file := filepath.Join(dir, f.Name())
+				_, err := parser.ParseFile(fset, file, nil, 0)
+				assert.OK(t, err == nil)
+			}
+		}
+	}
+
+	dir = filepath.Join("testdata", "go_files")
+	fset = token.NewFileSet()
+	parse(dir, fset)
+	assert.OK(t, containsGoFile2(fset) == true, "testdata/go_files contains go files")
+
+	dir = filepath.Join("testdata", "no_go_files")
+	fset = token.NewFileSet()
+	parse(dir, fset)
+	assert.OK(t, containsGoFile2(fset) == false, "testdata/no_go_files contains go files")
 }
 
 func TestContainsGoFile(t *testing.T) {
