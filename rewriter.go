@@ -357,7 +357,14 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 		ps = append(ps, y...)
 	case *ast.IndexExpr:
 		n := n.(*ast.IndexExpr)
+		// show value under the `[` in the same way as Groovy@v2.4.6 and power-assert-js@v1.2.0
+		//   xs[i]
+		//   | ||
+		//   | |1
+		//   | "b"
+		//   ["a", "b"]
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
+		ps = append(ps, newPrintExpr(n.Index.Pos()-1-offset, n))
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Index)...)
 	case *ast.SelectorExpr:
 		n := n.(*ast.SelectorExpr)

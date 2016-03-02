@@ -133,16 +133,31 @@ func TestExtractPrintExprs_SliceExpr(t *testing.T) {
 
 func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr("ary[i] == ary2[i2]"))
-	assert.OK(t, len(ps) == 5)
+	assert.OK(t, len(ps) == 7)
+	// ary
 	assert.OK(t, ps[0].Pos == 1)
 	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "ary")
-	assert.OK(t, ps[1].Pos == len("ary[")+1)
-	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "i")
-	assert.OK(t, ps[2].Pos == len("ary[i] ")+1)
-	assert.OK(t, ps[3].Pos == len("ary[i] == ")+1)
-	assert.OK(t, ps[3].Expr.(*ast.Ident).Name == "ary2")
-	assert.OK(t, ps[4].Pos == len("ary[i] == ary2[")+1)
-	assert.OK(t, ps[4].Expr.(*ast.Ident).Name == "i2")
+	// ary[i]
+	assert.OK(t, ps[1].Pos == len("ary")+1)
+	assert.OK(t, ps[1].Expr.(*ast.IndexExpr).X == ps[0].Expr)
+	assert.OK(t, ps[1].Expr.(*ast.IndexExpr).Index == ps[2].Expr)
+	// i
+	assert.OK(t, ps[2].Pos == len("ary[")+1)
+	assert.OK(t, ps[2].Expr.(*ast.Ident).Name == "i")
+
+	// ==
+	assert.OK(t, ps[3].Pos == len("ary[i] ")+1)
+
+	// ary2
+	assert.OK(t, ps[4].Pos == len("ary[i] == ")+1)
+	assert.OK(t, ps[4].Expr.(*ast.Ident).Name == "ary2")
+	// ary2[i2]
+	assert.OK(t, ps[5].Pos == len("ary[i] == ary2")+1)
+	assert.OK(t, ps[5].Expr.(*ast.IndexExpr).X == ps[4].Expr)
+	assert.OK(t, ps[5].Expr.(*ast.IndexExpr).Index == ps[6].Expr)
+	// i2
+	assert.OK(t, ps[6].Pos == len("ary[i] == ary2[")+1)
+	assert.OK(t, ps[6].Expr.(*ast.Ident).Name == "i2")
 }
 
 func TestExtractPrintExprs_ArrayType(t *testing.T) {

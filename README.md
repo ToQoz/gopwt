@@ -216,9 +216,10 @@ $ gopwt
 --- FAIL: TestArrayType (0.00s)
 	assert.go:61: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:33
 		assert.OK(t, []int{1, 2}[index] == 3)
-		                         |      |
-		                         |      false
-		                         1
+		                        ||      |
+		                        ||      false
+		                        |1
+		                        2
 		
 --- FAIL: TestStructType (0.00s)
 	assert.go:61: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:37
