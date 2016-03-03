@@ -82,15 +82,18 @@ func TestCreateReflectTypeExprFromTypeExpr(t *testing.T) {
 
 func TestExtractPrintExprs_SingleLineStringLit(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr(`"foo" == "bar"`))
-	assert.OK(t, len(ps) == 1)
-	assert.OK(t, ps[0].Pos == len(`"foo" `)+1)
+	assert.OK(t, len(ps) == 3)
+	// ==
+	assert.OK(t, ps[1].Pos == len(`"foo" `)+1)
 }
 
 func TestExtractPrintExprs_MultiLineStringLit(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr(`"foo\nbar" == "bar"`))
-	assert.OK(t, len(ps) == 2)
+	assert.OK(t, len(ps) == 3)
 	assert.OK(t, ps[0].Pos == 1)
 	assert.OK(t, ps[0].Expr.(*ast.BasicLit).Value == `"foo\nbar"`)
+	assert.OK(t, ps[2].Pos == len(`"foo\nbar" == `)+1)
+	assert.OK(t, ps[2].Expr.(*ast.BasicLit).Value == `"bar"`)
 }
 
 func TestExtractPrintExprs_UnaryExpr(t *testing.T) {
@@ -134,6 +137,7 @@ func TestExtractPrintExprs_SliceExpr(t *testing.T) {
 func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr("ary[i] == ary2[i2]"))
 	assert.OK(t, len(ps) == 7)
+
 	// ary
 	assert.OK(t, ps[0].Pos == 1)
 	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "ary")
@@ -152,7 +156,6 @@ func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 	assert.OK(t, ps[4].Pos == len("ary[i] == ")+1)
 	assert.OK(t, ps[4].Expr.(*ast.Ident).Name == "ary2")
 	// ary2[i2]
-	assert.OK(t, ps[5].Pos == len("ary[i] == ary2")+1)
 	assert.OK(t, ps[5].Expr.(*ast.IndexExpr).X == ps[4].Expr)
 	assert.OK(t, ps[5].Expr.(*ast.IndexExpr).Index == ps[6].Expr)
 	// i2
@@ -162,32 +165,63 @@ func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 
 func TestExtractPrintExprs_ArrayType(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr("reflect.DeepEqual([]string{c}, []string{})"))
-	assert.OK(t, len(ps) == 2)
-	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual([]string{")+1)
-	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "c")
+	assert.OK(t, len(ps) == 4)
+	// reflect.DeepEqual
+	assert.OK(t, ps[0].Pos == 1)
+	// []string{c}
+	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual(")+1)
+	// c
+	assert.OK(t, ps[2].Pos == len("reflect.DeepEqual([]string{")+1)
+	assert.OK(t, ps[2].Expr.(*ast.Ident).Name == "c")
+	// []string{}
+	assert.OK(t, ps[3].Pos == len("reflect.DeepEqual([]string{c}, ")+1)
 
 	ps = extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr("reflect.DeepEqual([4]string{d}, []string{})"))
-	assert.OK(t, len(ps) == 2)
-	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual([4]string{")+1)
-	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "d")
+	assert.OK(t, len(ps) == 4)
+	// reflect.DeeepEqual
+	assert.OK(t, ps[0].Pos == 1)
+	// [4]string{d}
+	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual(")+1)
+	// d
+	assert.OK(t, ps[2].Pos == len("reflect.DeepEqual([4]string{")+1)
+	// []string{}
+	assert.OK(t, ps[3].Pos == len("reflect.DeepEqual([4]string{d}, ")+1)
 }
 
 func TestExtractPrintExprs_MapType(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr("reflect.DeepEqual(map[string]string{a:b}, map[string]string{})"))
-	assert.OK(t, len(ps) == 3)
+	assert.OK(t, len(ps) == 5)
+
+	// reflect.DeepEqual
 	assert.OK(t, ps[0].Pos == 1)
-	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual(map[string]string{")+1)
-	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
-	assert.OK(t, ps[2].Pos == len("reflect.DeepEqual(map[string]string{a:")+1)
-	assert.OK(t, ps[2].Expr.(*ast.Ident).Name == "b")
+
+	// map[string]string{a:b}
+	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual(")+1)
+
+	// a
+	assert.OK(t, ps[2].Pos == len("reflect.DeepEqual(map[string]string{")+1)
+	assert.OK(t, ps[2].Expr.(*ast.Ident).Name == "a")
+
+	// b
+	assert.OK(t, ps[3].Pos == len("reflect.DeepEqual(map[string]string{a:")+1)
+	assert.OK(t, ps[3].Expr.(*ast.Ident).Name == "b")
+
+	// map[string]string{}
+	assert.OK(t, ps[4].Pos == len("reflect.DeepEqual(map[string]string{a:b}, ")+1)
 }
 
 func TestExtractPrintExprs_StructType(t *testing.T) {
 	ps := extractPrintExprs(nil, "", 0, 0, nil, mustParseExpr("reflect.DeepEqual(struct{Name string}{}, struct{Name string}{Name: foo})"))
-	assert.OK(t, len(ps) == 2)
+	assert.OK(t, len(ps) == 4)
+	// reflect.DeepEqual
 	assert.OK(t, ps[0].Pos == 1)
-	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual(struct{Name string}{}, struct{Name string}{Name: ")+1)
-	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "foo")
+	// struct{Name string}{}
+	assert.OK(t, ps[1].Pos == len("reflect.DeepEqual(")+1)
+	// struct{Name string}{Name: foo}
+	assert.OK(t, ps[2].Pos == len("reflect.DeepEqual(struct{Name string}{}, ")+1)
+	// foo
+	assert.OK(t, ps[3].Pos == len("reflect.DeepEqual(struct{Name string}{}, struct{Name string}{Name: ")+1)
+	assert.OK(t, ps[3].Expr.(*ast.Ident).Name == "foo")
 }
 
 func TestConvertFuncCallToMemorized(t *testing.T) {
@@ -271,6 +305,13 @@ func Test_createUntypedExprFromBinaryExpr_and_replaceBinaryExpr(t *testing.T) {
 		assert.OK(t, astToCode(parent) == `a[translatedassert.OpADD(a, b)]`)
 		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(a, b)`)
 	}()
+}
+
+func TestResultPosOf(t *testing.T) {
+	assert.OK(t, int(resultPosOf(mustParseExpr("a[2]"))) == len("a["))
+	assert.OK(t, int(resultPosOf(mustParseExpr("x.Println"))) == len("x.P"))
+	assert.OK(t, int(resultPosOf(mustParseExpr("1 == 2"))) == len("1 ="))
+	assert.OK(t, int(resultPosOf(mustParseExpr("(foo + bar)"))) == len("(foo +"))
 }
 
 func astToCode(a ast.Node) string {

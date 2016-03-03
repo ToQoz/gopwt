@@ -7,3 +7,5 @@ test: gopwt
 	./gopwt $(VERBOSE_FLAG) $(TESTPKG)
 test-all: gopwt
 	_misc/test-all
+example: gopwt
+	./gopwt ./_example

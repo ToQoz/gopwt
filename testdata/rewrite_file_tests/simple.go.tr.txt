@@ -8,6 +8,6 @@ import (
 func TestSimple(t *testing.T) {
 	func() {
 		translatedassert.
-			OK(t, 1 == 1, []string{"1 is 1"}, `FAIL`, `./testdata/rewrite_file_tests/simple.go`, 10, `assert.OK(t, 1 == 1, "1 is 1")`, 0, translatedassert.NewPosValuePair(16, 1 == 1))
+			OK(t, 1 == 1, []string{"1 is 1"}, `FAIL`, `./testdata/rewrite_file_tests/simple.go`, 10, `assert.OK(t, 1 == 1, "1 is 1")`, 0, 19, 14, translatedassert.NewPosValuePair(14, 1, false), translatedassert.NewPosValuePair(16, 1 == 1, true), translatedassert.NewPosValuePair(19, 1, false))
 	}()
 }

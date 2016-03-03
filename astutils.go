@@ -153,6 +153,26 @@ func isRawStringLit(n *ast.BasicLit) bool {
 	return n.Kind == token.STRING && strings.HasPrefix(n.Value, "`") && strings.HasSuffix(n.Value, "`")
 }
 
+func isEqualExpr(expr ast.Expr) bool {
+	if b, ok := expr.(*ast.BinaryExpr); ok {
+		return b.Op == token.EQL
+	}
+
+	return false
+}
+
+func isReflectDeepEqual(expr ast.Expr) bool {
+	if c, ok := expr.(*ast.CallExpr); ok {
+		if sel, ok := c.Fun.(*ast.SelectorExpr); ok {
+			if ident, ok := sel.X.(*ast.Ident); ok {
+				return ident.Name == "reflect" && sel.Sel.Name == "DeepEqual"
+			}
+		}
+	}
+
+	return false
+}
+
 func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
 	createAltBuiltin := func(bfuncName string, args []ast.Expr) *ast.CallExpr {
 		return &ast.CallExpr{
@@ -176,6 +196,16 @@ func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
 	default:
 		panic(fmt.Errorf("%s can't be used in assert", name))
 	}
+}
+
+func createBoolIdent(v bool) *ast.Ident {
+	var name string
+	if v {
+		name = "true"
+	} else {
+		name = "false"
+	}
+	return &ast.Ident{Name: name}
 }
 
 // createUntypedExprFromBinaryExpr creates untyped operator-func(translatedassert.Op*()) from BinaryExpr
@@ -357,6 +387,18 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 	args := []ast.Expr{}
 
 	for _, n := range ps {
+		powered := true
+		if lit, ok := n.Expr.(*ast.BasicLit); ok {
+			if lit.Kind == token.STRING {
+				powered = len(strings.Split(lit.Value, "\\n")) > 1
+			} else {
+				powered = false
+			}
+		}
+		if _, ok := n.Expr.(*ast.CompositeLit); ok {
+			powered = false
+		}
+
 		a := &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
 				X:   translatedassertImportIdent,
@@ -365,6 +407,7 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 			Args: []ast.Expr{
 				&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(n.Pos))},
 				n.Expr,
+				createBoolIdent(powered),
 			},
 		}
 

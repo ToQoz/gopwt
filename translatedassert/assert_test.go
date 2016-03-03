@@ -41,9 +41,9 @@ func TestReflectNilValue(t *testing.T) {
 
 func TestFormat(t *testing.T) {
 	pvs := []posValuePair{
-		NewPosValuePair(1, 2),
-		NewPosValuePair(3, 2.5),
-		NewPosValuePair(7, 5000),
+		NewPosValuePair(1, 2, true),
+		NewPosValuePair(3, 2.5, true),
+		NewPosValuePair(7, 5000, true),
 	}
 	e := format(pvs)
 	o := trim(`
@@ -60,9 +60,9 @@ func TestFormat(t *testing.T) {
 
 func TestFormat_String(t *testing.T) {
 	pvs := []posValuePair{
-		NewPosValuePair(1, "singleline"),
-		NewPosValuePair(5, "multi\nline\n-2"),
-		NewPosValuePair(9, "multi\nline"),
+		NewPosValuePair(1, "singleline", true),
+		NewPosValuePair(5, "multi\nline\n-2", true),
+		NewPosValuePair(9, "multi\nline", true),
 	}
 	e := format(pvs)
 	o := trim(`
@@ -74,15 +74,17 @@ func TestFormat_String(t *testing.T) {
 |   -2"
 "singleline"
 `)
+
 	if e != o {
-		t.Error(fmt.Sprintf("(expected)%s != (got)%s\n", e, o))
+		t.Error(fmt.Sprintf("(expected)\n%s", e))
+		t.Error(fmt.Sprintf("(got)\n%s", o))
 	}
 
 	pvs = []posValuePair{
-		NewPosValuePair(1, "a"),
-		NewPosValuePair(3, "tab\t"),
-		NewPosValuePair(5, "tab	"),
-		NewPosValuePair(10, "vtab\v"),
+		NewPosValuePair(1, "a", true),
+		NewPosValuePair(3, "tab\t", true),
+		NewPosValuePair(5, "tab	", true),
+		NewPosValuePair(10, "vtab\v", true),
 	}
 	e = format(pvs)
 	o = trim(`

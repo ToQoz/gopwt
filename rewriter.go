@@ -263,6 +263,22 @@ func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
 	n.Args = append(n.Args, testExpr)
 	n.Args = append(n.Args, messages)
 
+	posOffset := n.Pos() - 1
+	// expected pos-value index
+	// got pos-value index
+	expectedPosValueIndex := -1
+	gotPosValueIndex := -1
+	// unknown
+	if isEqualExpr(testExpr) {
+		bin := testExpr.(*ast.BinaryExpr)
+		expectedPosValueIndex = int(resultPosOf(bin.Y) - posOffset)
+		gotPosValueIndex = int(resultPosOf(bin.X) - posOffset)
+	} else if isReflectDeepEqual(testExpr) {
+		call := testExpr.(*ast.CallExpr)
+		expectedPosValueIndex = int(resultPosOf(call.Args[1]) - posOffset)
+		gotPosValueIndex = int(resultPosOf(call.Args[0]) - posOffset)
+	}
+
 	// header
 	n.Args = append(n.Args, createRawStringLit("FAIL"))
 	// filename
@@ -273,8 +289,16 @@ func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
 	n.Args = append(n.Args, createRawStringLit(originalExprString))
 	// terminal width
 	n.Args = append(n.Args, &ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(termw)})
+
+	n.Args = append(
+		n.Args,
+		&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(expectedPosValueIndex)},
+		&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(gotPosValueIndex)},
+	)
+
 	// pos-value pairs
-	n.Args = append(n.Args, createPosValuePairExpr(extractPrintExprs(typesInfo, filename, line, n.Pos()-1, n, n.Args[1]))...)
+	extractedPrintExprs := extractPrintExprs(typesInfo, filename, line, posOffset, n, n.Args[1])
+	n.Args = append(n.Args, createPosValuePairExpr(extractedPrintExprs)...)
 	n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
 }
 
@@ -293,14 +317,11 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 	switch n.(type) {
 	case *ast.BasicLit:
 		n := n.(*ast.BasicLit)
-		if n.Kind == token.STRING {
-			if len(strings.Split(n.Value, "\\n")) > 1 {
-				ps = append(ps, newPrintExpr(n.Pos()-offset, n))
-			}
-		}
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
 	case *ast.CompositeLit:
 		n := n.(*ast.CompositeLit)
 
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
 		for _, elt := range n.Elts {
 			ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, elt)...)
 		}
@@ -434,4 +455,27 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 	}
 
 	return ps
+}
+
+// "a" -> 0
+// "obj.Fn" -> 3
+// "1 + 2" -> 2
+// "(1)" -> 1
+func resultPosOf(n ast.Expr) token.Pos {
+	switch n.(type) {
+	case *ast.IndexExpr:
+		n := n.(*ast.IndexExpr)
+		return n.Index.Pos() - 1
+	case *ast.SelectorExpr:
+		n := n.(*ast.SelectorExpr)
+		return resultPosOf(n.Sel)
+	case *ast.BinaryExpr:
+		n := n.(*ast.BinaryExpr)
+		return n.OpPos
+	case *ast.ParenExpr:
+		n := n.(*ast.ParenExpr)
+		return resultPosOf(n.X)
+	default:
+		return n.Pos()
+	}
 }

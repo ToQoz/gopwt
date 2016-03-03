@@ -12,21 +12,25 @@ import (
 
 var cachedFuncRet = map[string]map[int]interface{}{}
 var cachedFuncRetMutex = &sync.Mutex{}
+var stdoutIsatty bool
 
 type posValuePair struct {
-	Pos   int
-	Value interface{}
+	Pos     int
+	Value   interface{}
+	Powered bool
 }
 
 // NewPosValuePair has nodoc
 // **This is not for human**
-func NewPosValuePair(pos int, v interface{}) posValuePair {
-	return posValuePair{Pos: pos, Value: v}
+func NewPosValuePair(pos int, v interface{}, p bool) posValuePair {
+	return posValuePair{Pos: pos, Value: v, Powered: p}
 }
 
 // OK has nodoc
 // **This is not for human**
-func OK(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
+func OK(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, expectedPosValueIndex, gotPosValueIndex int, pvPairs ...posValuePair) {
+	stdoutIsatty = termw > 0
+
 	if e {
 		return
 	}
@@ -44,7 +48,7 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 		// 218 buf.WriteString("\n\t\t")
 		terrorw := tabw * 2
 
-		if termw > 0 && runewidth.StringWidth(line) > termw-terrorw {
+		if stdoutIsatty && runewidth.StringWidth(line) > termw-terrorw {
 			lines = append(lines, truncate(line, termw-terrorw, "[ommitted]..."))
 		} else {
 			lines = append(lines, line)
@@ -58,7 +62,43 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 		}
 	}
 
-	t.Error(strings.Join(lines, "\n"))
+	if expectedPosValueIndex >= 0 && gotPosValueIndex >= 0 {
+		var expected interface{}
+		var got interface{}
+		efound := false
+		gfound := false
+		for _, pv := range pvPairs {
+			if pv.Pos == expectedPosValueIndex {
+				expected = pv.Value
+				efound = true
+			}
+			if pv.Pos == gotPosValueIndex {
+				got = pv.Value
+				gfound = true
+			}
+		}
+
+		d := false
+		if _, ok := expected.(string); ok {
+			if _, ok := got.(string); ok {
+				d = true
+			}
+		}
+		if efound && gfound {
+			if d {
+				diffOutput, diffType := diff(expected.(string), got.(string))
+				if diffType == diffTypeChar {
+					//				lines = append(lines, "{+ins+}/{-del-}")
+				}
+				lines = append(lines, diffOutput)
+			} else {
+				lines = append(lines, fmt.Sprintf("[expected] %v", expected))
+				lines = append(lines, fmt.Sprintf("[got] %v", got))
+			}
+		}
+	}
+
+	t.Error(strings.Join(lines, "\n") + "\n")
 
 	cachedFuncRetMutex.Lock()
 	defer cachedFuncRetMutex.Unlock()
@@ -71,8 +111,8 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 
 // Require has nodoc
 // **This is not for human**
-func Require(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, pvPairs ...posValuePair) {
-	OK(t, e, messages, header, filename, line, origexpr, termw, pvPairs...)
+func Require(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, expectedPosValueIndex, gotPosValueIndex int, pvPairs ...posValuePair) {
+	OK(t, e, messages, header, filename, line, origexpr, termw, expectedPosValueIndex, gotPosValueIndex, pvPairs...)
 	if !e {
 		t.Skip("skip by gopwt/assert.Require")
 	}
@@ -154,7 +194,14 @@ func reflectNilValue(t reflect.Type) reflect.Value {
 // Format
 // --------------------------------------------------------------------------------
 
-func format(pvPairs []posValuePair) string {
+func format(_pvPairs []posValuePair) string {
+	pvPairs := []posValuePair{}
+	for _, p := range _pvPairs {
+		if p.Powered {
+			pvPairs = append(pvPairs, p)
+		}
+	}
+
 	buf := make([]byte, 0, 50*len(pvPairs)*len(pvPairs)) // Try to avoid more allocations
 
 	// first line

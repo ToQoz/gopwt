@@ -27,6 +27,30 @@ func TestBasicLit(t *testing.T) {
 bar` == "bar")
 }
 
+func TestStringDiff(t *testing.T) {
+	assert.OK(t, "supersoper" == "supersuper")
+
+	expected := `foo
+baz
+bar2
+bar`
+	got := `foo
+baz
+bar
+bar`
+	assert.OK(t, got == expected)
+
+	expected = `<div>
+<div>
+foo
+</div>
+</div>`
+	got = `<div>
+bar
+</div>`
+	assert.OK(t, got == expected)
+}
+
 func TestMapType(t *testing.T) {
 	k := "b--------key"
 	v := "b------value"
