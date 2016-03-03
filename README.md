@@ -58,11 +58,12 @@ $ gopwt
 
 		Assersion messages:
 			- a should equal to b
-	--- [string] expected
-	--- [string] got
-	@@ -1,1 +1,1@@
-	-b
-	+a
+
+		--- [string] expected
+		--- [string] got
+		@@ -1,1 +1,1@@
+		-b
+		+a
 
 
 	FAIL
