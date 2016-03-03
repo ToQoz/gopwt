@@ -60,6 +60,7 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 		for _, msg := range messages {
 			lines = append(lines, "\t- "+msg)
 		}
+		lines = append(lines, "")
 	}
 
 	if expectedPosValueIndex >= 0 && gotPosValueIndex >= 0 {
@@ -95,10 +96,11 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 				lines = append(lines, fmt.Sprintf("[expected] %v", expected))
 				lines = append(lines, fmt.Sprintf("[got] %v", got))
 			}
+			lines = append(lines, "")
 		}
 	}
 
-	t.Error(strings.Join(lines, "\n") + "\n")
+	t.Error(strings.Join(lines, "\n"))
 
 	cachedFuncRetMutex.Lock()
 	defer cachedFuncRetMutex.Unlock()

@@ -58,8 +58,15 @@ $ gopwt
 
 		Assersion messages:
 			- a should equal to b
-FAIL
-FAIL    github.com/ToQoz/gopwtexample        0.008s
+	--- [string] expected
+	--- [string] got
+	@@ -1,1 +1,1@@
+	-b
+	+a
+
+
+	FAIL
+	FAIL    github.com/ToQoz/gopwtexample        0.008s
 exit status 1
 ```
 
