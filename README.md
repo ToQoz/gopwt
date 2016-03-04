@@ -192,7 +192,7 @@ func TestPkgValue(t *testing.T) {
 ```
 $ gopwt
 --- FAIL: TestWithMessage (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:14
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:14
 		assert.OK(t, receiver != nil, "receiver should not be nil")
 		             |        |  |
 		             |        |  <nil>
@@ -203,27 +203,31 @@ $ gopwt
 			- receiver should not be nil
 		
 --- FAIL: TestBasicLit (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:17
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:17
 		assert.OK(t, "a" == "b")
 		                 |
 		                 false
 		
 		--- [string] expected
-		--- [string] got
+		+++ [string] got
 		@@ -1,1 +1,1@@
 		-b
 		+a
 		
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:18
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:18
 		assert.OK(t, 1 == 2)
 		               |
 		               false
 		
-		[expected] 2
-		[got] 1
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-2
+		+1
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:22
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:22
 		assert.OK(t, a+c == b)
 		             ||| |  |
 		             ||| |  2
@@ -232,10 +236,14 @@ $ gopwt
 		             |4
 		             1
 		
-		[expected] 2
-		[got] 4
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-2
+		+4
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:23
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:23
 		assert.OK(t, (a+c)+a == b)
 		              ||| || |  |
 		              ||| || |  2
@@ -246,10 +254,14 @@ $ gopwt
 		              |4
 		              1
 		
-		[expected] 2
-		[got] 5
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-2
+		+5
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:24
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:24
 		assert.OK(t, "foo\nbar" == "bar")
 		             |          |
 		             |          false
@@ -257,24 +269,24 @@ $ gopwt
 		             bar"
 		
 		--- [string] expected
-		--- [string] got
+		+++ [string] got
 		@@ -1,1 +1,2@@
 		+foo
 		 bar
 		
 		
 --- FAIL: TestStringDiff (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:27
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:27
 		assert.OK(t, "supersoper" == "supersuper")
 		                          |
 		                          false
 		
 		--- [string] expected
-		--- [string] got
+		+++ [string] got
 		@@ -1,1 +1,1@@
 		supers[-u-]{+o+}per
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:36
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:36
 		assert.OK(t, got == expected)
 		             |   |  |
 		             |   |  "foo
@@ -288,14 +300,14 @@ $ gopwt
 		             bar"
 		
 		--- [string] expected
-		--- [string] got
+		+++ [string] got
 		@@ -1,4 +1,4@@
 		foo
 		baz
 		bar[-2-]
 		bar
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:45
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:45
 		assert.OK(t, got == expected)
 		             |   |  |
 		             |   |  "<div>
@@ -309,7 +321,7 @@ $ gopwt
 		             </div>"
 		
 		--- [string] expected
-		--- [string] got
+		+++ [string] got
 		@@ -1,5 +1,3@@
 		 <div>
 		-<div>
@@ -320,48 +332,67 @@ $ gopwt
 		
 		
 --- FAIL: TestMapType (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:50
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:50
 		assert.OK(t, reflect.DeepEqual(map[string]string{}, map[string]string{"a": "a", k: v}))
 		             |                                                                  |  |
 		             |                                                                  |  "b------value"
 		             |                                                                  "b--------key"
 		             false
 		
-		[expected] map[a:a b--------key:b------value]
-		[got] map[]
+		--- [string] expected
+		+++ [string] got
+		@@ -1,4 +1,1@@
+		-{
+		-  "a":            "a",
+		-  "b--------key": "b------value",
+		-}
+		+map[string]string{}
+		
 		
 --- FAIL: TestArrayType (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:54
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:54
 		assert.OK(t, []int{1, 2}[index] == 3)
 		                        ||      |
 		                        ||      false
 		                        |1
 		                        2
 		
-		[expected] 3
-		[got] 2
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-3
+		+2
+		
 		
 --- FAIL: TestStructType (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:58
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:58
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{foox}, struct{ Name string }{"foo"}))
 		             |                                       |
 		             |                                       "foo------x"
 		             false
 		
-		[expected] {foo}
-		[got] {foo------x}
+		--- [string] expected
+		+++ [string] got
+		@@ -1,3 +1,3@@
+		struct { Name string }{
+		  Name: "foo{+------x+}",
+		}
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:59
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:59
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{Name: foox}, struct{ Name string }{Name: "foo"}))
 		             |                                             |
 		             |                                             "foo------x"
 		             false
 		
-		[expected] {foo}
-		[got] {foo------x}
+		--- [string] expected
+		+++ [string] got
+		@@ -1,3 +1,3@@
+		struct { Name string }{
+		  Name: "foo{+------x+}",
+		}
 		
 --- FAIL: TestNestedCallExpr (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:65
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:65
 		assert.OK(t, rev(rev(rev(true))))
 		             |   |   |   |
 		             |   |   |   true
@@ -370,7 +401,7 @@ $ gopwt
 		             false
 		
 --- FAIL: TestCallWithNonIdempotentFunc (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:73
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:73
 		assert.OK(t, incl()+incl() == incl()+incl())
 		             |     ||      |  |     ||
 		             |     ||      |  |     |4
@@ -381,50 +412,70 @@ $ gopwt
 		             |     3
 		             1
 		
-		[expected] 7
-		[got] 3
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-7
+		+3
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:74
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:74
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  6
 		             |      false
 		             5
 		
-		[expected] 6
-		[got] 5
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-6
+		+5
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:75
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:75
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  8
 		             |      false
 		             7
 		
-		[expected] 8
-		[got] 7
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-8
+		+7
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:76
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:76
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  10
 		             |      false
 		             9
 		
-		[expected] 10
-		[got] 9
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-10
+		+9
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:77
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:77
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  12
 		             |      false
 		             11
 		
-		[expected] 12
-		[got] 11
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-12
+		+11
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:78
+		
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:78
 		assert.OK(t, (incl() == incl()) != (incl() == incl()))
 		              |      |  |       |   |      |  |
 		              |      |  |       |   |      |  16
@@ -435,26 +486,36 @@ $ gopwt
 		              |      false
 		              13
 		
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:84
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:84
 		assert.OK(t, incl2(incl2(2)) == 10)
 		             |     |         |
 		             |     |         false
 		             |     2
 		             4
 		
-		[expected] 10
-		[got] 4
+		--- [string] expected
+		+++ [string] got
+		@@ -1,1 +1,1@@
+		-10
+		+4
+		
 		
 --- FAIL: TestPkgValue (0.00s)
-	assert.go:90: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:87
+	assert.go:83: FAIL /.../src/github.com/ToQoz/gopwt/_example/example_test.go:87
 		assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
 		                 |         |  |
 		                 |         |  &errors.errorString{s:"error"}
 		                 |         false
 		                 &errors.errorString{s:"sql: no rows in result set"}
 		
-		[expected] error
-		[got] sql: no rows in result set
+		--- [string] expected
+		+++ [string] got
+		@@ -1,3 +1,3@@
+		 &errors.errorString{
+		-  s: "error",
+		+  s: "sql: no rows in result set",
+		 }
+		
 		
 FAIL
 FAIL	github.com/ToQoz/gopwt/_example

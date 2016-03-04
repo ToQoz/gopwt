@@ -3,6 +3,7 @@ package translatedassert
 
 import (
 	"fmt"
+	"github.com/k0kubun/pp"
 	"github.com/mattn/go-runewidth"
 	"reflect"
 	"strings"
@@ -74,16 +75,8 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 				got = pv.Value
 			}
 		}
-
-		expectedString, expectedIsString := expected.(string)
-		gotString, gotIsString := got.(string)
-		if expectedIsString && gotIsString {
-			diffOutput, _ := diff(expectedString, gotString)
-			lines = append(lines, diffOutput)
-		} else {
-			lines = append(lines, fmt.Sprintf("[expected] %v", expected))
-			lines = append(lines, fmt.Sprintf("[got] %v", got))
-		}
+		diffOutput, _ := diff(expected, got)
+		lines = append(lines, diffOutput)
 		lines = append(lines, "")
 	}
 
@@ -267,6 +260,14 @@ func format(_pvPairs []posValuePair) string {
 // TODO use own impl instead of fmt.Sprintf("%#v", a)
 func formatValue(a interface{}) string {
 	return fmt.Sprintf("%#v", a)
+}
+
+func formatValueForDiff(a interface{}) string {
+	if a, ok := a.(string); ok {
+		return a
+	}
+	pp.ColoringEnabled = false
+	return pp.Sprint(a)
 }
 
 func truncate(s string, w int, tail string) string {

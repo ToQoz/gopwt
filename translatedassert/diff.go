@@ -24,7 +24,10 @@ const (
 	diffTypeLine
 )
 
-func diff(a, b string) (string, diffType) {
+func diff(_a, _b interface{}) (string, diffType) {
+	a := formatValueForDiff(_a)
+	b := formatValueForDiff(_b)
+
 	dtype := diffTypeChar
 
 	diffs := charaDiff(a, b)
@@ -55,8 +58,8 @@ func diff(a, b string) (string, diffType) {
 	}
 
 	ret := ""
-	ret += "--- [string] expected\n"
-	ret += "--- [string] got\n"
+	ret += fmt.Sprintf("--- [%T] expected\n", _a)
+	ret += fmt.Sprintf("+++ [%T] got\n", _b)
 	ret += "@@ -1," + strconv.Itoa(strings.Count(a, "\n")+1) + " +1," + strconv.Itoa(strings.Count(b, "\n")+1) + "@@\n"
 	if dtype == diffTypeLine {
 		diffs = lineDiff(a, b)
@@ -83,17 +86,17 @@ func diff(a, b string) (string, diffType) {
 func green(s string) string {
 	if !stdoutIsatty {
 		return s
-	} else {
-		return "\x1b[32m" + s + "\x1b[39m"
 	}
+
+	return "\x1b[32m" + s + "\x1b[39m"
 }
 
 func red(s string) string {
 	if !stdoutIsatty {
 		return s
-	} else {
-		return "\x1b[31m" + s + "\x1b[39m"
 	}
+
+	return "\x1b[31m" + s + "\x1b[39m"
 }
 
 func charaDiff(a, b string) []diffmatchpatch.Diff {
