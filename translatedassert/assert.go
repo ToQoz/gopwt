@@ -28,7 +28,7 @@ func NewPosValuePair(pos int, v interface{}, p bool) posValuePair {
 
 // OK has nodoc
 // **This is not for human**
-func OK(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, expectedPosValueIndex, gotPosValueIndex int, pvPairs ...posValuePair) {
+func OK(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, expectedPos, gotPos int, pvPairs ...posValuePair) {
 	stdoutIsatty = termw > 0
 
 	if e {
@@ -63,17 +63,17 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 		lines = append(lines, "")
 	}
 
-	if expectedPosValueIndex >= 0 && gotPosValueIndex >= 0 {
+	if expectedPos >= 0 && gotPos >= 0 {
 		var expected interface{}
 		var got interface{}
 		efound := false
 		gfound := false
 		for _, pv := range pvPairs {
-			if pv.Pos == expectedPosValueIndex {
+			if pv.Pos == expectedPos {
 				expected = pv.Value
 				efound = true
 			}
-			if pv.Pos == gotPosValueIndex {
+			if pv.Pos == gotPos {
 				got = pv.Value
 				gfound = true
 			}
@@ -113,8 +113,8 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 
 // Require has nodoc
 // **This is not for human**
-func Require(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, expectedPosValueIndex, gotPosValueIndex int, pvPairs ...posValuePair) {
-	OK(t, e, messages, header, filename, line, origexpr, termw, expectedPosValueIndex, gotPosValueIndex, pvPairs...)
+func Require(t *testing.T, e bool, messages []string, header, filename string, line int, origexpr string, termw int, expectedPos, gotPos int, pvPairs ...posValuePair) {
+	OK(t, e, messages, header, filename, line, origexpr, termw, expectedPos, gotPos, pvPairs...)
 	if !e {
 		t.Skip("skip by gopwt/assert.Require")
 	}
