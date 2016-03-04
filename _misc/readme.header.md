@@ -31,8 +31,8 @@ Usage of gopwt:
 
 ```
 $ go get github.com/ToQoz/gopwt/...
-$ mkdir $GOPATH/src/gopwtexample
-$ cd $GOPATH/src/gopwtexample
+$ mkdir $GOPATH/src/$(whoami)/gopwtexample
+$ cd $GOPATH/src/$(whoami)/gopwtexample
 $ cat <<EOF > main_test.go
 package main
 
@@ -58,6 +58,14 @@ $ gopwt
 
 		Assersion messages:
 			- a should equal to b
+
+		--- [string] expected
+		--- [string] got
+		@@ -1,1 +1,1@@
+		-b
+		+a
+
+
 FAIL
 FAIL    github.com/ToQoz/gopwtexample        0.008s
 exit status 1
