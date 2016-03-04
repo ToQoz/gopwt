@@ -66,38 +66,25 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 	if expectedPos >= 0 && gotPos >= 0 {
 		var expected interface{}
 		var got interface{}
-		efound := false
-		gfound := false
 		for _, pv := range pvPairs {
 			if pv.Pos == expectedPos {
 				expected = pv.Value
-				efound = true
 			}
 			if pv.Pos == gotPos {
 				got = pv.Value
-				gfound = true
 			}
 		}
 
-		d := false
-		if _, ok := expected.(string); ok {
-			if _, ok := got.(string); ok {
-				d = true
-			}
+		expectedString, expectedIsString := expected.(string)
+		gotString, gotIsString := got.(string)
+		if expectedIsString && gotIsString {
+			diffOutput, _ := diff(expectedString, gotString)
+			lines = append(lines, diffOutput)
+		} else {
+			lines = append(lines, fmt.Sprintf("[expected] %v", expected))
+			lines = append(lines, fmt.Sprintf("[got] %v", got))
 		}
-		if efound && gfound {
-			if d {
-				diffOutput, diffType := diff(expected.(string), got.(string))
-				if diffType == diffTypeChar {
-					//				lines = append(lines, "{+ins+}/{-del-}")
-				}
-				lines = append(lines, diffOutput)
-			} else {
-				lines = append(lines, fmt.Sprintf("[expected] %v", expected))
-				lines = append(lines, fmt.Sprintf("[got] %v", got))
-			}
-			lines = append(lines, "")
-		}
+		lines = append(lines, "")
 	}
 
 	t.Error(strings.Join(lines, "\n"))
