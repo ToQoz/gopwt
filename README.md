@@ -5,9 +5,9 @@
 
 |package|coverage|
 |-------|-----|
-|gopwt v0.1.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt?v0.1.0)](https://gocover.io/github.com/toqoz/gopwt)|
-|gopwt/assert v0.1.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?v0.1.0)](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert v0.1.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?v0.1.0)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|gopwt v0.2.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt?v0.2.0)](https://gocover.io/github.com/toqoz/gopwt)|
+|gopwt/assert v0.2.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?v0.2.0)](https://gocover.io/github.com/toqoz/gopwt/assert)|
+|gopwt/translatedassert v0.2.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?v0.2.0)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
@@ -220,8 +220,8 @@ $ gopwt
 		               |
 		               false
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-2
 		+1
@@ -236,8 +236,8 @@ $ gopwt
 		             |4
 		             1
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-2
 		+4
@@ -254,8 +254,8 @@ $ gopwt
 		              |4
 		              1
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-2
 		+5
@@ -339,12 +339,12 @@ $ gopwt
 		             |                                                                  "b--------key"
 		             false
 		
-		--- [string] expected
-		+++ [string] got
+		--- [map[string]string] expected
+		+++ [map[string]string] got
 		@@ -1,4 +1,1@@
 		-{
-		-  "a":            "a",
 		-  "b--------key": "b------value",
+		-  "a":            "a",
 		-}
 		+map[string]string{}
 		
@@ -357,8 +357,8 @@ $ gopwt
 		                        |1
 		                        2
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-3
 		+2
@@ -371,8 +371,8 @@ $ gopwt
 		             |                                       "foo------x"
 		             false
 		
-		--- [string] expected
-		+++ [string] got
+		--- [struct { Name string }] expected
+		+++ [struct { Name string }] got
 		@@ -1,3 +1,3@@
 		struct { Name string }{
 		  Name: "foo{+------x+}",
@@ -384,8 +384,8 @@ $ gopwt
 		             |                                             "foo------x"
 		             false
 		
-		--- [string] expected
-		+++ [string] got
+		--- [struct { Name string }] expected
+		+++ [struct { Name string }] got
 		@@ -1,3 +1,3@@
 		struct { Name string }{
 		  Name: "foo{+------x+}",
@@ -412,8 +412,8 @@ $ gopwt
 		             |     3
 		             1
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-7
 		+3
@@ -426,8 +426,8 @@ $ gopwt
 		             |      false
 		             5
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-6
 		+5
@@ -440,8 +440,8 @@ $ gopwt
 		             |      false
 		             7
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-8
 		+7
@@ -454,8 +454,8 @@ $ gopwt
 		             |      false
 		             9
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-10
 		+9
@@ -468,8 +468,8 @@ $ gopwt
 		             |      false
 		             11
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-12
 		+11
@@ -493,8 +493,8 @@ $ gopwt
 		             |     2
 		             4
 		
-		--- [string] expected
-		+++ [string] got
+		--- [int] expected
+		+++ [int] got
 		@@ -1,1 +1,1@@
 		-10
 		+4
@@ -508,8 +508,8 @@ $ gopwt
 		                 |         false
 		                 &errors.errorString{s:"sql: no rows in result set"}
 		
-		--- [string] expected
-		+++ [string] got
+		--- [*errors.errorString] expected
+		+++ [*errors.errorString] got
 		@@ -1,3 +1,3@@
 		 &errors.errorString{
 		-  s: "error",
