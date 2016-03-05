@@ -1,0 +1,24 @@
+#!/bin/bash
+
+badge() {
+  pkg=$1
+
+  color=""
+  n=$(echo $2 | sed -e 's/\.[0-9]*%//')
+  if [ $n -lt 25 ]; then
+    color="red"
+  elif [ $n -lt 50 ]; then
+    color="orange"
+  elif [ $n -lt 75 ]; then
+    color="green"
+  else
+    color="brightgreen"
+  fi
+
+  echo "|$pkg|[![](https://img.shields.io/badge/coverage-$2-$color.svg?style=flat)](https://gocover.io/github.com/toqoz/$pkg)|"
+}
+export -f badge
+
+echo "|package|coverage|"
+echo "|-------|--------|"
+go test github.com/ToQoz/gopwt/... -covermode=count | grep coverage | awk -F' ' '{print $2 " " $5}' | sed -e 's,github.com/ToQoz/,,' | xargs -I{} bash -c "badge {}"

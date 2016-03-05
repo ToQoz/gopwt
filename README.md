@@ -4,10 +4,10 @@
 [![Travis-CI Build Status](https://travis-ci.org/ToQoz/gopwt.svg?branch=master)](https://travis-ci.org/ToQoz/gopwt)
 
 |package|coverage|
-|-------|-----|
-|gopwt v0.2.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt?v0.2.0)](https://gocover.io/github.com/toqoz/gopwt)|
-|gopwt/assert v0.2.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/assert?v0.2.0)](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert v0.2.0| [![](https://gocover.io/_badge/github.com/toqoz/gopwt/translatedassert?v0.2.0)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|-------|--------|
+|gopwt|[![](https://img.shields.io/badge/coverage-59.9%-green.svg?style=flat)](https://gocover.io/github.com/toqoz/gopwt)|
+|gopwt/assert|[![](https://img.shields.io/badge/coverage-62.1%-green.svg?style=flat)](https://gocover.io/github.com/toqoz/gopwt/assert)|
+|gopwt/translatedassert|[![](https://img.shields.io/badge/coverage-63.6%-green.svg?style=flat)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 

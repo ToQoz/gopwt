@@ -4,8 +4,11 @@ root=$(cd $(dirname $0) && pwd)/..
 out=$root/README.md
 
 git_latest_tag=$(git describe --tags --abbrev=0)
-cat $root/_misc/readme.header.md | sed -e "s/GIT_LATEST_TAG/$git_latest_tag/g" > $out
-
+cat $root/_misc/readme.header.md > $out
+echo "" >> $out
+_misc/cov >> $out
+echo "" >> $out
+cat $root/_misc/readme.header2.md >> $out
 # example code
 echo "" >> $out
 echo "## Example" >> $out
