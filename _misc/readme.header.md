@@ -30,7 +30,7 @@ Usage of gopwt:
 ### Install and Try
 
 ```
-$ go get github.com/ToQoz/gopwt/...
+$ go get -u github.com/ToQoz/gopwt/...
 $ mkdir $GOPATH/src/$(whoami)/gopwtexample
 $ cd $GOPATH/src/$(whoami)/gopwtexample
 $ cat <<EOF > main_test.go
