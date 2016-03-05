@@ -303,25 +303,28 @@ func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
 }
 
 type printExpr struct {
-	Pos  int
-	Expr ast.Expr
+	Pos          int
+	Expr         ast.Expr
+	OriginalExpr string
 }
 
-func newPrintExpr(pos token.Pos, e ast.Expr) printExpr {
-	return printExpr{Pos: int(pos), Expr: e}
+func newPrintExpr(pos token.Pos, newExpr ast.Expr, originalExpr string) printExpr {
+	return printExpr{Pos: int(pos), Expr: newExpr, OriginalExpr: originalExpr}
 }
 
 func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset token.Pos, parent ast.Expr, n ast.Expr) []printExpr {
 	ps := []printExpr{}
 
+	original := sprintCode(n)
+
 	switch n.(type) {
 	case *ast.BasicLit:
 		n := n.(*ast.BasicLit)
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 	case *ast.CompositeLit:
 		n := n.(*ast.CompositeLit)
 
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 		for _, elt := range n.Elts {
 			ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, elt)...)
 		}
@@ -344,13 +347,13 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 				return ps
 			}
 		}
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 	case *ast.ParenExpr:
 		n := n.(*ast.ParenExpr)
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
 	case *ast.StarExpr:
 		n := n.(*ast.StarExpr)
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
 	case *ast.UnaryExpr:
 		n := n.(*ast.UnaryExpr)
@@ -358,7 +361,7 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 
 		n.X = createReflectBoolExpr(createReflectValueOfExpr(n.X))
 
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n))
+		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 		ps = append(ps, x...)
 	case *ast.BinaryExpr:
 		n := n.(*ast.BinaryExpr)
@@ -374,7 +377,7 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 		}
 
 		ps = append(ps, x...)
-		ps = append(ps, newPrintExpr(n.OpPos-offset, newExpr))
+		ps = append(ps, newPrintExpr(n.OpPos-offset, newExpr, original))
 		ps = append(ps, y...)
 	case *ast.IndexExpr:
 		n := n.(*ast.IndexExpr)
@@ -385,18 +388,18 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 		//   | "b"
 		//   ["a", "b"]
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
-		ps = append(ps, newPrintExpr(n.Index.Pos()-1-offset, n))
+		ps = append(ps, newPrintExpr(n.Index.Pos()-1-offset, n, original))
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.Index)...)
 	case *ast.SelectorExpr:
 		n := n.(*ast.SelectorExpr)
 		ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
-		ps = append(ps, newPrintExpr(n.Sel.Pos()-offset, n))
+		ps = append(ps, newPrintExpr(n.Sel.Pos()-offset, n, original))
 	case *ast.CallExpr:
 		n := n.(*ast.CallExpr)
 		if isBuiltinFunc(n) { // don't memorize buildin methods
 			newExpr := createUntypedCallExprFromBuiltinCallExpr(n)
 
-			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr))
+			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr, original))
 			for _, arg := range n.Args {
 				ps = append(ps, extractPrintExprs(typesInfo, filename, line, offset, n, arg)...)
 			}
@@ -422,7 +425,7 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 				},
 			})
 
-			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr))
+			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr, original))
 			ps = append(ps, argsPrints...)
 
 			*n = *newExpr
@@ -440,7 +443,7 @@ func extractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 				memorized = createMemorizedFuncCall(filename, line, n, "Interface")
 			}
 
-			ps = append(ps, newPrintExpr(n.Pos()-offset, memorized))
+			ps = append(ps, newPrintExpr(n.Pos()-offset, memorized, original))
 			ps = append(ps, argsPrints...)
 
 			*n = *memorized

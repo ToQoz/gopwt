@@ -16,15 +16,16 @@ var cachedFuncRetMutex = &sync.Mutex{}
 var stdoutIsatty bool
 
 type posValuePair struct {
-	Pos     int
-	Value   interface{}
-	Powered bool
+	Pos          int
+	Value        interface{}
+	Powered      bool
+	OriginalExpr string
 }
 
 // NewPosValuePair has nodoc
 // **This is not for human**
-func NewPosValuePair(pos int, v interface{}, p bool) posValuePair {
-	return posValuePair{Pos: pos, Value: v, Powered: p}
+func NewPosValuePair(pos int, v interface{}, powerd bool, origexpr string) posValuePair {
+	return posValuePair{Pos: pos, Value: v, Powered: powerd, OriginalExpr: origexpr}
 }
 
 // OK has nodoc
@@ -65,14 +66,14 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 	}
 
 	if expectedPos >= 0 && gotPos >= 0 {
-		var expected interface{}
-		var got interface{}
+		var expected posValuePair
+		var got posValuePair
 		for _, pv := range pvPairs {
 			if pv.Pos == expectedPos {
-				expected = pv.Value
+				expected = pv
 			}
 			if pv.Pos == gotPos {
-				got = pv.Value
+				got = pv
 			}
 		}
 		diffOutput, _ := diff(expected, got)

@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
+	"go/printer"
 	"go/token"
+	"io"
 	"strconv"
 	"strings"
 )
@@ -408,6 +411,7 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 				&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(n.Pos))},
 				n.Expr,
 				createBoolIdent(powered),
+				createRawStringLit(n.OriginalExpr),
 			},
 		}
 
@@ -467,4 +471,14 @@ func createArrayTypeCompositLit(typ string) *ast.CompositeLit {
 		},
 		Elts: []ast.Expr{},
 	}
+}
+
+func sprintCode(n ast.Node) string {
+	buf := bytes.NewBuffer([]byte{})
+	fprintCode(buf, n)
+	return buf.String()
+}
+
+func fprintCode(out io.Writer, n ast.Node) error {
+	return printer.Fprint(out, token.NewFileSet(), n)
 }

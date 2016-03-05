@@ -24,9 +24,9 @@ const (
 	diffTypeLine
 )
 
-func diff(_a, _b interface{}) (string, diffType) {
-	a := formatValueForDiff(_a)
-	b := formatValueForDiff(_b)
+func diff(pa, pb posValuePair) (string, diffType) {
+	a := formatValueForDiff(pa.Value)
+	b := formatValueForDiff(pb.Value)
 
 	dtype := diffTypeChar
 
@@ -58,8 +58,8 @@ func diff(_a, _b interface{}) (string, diffType) {
 	}
 
 	ret := ""
-	ret += fmt.Sprintf("--- [%T] expected\n", _a)
-	ret += fmt.Sprintf("+++ [%T] got\n", _b)
+	ret += fmt.Sprintf("--- [%T] %s\n", pa.Value, pa.OriginalExpr)
+	ret += fmt.Sprintf("+++ [%T] %s\n", pb.Value, pb.OriginalExpr)
 	ret += "@@ -1," + strconv.Itoa(strings.Count(a, "\n")+1) + " +1," + strconv.Itoa(strings.Count(b, "\n")+1) + "@@\n"
 	if dtype == diffTypeLine {
 		diffs = lineDiff(a, b)
