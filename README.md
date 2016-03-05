@@ -52,18 +52,18 @@ $ gopwt
 	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/109993308/src/github.com/ToQoz/gopwtexample/main_test.go:11
 		assert.OK(t, a == b, "a should equal to b")
 		             | |  |
-		             | |  "b"
+		             | |  "yyy"
 		             | false
-		             "a"
+		             "xxx"
 
 		Assersion messages:
 			- a should equal to b
 
-		--- [string] expected
-		--- [string] got
+		--- [string] b
+		--- [string] a
 		@@ -1,1 +1,1@@
-		-b
-		+a
+		-yyy
+		+xxx
 
 
 FAIL
@@ -343,8 +343,8 @@ $ gopwt
 		+++ [map[string]string] map[string]string{}
 		@@ -1,4 +1,1@@
 		-{
-		-  "b--------key": "b------value",
 		-  "a":            "a",
+		-  "b--------key": "b------value",
 		-}
 		+map[string]string{}
 		
