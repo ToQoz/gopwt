@@ -21,7 +21,7 @@ echo "" >> $out
 echo '```' >> $out
 echo '$ gopwt' >> $out
 cd _example
-gopwt 2>&1 | sed -e "s,FAIL .*/src,FAIL /.../src,g; s/	[0-9\.]*s$//g" >> $out
+gopwt 2>&1 | sed -e "s/	[0-9\.]*s$//g" >> $out
 echo '```' >> $out
 echo "" >> $out
 
