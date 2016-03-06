@@ -30,6 +30,8 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	// Collect fset(*token.FileSet) and files([]*ast.File)
 	fset := token.NewFileSet()
 	files := []*ast.File{}
+	originalFset := token.NewFileSet()
+	origFiles := []*ast.File{}
 	root := filepath.Join(tempGoSrcDir, importPath)
 
 	err = filepath.Walk(root, func(path string, fInfo os.FileInfo, err error) error {
@@ -45,12 +47,20 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			return nil
 		}
 
+		// parse copyed & normalized file. e.g. multi-line CompositeLit -> single-line
 		a, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			return err
 		}
-
 		files = append(files, a)
+
+		// parse original file
+		o, err := parser.ParseFile(originalFset, filepath.Join(pkgDir, filepath.Base(path)), nil, 0)
+		if err != nil {
+			return err
+		}
+		origFiles = append(origFiles, o)
+
 		return nil
 	})
 	if err != nil {
@@ -63,7 +73,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	}
 
 	// Rewrite files
-	for _, f := range files {
+	for i, f := range files {
 		path := fset.File(f.Package).Name()
 
 		if !isTestGoFileName(path) {
@@ -89,7 +99,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 		out, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, fi.Mode())
 		defer out.Close()
-		err = rewriteFile(typesInfo, fset, f, out)
+		err = rewriteFile(typesInfo, fset, originalFset, f, origFiles[i], out)
 		if err != nil {
 			return err
 		}
@@ -139,6 +149,12 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		}
 		defer out.Close()
 
+		outOrig, err := os.OpenFile(outPath+".orig", os.O_RDWR|os.O_CREATE, fInfo.Mode())
+		if err != nil {
+			return err
+		}
+		defer outOrig.Close()
+
 		if !isTestGoFileName(path) {
 			return copyFile(path, out)
 		}
@@ -161,25 +177,9 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		//   - 1. replace rawStringLit to stringLit
 		//   - 2. replace multiline compositLit to singleline one.
 		//   - 3. copy
-		ast.Inspect(a, func(n ast.Node) bool {
-			if _, ok := n.(*ast.CallExpr); !ok {
-				return true
-			}
-
-			c := n.(*ast.CallExpr)
-
-			if _, ok := c.Fun.(*ast.FuncLit); ok {
-				return true
-			}
-
-			// skip inspecting children in n
-			if !isAssert(assertImportIdent, c) {
-				return false
-			}
-
+		inspectAssert(a, func(n *ast.CallExpr) {
 			// 1. replace rawStringLit to stringLit
-			replaceAllRawStringLitByStringLit(c)
-			return true
+			replaceAllRawStringLitByStringLit(n)
 		})
 
 		// 2. replace multiline-compositLit by singleline-one by passing empty token.FileSet
@@ -209,29 +209,19 @@ func copyFile(path string, out io.Writer) error {
 	return nil
 }
 
-func rewriteFile(typesInfo *types.Info, fset *token.FileSet, a *ast.File, out io.Writer) error {
-	ast.Inspect(a, func(n ast.Node) bool {
-		switch n.(type) {
-		case *ast.CallExpr:
-			n := n.(*ast.CallExpr)
-
-			if _, ok := n.Fun.(*ast.FuncLit); ok {
-				return true
-			}
-
-			// skip inspecting children in n
-			if !isAssert(assertImportIdent, n) {
-				return false
-			}
-
-			rewriteAssert(typesInfo, fset.File(n.Pos()), n)
-			return false
-		}
-
-		return true
+func rewriteFile(typesInfo *types.Info, fset, originalFset *token.FileSet, file, origFile *ast.File, out io.Writer) error {
+	assertPositions := []token.Position{}
+	inspectAssert(origFile, func(n *ast.CallExpr) {
+		assertPositions = append(assertPositions, originalFset.Position(n.Pos()))
+	})
+	i := 0
+	inspectAssert(file, func(n *ast.CallExpr) {
+		pos := assertPositions[i]
+		i++
+		rewriteAssert(typesInfo, pos, n)
 	})
 
-	err := printer.Fprint(out, fset, a)
+	err := printer.Fprint(out, fset, file)
 	if err != nil {
 		return err
 	}
@@ -239,10 +229,7 @@ func rewriteFile(typesInfo *types.Info, fset *token.FileSet, a *ast.File, out io
 }
 
 // rewriteAssert rewrites assert to translatedassert
-func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
-	filename := file.Name()
-	line := file.Line(n.Pos())
-
+func rewriteAssert(typesInfo *types.Info, position token.Position, n *ast.CallExpr) {
 	b := []byte{}
 	buf := bytes.NewBuffer(b)
 	// printing valid expr must success
@@ -282,9 +269,9 @@ func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
 	// header
 	n.Args = append(n.Args, createRawStringLit("FAIL"))
 	// filename
-	n.Args = append(n.Args, createRawStringLit(filename))
+	n.Args = append(n.Args, createRawStringLit(position.Filename))
 	// line
-	n.Args = append(n.Args, &ast.BasicLit{Value: strconv.Itoa(line), Kind: token.INT})
+	n.Args = append(n.Args, &ast.BasicLit{Value: strconv.Itoa(position.Line), Kind: token.INT})
 	// string of original expr
 	n.Args = append(n.Args, createRawStringLit(originalExprString))
 	// terminal width
@@ -297,7 +284,7 @@ func rewriteAssert(typesInfo *types.Info, file *token.File, n *ast.CallExpr) {
 	)
 
 	// pos-value pairs
-	extractedPrintExprs := extractPrintExprs(typesInfo, filename, line, posOffset, n, n.Args[1])
+	extractedPrintExprs := extractPrintExprs(typesInfo, position.Filename, position.Line, posOffset, n, n.Args[1])
 	n.Args = append(n.Args, createPosValuePairExpr(extractedPrintExprs)...)
 	n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
 }

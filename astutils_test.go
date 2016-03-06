@@ -25,6 +25,19 @@ func TestIsAssert_Regression(t *testing.T) {
 	isAssert(assertImportIdent, exprs.(*ast.CallExpr))
 }
 
+func TestInspectAssert(t *testing.T) {
+	file, err := parser.ParseFile(token.NewFileSet(), "./testdata/inspect_assert_tests/main.go", nil, 0)
+	assert.Require(t, err == nil)
+
+	asserts := []string{}
+	inspectAssert(file, func(n *ast.CallExpr) {
+		asserts = append(asserts, astToCode(n))
+	})
+	assert.OK(t, len(asserts) == 2)
+	assert.OK(t, asserts[0] == `assert.OK(nil, "basic" == "basic")`)
+	assert.OK(t, asserts[1] == `assert.OK(nil, "in func" == "in func")`)
+}
+
 func TestGetAssertImport(t *testing.T) {
 	var f *ast.File
 	var err error

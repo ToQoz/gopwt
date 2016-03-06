@@ -482,3 +482,26 @@ func sprintCode(n ast.Node) string {
 func fprintCode(out io.Writer, n ast.Node) error {
 	return printer.Fprint(out, token.NewFileSet(), n)
 }
+
+func inspectAssert(root ast.Node, fn func(*ast.CallExpr)) {
+	ast.Inspect(root, func(n ast.Node) bool {
+		switch n.(type) {
+		case *ast.CallExpr:
+			n := n.(*ast.CallExpr)
+
+			if _, ok := n.Fun.(*ast.FuncLit); ok {
+				return true
+			}
+
+			if !isAssert(assertImportIdent, n) {
+				// skip inspecting children in assert.OK
+				return false
+			}
+
+			fn(n)
+			return false
+		}
+
+		return true
+	})
+}

@@ -59,7 +59,7 @@ func TestRewriteFile(t *testing.T) {
 	assert.Require(t, err == nil)
 
 	buf := bytes.NewBuffer([]byte{})
-	rewriteFile(nil, fset, f, buf)
+	rewriteFile(nil, fset, fset, f, f, buf)
 	got := buf.String()
 
 	assert.OK(t, got == expected)
