@@ -9,6 +9,57 @@ echo "" >> $out
 _misc/cov >> $out
 echo "" >> $out
 cat $root/_misc/readme.header2.md >> $out
+
+# install an try
+echo "## Install and Try" >> $out
+echo '
+```
+$ go get -u github.com/ToQoz/gopwt/...
+$ mkdir -p $GOPATH/src/github.com/$(whoami)/gopwtexample
+$ cd $GOPATH/src/github.com/$(whoami)/gopwtexample
+$ cat <<EOF > main_test.go
+package main
+
+import (
+	"github.com/ToQoz/gopwt/assert"
+	"testing"
+)
+
+func TestFoo(t *testing.T) {
+	a := "xxx"
+	b := "yyy"
+	assert.OK(t, a == b, "a should equal to b")
+}
+EOF
+$ gopwt
+```
+' >> $out
+
+d=$(pwd)
+
+ls $GOPATH/src/github.com/$(whoami)/gopwtexample || mkdir $GOPATH/src/github.com/$(whoami)/gopwtexample
+cd $GOPATH/src//github.com/$(whoami)/gopwtexample
+cat <<EOF > main_test.go
+package main
+
+import (
+	"github.com/ToQoz/gopwt/assert"
+	"testing"
+)
+
+func TestFoo(t *testing.T) {
+	a := "xxx"
+	b := "yyy"
+	assert.OK(t, a == b, "a should equal to b")
+}
+EOF
+
+echo '```' >> $out
+gopwt >> $out
+echo '```' >> $out
+
+cd $d
+
 # example code
 echo "" >> $out
 echo "## Example" >> $out
@@ -21,7 +72,7 @@ echo "" >> $out
 echo '```' >> $out
 echo '$ gopwt' >> $out
 cd _example
-gopwt 2>&1 | sed -e "s/	[0-9\.]*s$//g" >> $out
+gopwt 2>&1 >> $out
 echo '```' >> $out
 echo "" >> $out
 

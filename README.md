@@ -26,13 +26,12 @@ Usage of gopwt:
 ```
 
 ## Getting Started
-
-### Install and Try
+## Install and Try
 
 ```
 $ go get -u github.com/ToQoz/gopwt/...
-$ mkdir $GOPATH/src/$(whoami)/gopwtexample
-$ cd $GOPATH/src/$(whoami)/gopwtexample
+$ mkdir -p $GOPATH/src/github.com/$(whoami)/gopwtexample
+$ cd $GOPATH/src/github.com/$(whoami)/gopwtexample
 $ cat <<EOF > main_test.go
 package main
 
@@ -42,38 +41,36 @@ import (
 )
 
 func TestFoo(t *testing.T) {
-	a := "a"
-	b := "b"
+	a := "xxx"
+	b := "yyy"
 	assert.OK(t, a == b, "a should equal to b")
 }
 EOF
 $ gopwt
+```
+
+```
 --- FAIL: TestFoo (0.00s)
-	assert.go:61: FAIL /var/folders/f8/0gm3xlgn1q12_zt7kxmzfj480000gn/T/109993308/src/github.com/ToQoz/gopwtexample/main_test.go:11
+	assert.go:84: FAIL /Users/toqoz/_go/src/github.com/toqoz/gopwtexample/main_test.go:11
 		assert.OK(t, a == b, "a should equal to b")
 		             | |  |
 		             | |  "yyy"
 		             | false
 		             "xxx"
-
+		
 		Assersion messages:
 			- a should equal to b
-
+		
 		--- [string] b
-		--- [string] a
+		+++ [string] a
 		@@ -1,1 +1,1@@
 		-yyy
 		+xxx
-
-
+		
+		
 FAIL
-FAIL    github.com/ToQoz/gopwtexample        0.008s
-exit status 1
+FAIL	github.com/toqoz/gopwtexample	0.007s
 ```
-
-### Update
-
-`go get -u github.com/ToQoz/gopwt/...`
 
 ## Example
 ```go
@@ -343,8 +340,8 @@ $ gopwt
 		+++ [map[string]string] map[string]string{}
 		@@ -1,4 +1,1@@
 		-{
-		-  "b--------key": "b------value",
 		-  "a":            "a",
+		-  "b--------key": "b------value",
 		-}
 		+map[string]string{}
 		
@@ -518,8 +515,7 @@ $ gopwt
 		
 		
 FAIL
-FAIL	github.com/ToQoz/gopwt/_example
-exit status 1
+FAIL	github.com/ToQoz/gopwt/_example	0.010s
 ```
 
 ## See Also
