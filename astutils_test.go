@@ -1,12 +1,13 @@
-package main
+package gopwt
 
 import (
-	"github.com/ToQoz/gopwt/assert"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"strings"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestIsAssert_Regression(t *testing.T) {

@@ -1,4 +1,4 @@
-package main
+package gopwt
 
 import (
 	"go/token"

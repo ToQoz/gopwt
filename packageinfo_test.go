@@ -1,9 +1,10 @@
-package main
+package gopwt
 
 import (
-	"github.com/ToQoz/gopwt/assert"
 	"reflect"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestNewPackageInfo(t *testing.T) {

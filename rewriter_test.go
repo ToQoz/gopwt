@@ -1,14 +1,15 @@
-package main
+package gopwt
 
 import (
 	"bytes"
-	"github.com/ToQoz/gopwt/assert"
 	"go/ast"
 	"go/parser"
 	"go/printer"
 	"go/token"
 	"io/ioutil"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestDontPanic_OnTypeConversion(t *testing.T) {

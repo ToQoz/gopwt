@@ -1,7 +1,6 @@
-package main
+package gopwt
 
 import (
-	"github.com/ToQoz/gopwt/assert"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -9,6 +8,8 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestDeterminantExprOfIsTypeConversion(t *testing.T) {
