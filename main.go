@@ -154,7 +154,6 @@ func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) erro
 	}
 	cmd.Dir = path.Join(goPath, "src", pkgInfo.importPath)
 	// cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
-	cmd.Args = append(cmd.Args, ".")
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()
