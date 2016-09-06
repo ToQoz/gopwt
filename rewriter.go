@@ -1,4 +1,4 @@
-package main
+package gopwt
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"golang.org/x/tools/go/types"
+	"go/types"
 	"io"
 	"io/ioutil"
 	"os"

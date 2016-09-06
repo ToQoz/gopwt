@@ -1,10 +1,11 @@
-package main
+package gopwt
 
 import (
 	"go/ast"
+	"go/importer"
+	// "go/internal/gcimporter"
 	"go/token"
-	"golang.org/x/tools/go/gcimporter"
-	"golang.org/x/tools/go/types"
+	"go/types"
 	"os"
 	"os/exec"
 )
@@ -61,7 +62,8 @@ func getTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	}
 
 	// Assume types from ast.Node
-	typesConfig.Import = gcimporter.Import
+	// typesConfig.Import = gcimporter.Import
+	typesConfig.Importer = importer.Default()
 	pkg := types.NewPackage(importPath, "")
 	info := &types.Info{
 		Types:      map[ast.Expr]types.TypeAndValue{},

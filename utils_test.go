@@ -1,14 +1,15 @@
-package main
+package gopwt
 
 import (
 	"fmt"
-	"github.com/ToQoz/gopwt/assert"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestMust(t *testing.T) {

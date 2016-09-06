@@ -1,4 +1,4 @@
-package main
+package gopwt
 
 import (
 	"bytes"
@@ -112,6 +112,32 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 			imp := imp.(*ast.ImportSpec)
 
 			if imp.Path.Value == `"github.com/ToQoz/gopwt/assert"` {
+				return imp
+			}
+		}
+	}
+
+	return nil
+}
+
+func getGopwtImport(a *ast.File) *ast.ImportSpec {
+	for _, decl := range a.Decls {
+		decl, ok := decl.(*ast.GenDecl)
+		if !ok {
+			continue
+		}
+		if len(decl.Specs) == 0 {
+			continue
+		}
+
+		if _, ok := decl.Specs[0].(*ast.ImportSpec); !ok {
+			continue
+		}
+
+		for _, imp := range decl.Specs {
+			imp := imp.(*ast.ImportSpec)
+
+			if imp.Path.Value == `"github.com/ToQoz/gopwt"` {
 				return imp
 			}
 		}

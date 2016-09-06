@@ -1,16 +1,18 @@
-package main
+package gopwt
 
 import (
 	"flag"
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/mattn/go-isatty"
 )
 
 var (
@@ -19,7 +21,17 @@ var (
 	testdata = flag.String("testdata", "testdata", "name of test data directories. e.g. -testdata testdata,migrations")
 )
 
-func main() {
+func Main() {
+	dir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	if strings.HasPrefix(dir, os.TempDir()) {
+		// XXX: dirty hack
+		// Return if Main() is called from translated test to avoid recursive call.
+		// I guess re-writing Main() func in tranlation is better.
+		return
+	}
 	if err := doMain(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(2)
@@ -131,16 +143,17 @@ func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 }
 
 func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) error {
-	err := os.Setenv("GOPATH", goPath+":"+os.Getenv("GOPATH"))
-	if err != nil {
-		return err
-	}
+	// err := os.Setenv("GOPATH", os.Getenv("GOPATH"))
+	// if err != nil {
+	// 	return err
+	// }
 
 	cmd := exec.Command("go", "test")
 	if *verbose {
 		cmd.Args = append(cmd.Args, "-v")
 	}
-	cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
+	cmd.Dir = path.Join(goPath, "src", pkgInfo.importPath)
+	// cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()
