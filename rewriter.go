@@ -1,4 +1,4 @@
-package main
+package gopwt
 
 import (
 	"bytes"
@@ -79,6 +79,29 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		if !isTestGoFileName(path) {
 			continue
 		}
+
+		// gopwtImport := getGopwtImport(f)
+		// if gopwtImport != nil {
+		// 	fmt.Println(gopwtImport.Path.Value)
+		// 	gopwtImport.Path.Value = ""
+		// }
+		//
+		// ast.Inspect(f, func(n ast.Node) bool {
+		// 	switch n.(type) {
+		// 	case *ast.CallExpr:
+		// 		n := n.(*ast.CallExpr)
+		//
+		// 		if _, ok := n.Fun.(*ast.FuncLit); ok {
+		// 			return true
+		// 		}
+		//
+		// 		n.Fun
+		//
+		// 		// fn(n)
+		// 		return false
+		// 	}
+		// 	return false
+		// })
 
 		assertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := getAssertImport(f)

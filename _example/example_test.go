@@ -2,11 +2,21 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
-	"github.com/ToQoz/gopwt/assert"
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/ToQoz/gopwt"
+	"github.com/ToQoz/gopwt/assert"
 )
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	gopwt.Main() // magic happens
+	os.Exit(m.Run())
+}
 
 func TestWithMessage(t *testing.T) {
 	var receiver *struct{}
