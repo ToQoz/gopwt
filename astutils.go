@@ -120,7 +120,10 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 	return nil
 }
 
-func getGopwtImport(a *ast.File) *ast.ImportSpec {
+// dropGopwtMain drops `gopwt.Main()` and drops `import "github.com/ToQoz/gopwt"`.
+func dropGopwtMain(a *ast.File) (dropped bool) {
+	var gopwtImport *ast.ImportSpec
+
 	for _, decl := range a.Decls {
 		decl, ok := decl.(*ast.GenDecl)
 		if !ok {
@@ -134,16 +137,80 @@ func getGopwtImport(a *ast.File) *ast.ImportSpec {
 			continue
 		}
 
-		for _, imp := range decl.Specs {
+		for i, imp := range decl.Specs {
 			imp := imp.(*ast.ImportSpec)
 
 			if imp.Path.Value == `"github.com/ToQoz/gopwt"` {
-				return imp
+				decl.Specs = append(decl.Specs[:i], decl.Specs[i+1:]...)
+				gopwtImport = imp
 			}
 		}
 	}
 
-	return nil
+	if gopwtImport == nil && a.Name.Name != "gopwt" {
+		return false
+	}
+
+	for _, decl := range a.Decls {
+		gen, ok := decl.(*ast.FuncDecl)
+		if !ok {
+			continue
+		}
+
+		for i, stmt := range gen.Body.List {
+			expr, ok := stmt.(*ast.ExprStmt)
+			if !ok {
+				continue
+			}
+
+			callexpr, ok := expr.X.(*ast.CallExpr)
+			if !ok {
+				continue
+			}
+
+			if gopwtImport != nil {
+				sel, ok := callexpr.Fun.(*ast.SelectorExpr)
+				if !ok {
+					continue
+				}
+
+				// For tests in other packages
+				//
+				// package foopkg
+				// import (
+				//   "gopwt"
+				// )
+				//
+				// gopwt.Main() <--- drop
+				gopwtImportName := "gopwt"
+				if gopwtImport.Name != nil {
+					gopwtImportName = gopwtImport.Name.Name
+				}
+				if sel.X.(*ast.Ident).Name == gopwtImportName && sel.Sel.Name == "Main" {
+					gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
+					dropped = true
+					return
+				}
+			} else {
+				// For tests in this package(= gopwt)
+				//
+				// package gopwt
+				//
+				// Main() <--- drop
+				ident, ok := callexpr.Fun.(*ast.Ident)
+				if !ok {
+					continue
+				}
+
+				if ident.Name == "Main" {
+					gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
+					dropped = true
+					return
+				}
+			}
+		}
+	}
+	return
 }
 
 // isAssert returns ok if given CallExpr is github.com/ToQoz/gopwt/assert.OK or Require

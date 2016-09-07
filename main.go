@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 
 	"github.com/mattn/go-isatty"
 )
@@ -22,21 +23,20 @@ var (
 )
 
 func Main() {
-	dir, err := os.Getwd()
-	if err != nil {
-		return
-	}
-	if strings.HasPrefix(dir, os.TempDir()) {
-		// XXX: dirty hack
-		// Return if Main() is called from translated test to avoid recursive call.
-		// I guess re-writing Main() func in tranlation is better.
-		return
-	}
 	if err := doMain(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(2)
-		return
+
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			if s, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				os.Exit(s.ExitStatus())
+			} else {
+				panic(fmt.Errorf("Unimplemented for system where exec.ExitError.Sys() is not syscall.WaitStatus."))
+			}
+		}
+
+		os.Exit(127)
 	}
+	os.Exit(0)
 }
 func doMain() error {
 	if runtime.Version() == "go1.4" {
