@@ -23,12 +23,8 @@ t() {
   cp -R ./* $pkgpath/
   cd $pkgpath
   go get ./...
-  go build
-  ./gopwt ./...
+  go test ./...
 }
 
-t 1.2
-t 1.3
-t 1.4.1
 t 1.5
 t 1.6

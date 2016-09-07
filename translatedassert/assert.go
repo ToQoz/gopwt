@@ -3,12 +3,13 @@ package translatedassert
 
 import (
 	"fmt"
-	"github.com/k0kubun/pp"
-	"github.com/mattn/go-runewidth"
 	"reflect"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/k0kubun/pp"
+	"github.com/mattn/go-runewidth"
 )
 
 var cachedFuncRet = map[string]map[int]interface{}{}

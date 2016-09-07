@@ -1,4 +1,4 @@
-package main
+package gopwt
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"golang.org/x/tools/go/types"
+	"go/types"
 	"io"
 	"io/ioutil"
 	"os"
@@ -80,16 +80,21 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			continue
 		}
 
+		gopwtMainDropped := dropGopwtEmpower(f)
+
 		assertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := getAssertImport(f)
 		if assertImport == nil {
-			continue
-		}
-		assertImport.Path.Value = `"github.com/ToQoz/gopwt/translatedassert"`
+			if !gopwtMainDropped {
+				continue
+			}
+		} else {
+			assertImport.Path.Value = `"github.com/ToQoz/gopwt/translatedassert"`
 
-		if assertImport.Name != nil {
-			assertImportIdent = assertImport.Name
-			assertImport.Name = translatedassertImportIdent
+			if assertImport.Name != nil {
+				assertImportIdent = assertImport.Name
+				assertImport.Name = translatedassertImportIdent
+			}
 		}
 
 		fi, err := os.Stat(path)

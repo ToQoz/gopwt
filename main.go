@@ -1,16 +1,19 @@
-package main
+package gopwt
 
 import (
 	"flag"
 	"fmt"
-	"github.com/mattn/go-isatty"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
+
+	"github.com/mattn/go-isatty"
 )
 
 var (
@@ -19,12 +22,21 @@ var (
 	testdata = flag.String("testdata", "testdata", "name of test data directories. e.g. -testdata testdata,migrations")
 )
 
-func main() {
+func Empower() {
 	if err := doMain(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(2)
-		return
+
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			if s, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				os.Exit(s.ExitStatus())
+			} else {
+				panic(fmt.Errorf("Unimplemented for system where exec.ExitError.Sys() is not syscall.WaitStatus."))
+			}
+		}
+
+		os.Exit(127)
 	}
+	os.Exit(0)
 }
 func doMain() error {
 	if runtime.Version() == "go1.4" {
@@ -140,7 +152,8 @@ func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) erro
 	if *verbose {
 		cmd.Args = append(cmd.Args, "-v")
 	}
-	cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
+	cmd.Dir = path.Join(goPath, "src", pkgInfo.importPath)
+	// cmd.Args = append(cmd.Args, pkgInfo.ToGoTestArg())
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()

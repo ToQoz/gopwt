@@ -1,12 +1,16 @@
-package main
+package gopwt
 
 import (
-	"github.com/ToQoz/gopwt/assert"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestIsAssert_Regression(t *testing.T) {
@@ -58,6 +62,111 @@ func TestGetAssertImport(t *testing.T) {
 	importSpec = getAssertImport(f)
 	assert.OK(t, importSpec.Name.Name == `powerAssert`)
 	assert.OK(t, importSpec.Path.Value == `"github.com/ToQoz/gopwt/assert"`)
+}
+
+func TestDropGopwtEmpower(t *testing.T) {
+	test := func(input, expected string) {
+		tmp, err := ioutil.TempFile("", "gopwt_TestDropGopwtEmpower")
+		assert.Require(t, err == nil)
+
+		defer os.Remove(tmp.Name())
+		defer tmp.Close()
+
+		_, err = tmp.Write([]byte(input))
+		assert.Require(t, err == nil)
+
+		fset := token.NewFileSet()
+
+		f, err := parser.ParseFile(fset, tmp.Name(), nil, 0)
+		assert.Require(t, err == nil)
+		dropGopwtEmpower(f)
+
+		tmp.Seek(0, 0)
+		tmp.Truncate(0)
+
+		err = printer.Fprint(tmp, fset, f)
+		assert.Require(t, err == nil)
+
+		data, err := ioutil.ReadFile(tmp.Name())
+		assert.Require(t, err == nil)
+		assert.OK(t, string(data) == expected)
+	}
+
+	test(`package apkg
+
+import (
+	"testing"
+	"os"
+
+	"github.com/ToQoz/gopwt"
+)
+
+func TestMain(m *testing.M) {
+	gopwt.Empower()
+	os.Exit(m.Run())
+}
+`, `package apkg
+
+import (
+	"testing"
+	"os"
+)
+
+func TestMain(m *testing.M) {
+
+	os.Exit(m.Run())
+}
+`)
+
+	test(`package apkg
+
+import (
+	"testing"
+	"os"
+
+	gopwt2 "github.com/ToQoz/gopwt"
+)
+
+func TestMain(m *testing.M) {
+	gopwt2.Empower()
+	os.Exit(m.Run())
+}
+`, `package apkg
+
+import (
+	"testing"
+	"os"
+)
+
+func TestMain(m *testing.M) {
+
+	os.Exit(m.Run())
+}
+`)
+
+	test(`package gopwt
+
+import (
+	"testing"
+	"os"
+)
+
+func TestMain(m *testing.M) {
+	Empower()
+	os.Exit(m.Run())
+}
+`, `package gopwt
+
+import (
+	"testing"
+	"os"
+)
+
+func TestMain(m *testing.M) {
+
+	os.Exit(m.Run())
+}
+`)
 }
 
 func TestReplaceBinaryExpr(t *testing.T) {

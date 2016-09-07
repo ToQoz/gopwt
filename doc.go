@@ -37,4 +37,4 @@ Usage
 	FAIL    github.com/ToQoz/gopwt/foo      0.006s
 	exit status 1
 */
-package main
+package gopwt

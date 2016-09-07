@@ -21,9 +21,18 @@ $ cat <<EOF > main_test.go
 package main
 
 import (
+	"flag"
+	"github.com/ToQoz/gopwt"
 	"github.com/ToQoz/gopwt/assert"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	gopwt.Empower()
+	os.Exit(m.Run())
+}
 
 func TestFoo(t *testing.T) {
 	a := "xxx"
@@ -31,7 +40,7 @@ func TestFoo(t *testing.T) {
 	assert.OK(t, a == b, "a should equal to b")
 }
 EOF
-$ gopwt
+$ go test
 ```
 ' >> $out
 
@@ -43,9 +52,18 @@ cat <<EOF > main_test.go
 package main
 
 import (
+	"flag"
+	"github.com/ToQoz/gopwt"
 	"github.com/ToQoz/gopwt/assert"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	gopwt.Empower()
+	os.Exit(m.Run())
+}
 
 func TestFoo(t *testing.T) {
 	a := "xxx"
@@ -55,7 +73,7 @@ func TestFoo(t *testing.T) {
 EOF
 
 echo '```' >> $out
-gopwt >> $out
+go test >> $out
 echo '```' >> $out
 
 cd $d
@@ -64,15 +82,15 @@ cd $d
 echo "" >> $out
 echo "## Example" >> $out
 echo '```go' >> $out
-cat _example/example_test.go >> $out
+cat _example/main_test.go >> $out
 echo '```' >> $out
 
 # example result
 echo "" >> $out
 echo '```' >> $out
-echo '$ gopwt' >> $out
+echo '$ go test' >> $out
 cd _example
-gopwt 2>&1 >> $out
+go test 2>&1 >> $out
 echo '```' >> $out
 echo "" >> $out
 
