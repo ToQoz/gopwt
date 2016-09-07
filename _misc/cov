@@ -2,20 +2,8 @@
 
 badge() {
   pkg=$1
-
-  color=""
-  n=$(echo $2 | sed -e 's/\.[0-9]*%//')
-  if [ $n -lt 25 ]; then
-    color="red"
-  elif [ $n -lt 50 ]; then
-    color="orange"
-  elif [ $n -lt 75 ]; then
-    color="green"
-  else
-    color="brightgreen"
-  fi
-
-  echo "|$pkg|[![](https://img.shields.io/badge/coverage-$2-$color.svg?style=flat)](https://gocover.io/github.com/toqoz/$pkg)|"
+  cov=$2
+  echo "|$pkg|[$cov](https://gocover.io/github.com/toqoz/$pkg)|"
 }
 export -f badge
 

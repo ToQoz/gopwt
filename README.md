@@ -4,9 +4,9 @@
 
 |package|coverage|
 |-------|--------|
-|gopwt|[![](https://img.shields.io/badge/coverage-60.8%-green.svg?style=flat)](https://gocover.io/github.com/toqoz/gopwt)|
-|gopwt/assert|[![](https://img.shields.io/badge/coverage-62.1%-green.svg?style=flat)](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert|[![](https://img.shields.io/badge/coverage-63.6%-green.svg?style=flat)](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|gopwt|[60.8%](https://gocover.io/github.com/toqoz/gopwt)|
+|gopwt/assert|[62.1%](https://gocover.io/github.com/toqoz/gopwt/assert)|
+|gopwt/translatedassert|[63.6%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
@@ -50,7 +50,6 @@ $ go test
 ```
 
 ```
-=== RUN   TestFoo
 --- FAIL: TestFoo (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/toqoz/gopwtexample/main_test.go:20
 		assert.OK(t, a == b, "a should equal to b")
@@ -71,9 +70,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/toqoz/gopwtexample	0.009s
+FAIL	github.com/toqoz/gopwtexample	0.008s
 exit status 1
-FAIL	github.com/toqoz/gopwtexample	0.877s
+FAIL	github.com/toqoz/gopwtexample	0.584s
 ```
 
 ## Example
@@ -202,7 +201,6 @@ func TestPkgValue(t *testing.T) {
 
 ```
 $ go test
-=== RUN   TestWithMessage
 --- FAIL: TestWithMessage (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:24
 		assert.OK(t, receiver != nil, "receiver should not be nil")
@@ -214,7 +212,6 @@ $ go test
 		Assersion messages:
 			- receiver should not be nil
 		
-=== RUN   TestBasicLit
 --- FAIL: TestBasicLit (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:28
 		assert.OK(t, "a" == "b")
@@ -288,7 +285,6 @@ $ go test
 		 bar
 		
 		
-=== RUN   TestStringDiff
 --- FAIL: TestStringDiff (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:41
 		assert.OK(t, "supersoper" == "supersuper")
@@ -345,7 +341,6 @@ $ go test
 		 </div>
 		
 		
-=== RUN   TestMapType
 --- FAIL: TestMapType (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:67
 		assert.OK(t, reflect.DeepEqual(map[string]string{}, map[string]string{"a": "a", k: v}))
@@ -358,13 +353,12 @@ $ go test
 		+++ [map[string]string] map[string]string{}
 		@@ -1,4 +1,1@@
 		-{
-		-  "b--------key": "b------value",
 		-  "a":            "a",
+		-  "b--------key": "b------value",
 		-}
 		+map[string]string{}
 		
 		
-=== RUN   TestArrayType
 --- FAIL: TestArrayType (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:75
 		assert.OK(t, []int{1, 2}[index] == 3)
@@ -380,7 +374,6 @@ $ go test
 		+2
 		
 		
-=== RUN   TestStructType
 --- FAIL: TestStructType (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:83
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{foox}, struct{ Name string }{"foo"}))
@@ -408,7 +401,6 @@ $ go test
 		  Name: "foo{+------x+}",
 		}
 		
-=== RUN   TestNestedCallExpr
 --- FAIL: TestNestedCallExpr (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:92
 		assert.OK(t, rev(rev(rev(true))))
@@ -418,7 +410,6 @@ $ go test
 		             |   true
 		             false
 		
-=== RUN   TestCallWithNonIdempotentFunc
 --- FAIL: TestCallWithNonIdempotentFunc (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:102
 		assert.OK(t, incl()+incl() == incl()+incl())
@@ -519,7 +510,6 @@ $ go test
 		+4
 		
 		
-=== RUN   TestPkgValue
 --- FAIL: TestPkgValue (0.00s)
 	assert.go:85: FAIL /Users/toqoz/_go/src/github.com/ToQoz/gopwt/_example/main_test.go:119
 		assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
@@ -539,9 +529,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.012s
+FAIL	github.com/ToQoz/gopwt/_example	0.010s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.773s
+FAIL	github.com/ToQoz/gopwt/_example	0.761s
 ```
 
 ## Tips
