@@ -6,12 +6,4 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 
 See [.travis.yml](/.travis.yml)
 
-## Usage
-
-```
-Usage of gopwt:
-  -testdata="testdata": name of test data directories. e.g. -testdata testdata,migrations
-  -v=false: This will be passed to `go test`
-```
-
 ## Getting Started

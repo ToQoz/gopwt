@@ -14,7 +14,7 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	gopwt.Main() // magic happens
+	gopwt.Empower() // magic happens
 	os.Exit(m.Run())
 }
 
