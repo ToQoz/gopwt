@@ -18,8 +18,8 @@ import (
 
 var (
 	termw    = 0
-	verbose  = flag.Bool("v", false, "This will be passed to `go test`")
 	testdata = flag.String("testdata", "testdata", "name of test data directories. e.g. -testdata testdata,migrations")
+	verbose  = false
 )
 
 func Empower() {
@@ -46,6 +46,14 @@ func doMain() error {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
+
+	flag.VisitAll(func(f *flag.Flag) {
+		if f.Name == "test.v" {
+			if f.Value.String() == "false" {
+				verbose = true
+			}
+		}
+	})
 
 	if isatty.IsTerminal(os.Stdout.Fd()) {
 		termw = getTermCols(os.Stdin.Fd())
@@ -151,7 +159,8 @@ func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) erro
 	}
 
 	cmd := exec.Command("go", "test")
-	if *verbose {
+
+	if verbose {
 		cmd.Args = append(cmd.Args, "-v")
 	}
 	cmd.Dir = path.Join(goPath, "src", pkgInfo.importPath)

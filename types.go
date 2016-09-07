@@ -52,7 +52,7 @@ func getTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		install.Dir = pkgDir
 		install.Stdout = os.Stdout
 		install.Stderr = os.Stderr
-		if *verbose {
+		if verbose {
 			install.Args = append(install.Args, "-v")
 		}
 		install.Args = append(install.Args, deps...)
