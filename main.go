@@ -43,7 +43,9 @@ func doMain() error {
 		return fmt.Errorf("go1.4 is not supported. please bump to go1.4.1 or later")
 	}
 
-	flag.Parse()
+	if !flag.Parsed() {
+		flag.Parse()
+	}
 
 	if isatty.IsTerminal(os.Stdout.Fd()) {
 		termw = getTermCols(os.Stdin.Fd())
