@@ -64,9 +64,9 @@ func TestGetAssertImport(t *testing.T) {
 	assert.OK(t, importSpec.Path.Value == `"github.com/ToQoz/gopwt/assert"`)
 }
 
-func TestDropGopwtMain(t *testing.T) {
+func TestDropGopwtEmpower(t *testing.T) {
 	test := func(input, expected string) {
-		tmp, err := ioutil.TempFile("", "gopwt_TestDropGopwtMain")
+		tmp, err := ioutil.TempFile("", "gopwt_TestDropGopwtEmpower")
 		assert.Require(t, err == nil)
 
 		defer os.Remove(tmp.Name())
@@ -79,7 +79,7 @@ func TestDropGopwtMain(t *testing.T) {
 
 		f, err := parser.ParseFile(fset, tmp.Name(), nil, 0)
 		assert.Require(t, err == nil)
-		dropGopwtMain(f)
+		dropGopwtEmpower(f)
 
 		tmp.Seek(0, 0)
 		tmp.Truncate(0)
@@ -102,7 +102,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	gopwt.Main()
+	gopwt.Empower()
 	os.Exit(m.Run())
 }
 `, `package apkg
@@ -128,7 +128,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	gopwt2.Main()
+	gopwt2.Empower()
 	os.Exit(m.Run())
 }
 `, `package apkg
@@ -152,7 +152,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	Main()
+	Empower()
 	os.Exit(m.Run())
 }
 `, `package gopwt

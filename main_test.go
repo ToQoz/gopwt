@@ -8,6 +8,6 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	Main()
+	Empower()
 	os.Exit(m.Run())
 }

@@ -120,8 +120,8 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 	return nil
 }
 
-// dropGopwtMain drops `gopwt.Main()` and drops `import "github.com/ToQoz/gopwt"`.
-func dropGopwtMain(a *ast.File) (dropped bool) {
+// dropGopwtEmpower drops `gopwt.Empower()` and drops `import "github.com/ToQoz/gopwt"`.
+func dropGopwtEmpower(a *ast.File) (dropped bool) {
 	var gopwtImport *ast.ImportSpec
 
 	for _, decl := range a.Decls {
@@ -181,12 +181,12 @@ func dropGopwtMain(a *ast.File) (dropped bool) {
 				//   "gopwt"
 				// )
 				//
-				// gopwt.Main() <--- drop
+				// gopwt.Empower() <--- drop
 				gopwtImportName := "gopwt"
 				if gopwtImport.Name != nil {
 					gopwtImportName = gopwtImport.Name.Name
 				}
-				if sel.X.(*ast.Ident).Name == gopwtImportName && sel.Sel.Name == "Main" {
+				if sel.X.(*ast.Ident).Name == gopwtImportName && sel.Sel.Name == "Empower" {
 					gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
 					dropped = true
 					return
@@ -196,13 +196,13 @@ func dropGopwtMain(a *ast.File) (dropped bool) {
 				//
 				// package gopwt
 				//
-				// Main() <--- drop
+				// Empower() <--- drop
 				ident, ok := callexpr.Fun.(*ast.Ident)
 				if !ok {
 					continue
 				}
 
-				if ident.Name == "Main" {
+				if ident.Name == "Empower" {
 					gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
 					dropped = true
 					return

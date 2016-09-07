@@ -22,7 +22,7 @@ var (
 	testdata = flag.String("testdata", "testdata", "name of test data directories. e.g. -testdata testdata,migrations")
 )
 
-func Main() {
+func Empower() {
 	if err := doMain(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 

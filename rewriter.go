@@ -80,7 +80,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			continue
 		}
 
-		gopwtMainDropped := dropGopwtMain(f)
+		gopwtMainDropped := dropGopwtEmpower(f)
 
 		assertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := getAssertImport(f)
