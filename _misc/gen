@@ -55,7 +55,7 @@ func TestFoo(t *testing.T) {
 EOF
 
 echo '```' >> $out
-gopwt >> $out
+go test >> $out
 echo '```' >> $out
 
 cd $d
@@ -72,7 +72,7 @@ echo "" >> $out
 echo '```' >> $out
 echo '$ gopwt' >> $out
 cd _example
-gopwt 2>&1 >> $out
+go test 2>&1 >> $out
 echo '```' >> $out
 echo "" >> $out
 
