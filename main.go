@@ -53,7 +53,7 @@ func doMain() error {
 
 	flag.VisitAll(func(f *flag.Flag) {
 		if f.Name == "test.v" {
-			if f.Value.String() == "false" {
+			if f.Value.String() != "false" {
 				verbose = true
 			}
 		}
