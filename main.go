@@ -143,10 +143,10 @@ func rewrite(tempGoPath string, pkgInfo *packageInfo) error {
 }
 
 func runTest(goPath string, pkgInfo *packageInfo, stdout, stderr io.Writer) error {
-	// err := os.Setenv("GOPATH", os.Getenv("GOPATH"))
-	// if err != nil {
-	// 	return err
-	// }
+	err := os.Setenv("GOPATH", goPath+":"+os.Getenv("GOPATH"))
+	if err != nil {
+		return err
+	}
 
 	cmd := exec.Command("go", "test")
 	if *verbose {
