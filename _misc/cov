@@ -21,4 +21,4 @@ export -f badge
 
 echo "|package|coverage|"
 echo "|-------|--------|"
-go test github.com/ToQoz/gopwt/... -covermode=count | grep coverage | awk -F' ' '{print $2 " " $5}' | sed -e 's,github.com/ToQoz/,,' | xargs -I{} bash -c "badge {}"
+GOPWT_OFF=1 go test github.com/ToQoz/gopwt/... -covermode=count | grep coverage | awk -F' ' '{print $2 " " $5}' | sed -e 's,github.com/ToQoz/,,' | xargs -I{} bash -c "badge {}"

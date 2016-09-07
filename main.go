@@ -23,6 +23,10 @@ var (
 )
 
 func Empower() {
+	if os.Getenv("GOPWT_OFF") != "" {
+		return
+	}
+
 	if err := doMain(); err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
 
