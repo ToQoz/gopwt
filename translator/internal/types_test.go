@@ -1,4 +1,4 @@
-package gopwt
+package internal_test
 
 import (
 	"go/ast"
@@ -10,21 +10,22 @@ import (
 	"testing"
 
 	"github.com/ToQoz/gopwt/assert"
+	. "github.com/ToQoz/gopwt/translator/internal"
 )
 
 func TestDeterminantExprOfIsTypeConversion(t *testing.T) {
 	var d ast.Expr
 
-	d = determinantExprOfIsTypeConversion(mustParseExpr("(string(x))"))
+	d = DeterminantExprOfIsTypeConversion(MustParseExpr("(string(x))"))
 	assert.OK(t, astToCode(d) == "string")
 
-	d = determinantExprOfIsTypeConversion(mustParseExpr("*string(x)"))
+	d = DeterminantExprOfIsTypeConversion(MustParseExpr("*string(x)"))
 	assert.OK(t, astToCode(d) == "string")
 
-	d = determinantExprOfIsTypeConversion(mustParseExpr("string(x)"))
+	d = DeterminantExprOfIsTypeConversion(MustParseExpr("string(x)"))
 	assert.OK(t, astToCode(d) == "string")
 
-	d = determinantExprOfIsTypeConversion(mustParseExpr("http.Handler(x)"))
+	d = DeterminantExprOfIsTypeConversion(MustParseExpr("http.Handler(x)"))
 	assert.OK(t, astToCode(d) == "Handler")
 }
 
@@ -42,21 +43,21 @@ func TestIsTypeConversion(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, "./tdata/is_type_conversion_test/main.go", nil, 0)
 	assert.Require(t, err == nil)
-	types, err := getTypeInfo("./tdata/is_type_conversion_test", "github.com/ToQoz/gopwt/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), ":")[0]+"/src", fset, []*ast.File{f})
+	types, err := GetTypeInfo("./tdata/is_type_conversion_test", "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), ":")[0]+"/src", fset, []*ast.File{f})
 	assert.Require(t, err == nil)
 
 	// fmt.Println(string([]byte(hello())))
 	expr := f.Decls[1].(*ast.FuncDecl).Body.List[0].(*ast.ExprStmt).X
 
 	fmtPrintln := expr.(*ast.CallExpr)
-	assert.OK(t, isTypeConversion(types, fmtPrintln) == false, "fmt.Println(x) is NOT type conversion")
+	assert.OK(t, IsTypeConversion(types, fmtPrintln) == false, "fmt.Println(x) is NOT type conversion")
 	stringConv := fmtPrintln.Args[0].(*ast.CallExpr)
-	assert.OK(t, isTypeConversion(types, stringConv) == true, "string(x) is type conversion")
+	assert.OK(t, IsTypeConversion(types, stringConv) == true, "string(x) is type conversion")
 	bytesConv := stringConv.Args[0].(*ast.CallExpr)
-	assert.OK(t, isTypeConversion(types, bytesConv) == true, "[]byte(x) is type conversion")
+	assert.OK(t, IsTypeConversion(types, bytesConv) == true, "[]byte(x) is type conversion")
 
 	// fmt.Println(http.Handler(nil))
 	expr = f.Decls[1].(*ast.FuncDecl).Body.List[1].(*ast.ExprStmt).X
 	httpHandlerConv := expr.(*ast.CallExpr).Args[0].(*ast.CallExpr)
-	assert.OK(t, isTypeConversion(types, httpHandlerConv) == true, "http.Handler(x) is type conversion")
+	assert.OK(t, IsTypeConversion(types, httpHandlerConv) == true, "http.Handler(x) is type conversion")
 }

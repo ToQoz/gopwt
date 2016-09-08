@@ -1,4 +1,4 @@
-package gopwt
+package internal
 
 import (
 	"bytes"
@@ -31,8 +31,8 @@ var (
 	}
 )
 
-// replaceBinaryExpr replace oldExpr by newExpr in parent
-func replaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Expr) {
+// ReplaceBinaryExpr replace oldExpr by newExpr in parent
+func ReplaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Expr) {
 	switch parent.(type) {
 	case *ast.CallExpr:
 		parent := parent.(*ast.CallExpr)
@@ -79,11 +79,11 @@ func replaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Exp
 	panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
 }
 
-// replaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
-func replaceAllRawStringLitByStringLit(root ast.Node) {
+// ReplaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
+func ReplaceAllRawStringLitByStringLit(root ast.Node) {
 	ast.Inspect(root, func(n ast.Node) bool {
 		if n, ok := n.(*ast.BasicLit); ok {
-			if isRawStringLit(n) {
+			if IsRawStringLit(n) {
 				n.Value = strconv.Quote(strings.Trim(n.Value, "`"))
 			}
 		}
@@ -92,9 +92,9 @@ func replaceAllRawStringLitByStringLit(root ast.Node) {
 	})
 }
 
-// getAssertImport returns *ast.ImportSpec of "github.com/ToQoz/gopwt/assert"
+// GetAssertImport returns *ast.ImportSpec of "github.com/ToQoz/gopwt/assert"
 // if it is not found, this returns nil
-func getAssertImport(a *ast.File) *ast.ImportSpec {
+func GetAssertImport(a *ast.File) *ast.ImportSpec {
 	for _, decl := range a.Decls {
 		decl, ok := decl.(*ast.GenDecl)
 		if !ok {
@@ -120,8 +120,8 @@ func getAssertImport(a *ast.File) *ast.ImportSpec {
 	return nil
 }
 
-// dropGopwtEmpower drops `gopwt.Empower()` and drops `import "github.com/ToQoz/gopwt"`.
-func dropGopwtEmpower(a *ast.File) (dropped bool) {
+// DropGopwtEmpower drops `gopwt.Empower()` and drops `import "github.com/ToQoz/gopwt"`.
+func DropGopwtEmpower(a *ast.File) (dropped bool) {
 	var gopwtImport *ast.ImportSpec
 
 	for _, decl := range a.Decls {
@@ -194,7 +194,7 @@ func dropGopwtEmpower(a *ast.File) (dropped bool) {
 			} else {
 				// For tests in this package(= gopwt)
 				//
-				// package gopwt
+				// package internal
 				//
 				// Empower() <--- drop
 				ident, ok := callexpr.Fun.(*ast.Ident)
@@ -213,8 +213,8 @@ func dropGopwtEmpower(a *ast.File) (dropped bool) {
 	return
 }
 
-// isAssert returns ok if given CallExpr is github.com/ToQoz/gopwt/assert.OK or Require
-func isAssert(x *ast.Ident, c *ast.CallExpr) bool {
+// IsAssert returns ok if given CallExpr is github.com/ToQoz/gopwt/assert.OK or Require
+func IsAssert(x *ast.Ident, c *ast.CallExpr) bool {
 	if s, ok := c.Fun.(*ast.SelectorExpr); ok {
 		if xident, ok := s.X.(*ast.Ident); ok {
 			return xident.Name == x.Name && (s.Sel.Name == "OK" || s.Sel.Name == "Require")
@@ -224,7 +224,7 @@ func isAssert(x *ast.Ident, c *ast.CallExpr) bool {
 	return false
 }
 
-func isBuiltinFunc(n *ast.CallExpr) bool {
+func IsBuiltinFunc(n *ast.CallExpr) bool {
 	if f, ok := n.Fun.(*ast.Ident); ok {
 		for _, b := range builtinFuncs {
 			if f.Name == b {
@@ -236,7 +236,7 @@ func isBuiltinFunc(n *ast.CallExpr) bool {
 	return false
 }
 
-func isMapType(n ast.Node) bool {
+func IsMapType(n ast.Node) bool {
 	if n, ok := n.(*ast.CompositeLit); ok {
 		_, ismap := n.Type.(*ast.MapType)
 		return ismap
@@ -245,11 +245,11 @@ func isMapType(n ast.Node) bool {
 	return false
 }
 
-func isRawStringLit(n *ast.BasicLit) bool {
+func IsRawStringLit(n *ast.BasicLit) bool {
 	return n.Kind == token.STRING && strings.HasPrefix(n.Value, "`") && strings.HasSuffix(n.Value, "`")
 }
 
-func isEqualExpr(expr ast.Expr) bool {
+func IsEqualExpr(expr ast.Expr) bool {
 	if b, ok := expr.(*ast.BinaryExpr); ok {
 		return b.Op == token.EQL
 	}
@@ -257,7 +257,7 @@ func isEqualExpr(expr ast.Expr) bool {
 	return false
 }
 
-func isReflectDeepEqual(expr ast.Expr) bool {
+func IsReflectDeepEqual(expr ast.Expr) bool {
 	if c, ok := expr.(*ast.CallExpr); ok {
 		if sel, ok := c.Fun.(*ast.SelectorExpr); ok {
 			if ident, ok := sel.X.(*ast.Ident); ok {
@@ -269,10 +269,10 @@ func isReflectDeepEqual(expr ast.Expr) bool {
 	return false
 }
 
-func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
+func CreateUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
 	createAltBuiltin := func(bfuncName string, args []ast.Expr) *ast.CallExpr {
 		return &ast.CallExpr{
-			Fun:  &ast.SelectorExpr{X: translatedassertImportIdent, Sel: &ast.Ident{Name: "B" + bfuncName}},
+			Fun:  &ast.SelectorExpr{X: translatedAssertImportIdent, Sel: &ast.Ident{Name: "B" + bfuncName}},
 			Args: args,
 		}
 	}
@@ -283,10 +283,10 @@ func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
 	case "append", "cap", "complex", "copy", "imag", "len", "real":
 		return createAltBuiltin(name, n.Args)
 	case "new":
-		return createAltBuiltin(name, []ast.Expr{createReflectTypeExprFromTypeExpr(n.Args[0])})
+		return createAltBuiltin(name, []ast.Expr{CreateReflectTypeExprFromTypeExpr(n.Args[0])})
 	case "make":
 		args := []ast.Expr{}
-		args = append(args, createReflectTypeExprFromTypeExpr(n.Args[0]))
+		args = append(args, CreateReflectTypeExprFromTypeExpr(n.Args[0]))
 		args = append(args, n.Args[1:]...)
 		return createAltBuiltin(name, args)
 	default:
@@ -294,7 +294,7 @@ func createUntypedCallExprFromBuiltinCallExpr(n *ast.CallExpr) *ast.CallExpr {
 	}
 }
 
-func createBoolIdent(v bool) *ast.Ident {
+func CreateBoolIdent(v bool) *ast.Ident {
 	var name string
 	if v {
 		name = "true"
@@ -304,12 +304,12 @@ func createBoolIdent(v bool) *ast.Ident {
 	return &ast.Ident{Name: name}
 }
 
-// createUntypedExprFromBinaryExpr creates untyped operator-func(translatedassert.Op*()) from BinaryExpr
+// CreateUntypedExprFromBinaryExpr creates untyped operator-func(translatedassert.Op*()) from BinaryExpr
 // if given BinaryExpr is untyped, returns it.
-func createUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
+func CreateUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 	createFuncOp := func(opName string, x ast.Expr, y ast.Expr) *ast.CallExpr {
 		return &ast.CallExpr{
-			Fun:  &ast.SelectorExpr{X: translatedassertImportIdent, Sel: &ast.Ident{Name: "Op" + opName}},
+			Fun:  &ast.SelectorExpr{X: translatedAssertImportIdent, Sel: &ast.Ident{Name: "Op" + opName}},
 			Args: []ast.Expr{x, y},
 		}
 	}
@@ -367,37 +367,37 @@ func createUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 }
 
 // f(a, b) -> translatedassert.FRVInterface(translatedassert.MFCall(filename, line, pos, f, translatedassert.RVOf(a), translatedassert.RVOf(b)))
-func createMemorizedFuncCall(filename string, line int, n *ast.CallExpr, returnType string) *ast.CallExpr {
+func CreateMemorizedFuncCall(filename string, line int, n *ast.CallExpr, returnType string) *ast.CallExpr {
 	c := &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
+			X:   translatedAssertImportIdent,
 			Sel: &ast.Ident{Name: "MFCall"},
 		},
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(filename)},
 			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(line)},
 			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(n.Pos()))},
-			createReflectValueOfExpr(n.Fun),
+			CreateReflectValueOfExpr(n.Fun),
 		},
 	}
 
 	args := []ast.Expr{}
 	for _, a := range n.Args {
-		args = append(args, createReflectValueOfExpr(a))
+		args = append(args, CreateReflectValueOfExpr(a))
 	}
 	c.Args = append(c.Args, args...)
 
 	return &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
+			X:   translatedAssertImportIdent,
 			Sel: &ast.Ident{Name: "FRV" + returnType},
 		},
 		Args: []ast.Expr{c},
 	}
 }
 
-// createReflectTypeExprFromTypeExpr create ast of reflect.Type from ast of type.
-func createReflectTypeExprFromTypeExpr(t ast.Expr) ast.Expr {
+// CreateReflectTypeExprFromTypeExpr create ast of reflect.Type from ast of type.
+func CreateReflectTypeExprFromTypeExpr(t ast.Expr) ast.Expr {
 	canUseCompositeLit := true
 
 	if t, ok := t.(*ast.Ident); ok {
@@ -420,7 +420,7 @@ func createReflectTypeExprFromTypeExpr(t ast.Expr) ast.Expr {
 	if !canUseCompositeLit {
 		rv := &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
-				X: createReflectValueOfExpr(&ast.CallExpr{
+				X: CreateReflectValueOfExpr(&ast.CallExpr{
 					Fun:  &ast.Ident{Name: "new"},
 					Args: []ast.Expr{t},
 				}),
@@ -436,50 +436,50 @@ func createReflectTypeExprFromTypeExpr(t ast.Expr) ast.Expr {
 		}
 	}
 
-	return createReflectTypeOfExpr(&ast.CompositeLit{Type: t})
+	return CreateReflectTypeOfExpr(&ast.CompositeLit{Type: t})
 }
 
-func createReflectInterfaceExpr(rv ast.Expr) *ast.CallExpr {
+func CreateReflectInterfaceExpr(rv ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
+			X:   translatedAssertImportIdent,
 			Sel: &ast.Ident{Name: "RVInterface"},
 		},
 		Args: []ast.Expr{rv},
 	}
 }
 
-func createReflectBoolExpr(rv ast.Expr) *ast.CallExpr {
+func CreateReflectBoolExpr(rv ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
+			X:   translatedAssertImportIdent,
 			Sel: &ast.Ident{Name: "RVBool"},
 		},
 		Args: []ast.Expr{rv},
 	}
 }
 
-func createReflectValueOfExpr(v ast.Expr) *ast.CallExpr {
+func CreateReflectValueOfExpr(v ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
+			X:   translatedAssertImportIdent,
 			Sel: &ast.Ident{Name: "RVOf"},
 		},
 		Args: []ast.Expr{v},
 	}
 }
 
-func createReflectTypeOfExpr(v ast.Expr) *ast.CallExpr {
+func CreateReflectTypeOfExpr(v ast.Expr) *ast.CallExpr {
 	return &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
-			X:   translatedassertImportIdent,
+			X:   translatedAssertImportIdent,
 			Sel: &ast.Ident{Name: "RTOf"},
 		},
 		Args: []ast.Expr{v},
 	}
 }
 
-func createPosValuePairExpr(ps []printExpr) []ast.Expr {
+func CreatePosValuePairExpr(ps []printExpr) []ast.Expr {
 	args := []ast.Expr{}
 
 	for _, n := range ps {
@@ -497,14 +497,14 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 
 		a := &ast.CallExpr{
 			Fun: &ast.SelectorExpr{
-				X:   translatedassertImportIdent,
+				X:   translatedAssertImportIdent,
 				Sel: &ast.Ident{Name: "NewPosValuePair"},
 			},
 			Args: []ast.Expr{
 				&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(n.Pos))},
 				n.Expr,
-				createBoolIdent(powered),
-				createRawStringLit(n.OriginalExpr),
+				CreateBoolIdent(powered),
+				CreateRawStringLit(n.OriginalExpr),
 			},
 		}
 
@@ -516,7 +516,7 @@ func createPosValuePairExpr(ps []printExpr) []ast.Expr {
 
 // VALUE:"foo"     ---> AST:`foo`
 // VALUE:"foo`bar" ---> AST:`foo` + "`" + `bar` (because we can't escape ` in ``)
-func createRawStringLit(s string) ast.Expr {
+func CreateRawStringLit(s string) ast.Expr {
 	segments := strings.Split(s, "`")
 
 	if len(segments) == 1 {
@@ -566,17 +566,17 @@ func createArrayTypeCompositLit(typ string) *ast.CompositeLit {
 	}
 }
 
-func sprintCode(n ast.Node) string {
+func SprintCode(n ast.Node) string {
 	buf := bytes.NewBuffer([]byte{})
-	fprintCode(buf, n)
+	FprintCode(buf, n)
 	return buf.String()
 }
 
-func fprintCode(out io.Writer, n ast.Node) error {
+func FprintCode(out io.Writer, n ast.Node) error {
 	return printer.Fprint(out, token.NewFileSet(), n)
 }
 
-func inspectAssert(root ast.Node, fn func(*ast.CallExpr)) {
+func InspectAssert(root ast.Node, fn func(*ast.CallExpr)) {
 	ast.Inspect(root, func(n ast.Node) bool {
 		switch n.(type) {
 		case *ast.CallExpr:
@@ -586,7 +586,7 @@ func inspectAssert(root ast.Node, fn func(*ast.CallExpr)) {
 				return true
 			}
 
-			if !isAssert(assertImportIdent, n) {
+			if !IsAssert(AssertImportIdent, n) {
 				// skip inspecting children in assert.OK
 				return false
 			}

@@ -1,4 +1,4 @@
-package gopwt
+package internal
 
 import (
 	"fmt"
@@ -8,60 +8,37 @@ import (
 	"strings"
 )
 
-type packageInfo struct {
-	dirPath    string
-	importPath string
-	recursive  bool
-}
-
-func newPackageInfo(globalOrLocalImportPath string) (*packageInfo, error) {
-	var err error
-	var importPath string
-	var dirPath string
-	var recursive bool
-
-	if strings.HasSuffix(globalOrLocalImportPath, "/...") {
-		recursive = true
-		globalOrLocalImportPath = strings.TrimSuffix(globalOrLocalImportPath, "/...")
-	}
-
+func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, _filepath string, err error) {
 	if globalOrLocalImportPath == "" {
 		globalOrLocalImportPath = "."
 	}
 
 	if strings.HasPrefix(globalOrLocalImportPath, ".") {
-		wd, err := os.Getwd()
-		if err != nil {
-			return nil, err
+		wd, e := os.Getwd()
+		if e != nil {
+			err = e
+			return
 		}
 
-		dirPath = filepath.Join(wd, globalOrLocalImportPath)
-		if _, err := os.Stat(dirPath); err != nil {
-			return nil, err
+		_filepath = filepath.Join(wd, globalOrLocalImportPath)
+		if _, err = os.Stat(_filepath); err != nil {
+			return
 		}
 
-		importPath, err = findImportPathByPath(dirPath)
+		importpath, err = findImportPathByPath(_filepath)
 		if err != nil {
-			return nil, err
+			return
 		}
 	} else {
-		importPath = globalOrLocalImportPath
+		importpath = globalOrLocalImportPath
 
-		dirPath, err = findPathByImportPath(importPath)
+		_filepath, err = findPathByImportPath(importpath)
 		if err != nil {
-			return nil, err
+			return
 		}
 	}
 
-	return &packageInfo{dirPath: dirPath, importPath: importPath, recursive: recursive}, nil
-}
-
-func (pi *packageInfo) ToGoTestArg() string {
-	if pi.recursive {
-		return filepath.Join(pi.importPath, "...")
-	}
-
-	return pi.importPath
+	return
 }
 
 func findImportPathByPath(path string) (string, error) {
