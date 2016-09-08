@@ -2,9 +2,10 @@ package translatedassert
 
 import (
 	"fmt"
-	"github.com/sergi/go-diff/diffmatchpatch"
 	"strconv"
 	"strings"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 type diffType int

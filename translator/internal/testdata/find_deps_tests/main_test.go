@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/ToQoz/gopwt/assert"
 	"strings"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestMain(t *testing.T) {

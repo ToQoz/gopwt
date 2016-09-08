@@ -18,9 +18,9 @@ import (
 var (
 	translatedAssertImportIdent = &ast.Ident{Name: "translatedassert"}
 	AssertImportIdent           = &ast.Ident{Name: "assert"}
-	Testdata = "testdata"
-	TermWidth = 0
-	Verbose = false
+	Testdata                    = "testdata"
+	TermWidth                   = 0
+	Verbose                     = false
 )
 
 func Rewrite(gopath string, importpath, _filepath string, recursive bool) error {

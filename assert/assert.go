@@ -1,11 +1,12 @@
 package assert
 
 import (
-	_ "github.com/ToQoz/gopwt/translatedassert" // for go get github.com/ToQoz/gopwt/assert
 	"io/ioutil"
 	"runtime"
 	"strings"
 	"testing"
+
+	_ "github.com/ToQoz/gopwt/translatedassert" // for go get github.com/ToQoz/gopwt/assert
 )
 
 type testingInterface interface {

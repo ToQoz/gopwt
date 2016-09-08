@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/ToQoz/gopwt/assert"
 	"testing"
+
+	"github.com/ToQoz/gopwt/assert"
 )
 
 func TestSimple(t *testing.T) {
