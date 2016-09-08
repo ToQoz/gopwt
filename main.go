@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -43,7 +42,6 @@ func doMain() error {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
-
 	flag.VisitAll(func(f *flag.Flag) {
 		if f.Name == "test.v" {
 			if f.Value.String() != "false" {
@@ -53,32 +51,22 @@ func doMain() error {
 	})
 
 	translator.Verbose(verbose)
+	translator.Testdata(*testdata)
 	if isatty.IsTerminal(os.Stdout.Fd()) {
 		translator.TermWidth(getTermCols(os.Stdin.Fd()))
 	}
-	translator.Testdata(*testdata)
 
-	gopath, err := ioutil.TempDir(os.TempDir(), "")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(gopath)
-
-	importpath, err := translator.Translate(gopath, flag.Arg(0))
+	tmpGopath, importpath, err := translator.Translate(flag.Arg(0))
+	defer os.RemoveAll(tmpGopath)
 	if err != nil {
 		return err
 	}
 
-	err = runTest(gopath, importpath, os.Stdout, os.Stderr)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return runTest(tmpGopath, importpath, os.Stdout, os.Stderr)
 }
 
-func runTest(goPath string, importPath string, stdout, stderr io.Writer) error {
-	err := os.Setenv("GOPATH", goPath+":"+os.Getenv("GOPATH"))
+func runTest(gopath string, importpath string, stdout, stderr io.Writer) error {
+	err := os.Setenv("GOPATH", gopath+":"+os.Getenv("GOPATH"))
 	if err != nil {
 		return err
 	}
@@ -87,7 +75,7 @@ func runTest(goPath string, importPath string, stdout, stderr io.Writer) error {
 	if verbose {
 		cmd.Args = append(cmd.Args, "-v")
 	}
-	cmd.Dir = path.Join(goPath, "src", importPath)
+	cmd.Dir = path.Join(gopath, "src", importpath)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()
