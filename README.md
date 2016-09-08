@@ -4,9 +4,9 @@
 
 |package|coverage|
 |-------|--------|
-|gopwt|[60.8%](https://gocover.io/github.com/toqoz/gopwt)|
 |gopwt/assert|[62.1%](https://gocover.io/github.com/toqoz/gopwt/assert)|
 |gopwt/translatedassert|[63.6%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|gopwt/translator/internal|[60.3%](https://gocover.io/github.com/toqoz/gopwt/translator/internal)|
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
@@ -17,6 +17,9 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 See [.travis.yml](/.travis.yml)
 
 ## Getting Started
+
+Check [online demo](http://gopwt.toqoz.net) at first!
+
 ## Install and Try
 
 ```
@@ -70,9 +73,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/toqoz/gopwtexample	0.008s
+FAIL	github.com/toqoz/gopwtexample	0.007s
 exit status 1
-FAIL	github.com/toqoz/gopwtexample	0.584s
+FAIL	github.com/toqoz/gopwtexample	0.357s
 ```
 
 ## Example
@@ -529,9 +532,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.010s
+FAIL	github.com/ToQoz/gopwt/_example	0.009s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.761s
+FAIL	github.com/ToQoz/gopwt/_example	0.466s
 ```
 
 ## Tips

@@ -7,3 +7,6 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 See [.travis.yml](/.travis.yml)
 
 ## Getting Started
+
+Check [online demo](http://gopwt.toqoz.net) at first!
+
