@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"syscall"
 
 	"github.com/ToQoz/gopwt/translator"
@@ -41,10 +40,6 @@ func Empower() {
 	os.Exit(0)
 }
 func doMain() error {
-	if runtime.Version() == "go1.4" {
-		return fmt.Errorf("go1.4 is not supported. please bump to go1.4.1 or later")
-	}
-
 	if !flag.Parsed() {
 		flag.Parse()
 	}
