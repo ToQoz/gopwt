@@ -12,6 +12,10 @@ func Testdata(testdata string) {
 	internal.Testdata = testdata
 }
 
+func WorkingDir(d string) {
+	internal.WorkingDir = d
+}
+
 func TermWidth(width int) {
 	internal.TermWidth = width
 }
