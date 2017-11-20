@@ -77,7 +77,7 @@ $ go test
 		             | false
 		             "xxx"
 		
-		Assersion messages:
+		Assertion messages:
 			- a should equal to b
 		
 		--- [string] b
@@ -228,7 +228,7 @@ $ go test
 		             |        false
 		             (*struct {})(nil)
 		
-		Assersion messages:
+		Assertion messages:
 			- receiver should not be nil
 		
 --- FAIL: TestBasicLit (0.00s)

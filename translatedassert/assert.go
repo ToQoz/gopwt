@@ -59,7 +59,7 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 	}
 
 	if len(messages) > 0 {
-		lines = append(lines, "Assersion messages:")
+		lines = append(lines, "Assertion messages:")
 		for _, msg := range messages {
 			lines = append(lines, "\t- "+msg)
 		}

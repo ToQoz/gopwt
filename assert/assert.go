@@ -25,14 +25,14 @@ func _ok(t testingInterface, ok bool, callerLine string, messages ...string) {
 		return
 	}
 
-	msg := `[FAIL Assersion] ` + callerLine + `
+	msg := `[FAIL Assertion] ` + callerLine + `
 
 Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
 `
 
 	if len(messages) > 0 {
-		msg += "\nAssersionMessage:\n"
+		msg += "\nAssertionMessage:\n"
 		for _, m := range messages {
 			msg += "\t- " + m
 		}
@@ -53,14 +53,14 @@ func _require(t testingInterface, ok bool, callerLine string, messages ...string
 		return
 	}
 
-	msg := `[FAIL Assersion] ` + callerLine + `
+	msg := `[FAIL Assertion] ` + callerLine + `
 
 Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
 `
 
 	if len(messages) > 0 {
-		msg += "\nAssersionMessage:\n"
+		msg += "\nAssertionMessage:\n"
 		for _, m := range messages {
 			msg += "\t- " + m
 		}

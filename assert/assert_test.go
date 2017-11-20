@@ -34,7 +34,7 @@ func TestOK(t *testing.T) {
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
-	errorArgs := []interface{}{`[FAIL Assersion] caller line
+	errorArgs := []interface{}{`[FAIL Assertion] caller line
 
 Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
@@ -45,19 +45,19 @@ If you need more information, see http://github.com/ToQoz/gopwt
 	}
 }
 
-func TestOKWithAssersionMessage(t *testing.T) {
+func TestOKWithAssertionMessage(t *testing.T) {
 	td := &testingDummy{}
 
 	_ok(td, false, "caller line", "dummy message")
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
-	expected := []interface{}{`[FAIL Assersion] caller line
+	expected := []interface{}{`[FAIL Assertion] caller line
 
 Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
 
-AssersionMessage:
+AssertionMessage:
 	- dummy message`}
 	if !reflect.DeepEqual(td.errorCalledWith, expected) {
 
@@ -80,7 +80,7 @@ func TestRequired(t *testing.T) {
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
-	expected := []interface{}{`[FAIL Assersion] caller line
+	expected := []interface{}{`[FAIL Assertion] caller line
 
 Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
@@ -100,19 +100,19 @@ If you need more information, see http://github.com/ToQoz/gopwt
 	}
 }
 
-func TestRequiredWithAssersionMessage(t *testing.T) {
+func TestRequiredWithAssertionMessage(t *testing.T) {
 	td := &testingDummy{}
 
 	_require(td, false, "caller line", "dummy message")
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
-	errorArgs := []interface{}{`[FAIL Assersion] caller line
+	errorArgs := []interface{}{`[FAIL Assertion] caller line
 
 Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
 
-AssersionMessage:
+AssertionMessage:
 	- dummy message`}
 
 	if !reflect.DeepEqual(td.errorCalledWith, errorArgs) {
