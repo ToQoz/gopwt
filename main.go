@@ -55,6 +55,9 @@ func doMain() error {
 	if isatty.IsTerminal(os.Stdout.Fd()) {
 		translator.TermWidth(getTermCols(os.Stdin.Fd()))
 	}
+	if wd, err := os.Getwd(); err == nil {
+		translator.WorkingDir(wd + "/")
+	}
 
 	tmpGopath, importpath, err := translator.Translate(flag.Arg(0))
 	defer os.RemoveAll(tmpGopath)

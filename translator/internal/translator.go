@@ -20,6 +20,7 @@ var (
 	AssertImportIdent           = &ast.Ident{Name: "assert"}
 	Testdata                    = "testdata"
 	TermWidth                   = 0
+	WorkingDir                  = ""
 	Verbose                     = false
 )
 
@@ -344,7 +345,11 @@ func RewriteAssert(typesInfo *types.Info, position token.Position, n *ast.CallEx
 	// header
 	n.Args = append(n.Args, CreateRawStringLit("FAIL"))
 	// filename
-	n.Args = append(n.Args, CreateRawStringLit(position.Filename))
+	fname := position.Filename
+	if strings.HasPrefix(fname, WorkingDir) {
+		fname = strings.TrimPrefix(fname, WorkingDir)
+	}
+	n.Args = append(n.Args, CreateRawStringLit(fname))
 	// line
 	n.Args = append(n.Args, &ast.BasicLit{Value: strconv.Itoa(position.Line), Kind: token.INT})
 	// string of original expr
