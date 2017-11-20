@@ -22,12 +22,24 @@ See [.travis.yml](/.travis.yml)
 
 Check [online demo](http://gopwt.toqoz.net) at first!
 
-## Install and Try
+## Install
 
 ```
 $ go get -u github.com/ToQoz/gopwt/...
-$ mkdir -p $GOPATH/src/github.com/$dummy_user/gopwtexample
-$ cd $GOPATH/src/github.com/$dummy_user/gopwtexample
+```
+
+## Try
+
+go to project:
+
+```
+$ mkdir -p $GOPATH/src/github.com/$(whoami)/gopwtexample
+$ cd $GOPATH/src/github.com/$(whoami)/gopwtexample
+```
+
+write main_test.go
+
+```
 $ cat <<EOF > main_test.go
 package main
 
@@ -51,10 +63,12 @@ func TestFoo(t *testing.T) {
 	assert.OK(t, a == b, "a should equal to b")
 }
 EOF
-$ go test
 ```
 
+run tests:
+
 ```
+$ go test
 --- FAIL: TestFoo (0.00s)
 	assert.go:85: FAIL main_test.go:20
 		assert.OK(t, a == b, "a should equal to b")
@@ -75,9 +89,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.007s
+FAIL	github.com/gopwter/gopwtexample	0.006s
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.685s
+FAIL	github.com/gopwter/gopwtexample	0.624s
 ```
 
 ## Example
@@ -536,7 +550,7 @@ FAIL
 exit status 1
 FAIL	github.com/ToQoz/gopwt/_example	0.007s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.776s
+FAIL	github.com/ToQoz/gopwt/_example	0.731s
 ```
 
 ## Tips

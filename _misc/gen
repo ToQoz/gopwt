@@ -12,13 +12,27 @@ _misc/cov >> $out
 echo "" >> $out
 cat $root/_misc/readme.header2.md >> $out
 
-# install an try
-echo "## Install and Try" >> $out
+# install
+echo "## Install" >> $out
 echo '
 ```
 $ go get -u github.com/ToQoz/gopwt/...
-$ mkdir -p $GOPATH/src/github.com/$dummy_user/gopwtexample
-$ cd $GOPATH/src/github.com/$dummy_user/gopwtexample
+```
+' >> $out
+
+echo "## Try" >> $out
+
+echo '
+go to project:
+
+```
+$ mkdir -p $GOPATH/src/github.com/$(whoami)/gopwtexample
+$ cd $GOPATH/src/github.com/$(whoami)/gopwtexample
+```
+
+write main_test.go
+
+```
 $ cat <<EOF > main_test.go
 package main
 
@@ -42,9 +56,12 @@ func TestFoo(t *testing.T) {
 	assert.OK(t, a == b, "a should equal to b")
 }
 EOF
-$ go test
 ```
-' >> $out
+
+run tests:
+
+```
+$ go test' >> $out
 
 d=$(pwd)
 
@@ -74,7 +91,6 @@ func TestFoo(t *testing.T) {
 }
 EOF
 
-echo '```' >> $out
 go test >> $out
 echo '```' >> $out
 
