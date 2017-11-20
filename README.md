@@ -4,7 +4,7 @@
 
 PowerAssert library for golang. This is out of goway(in my mind), but I'm going to put this on goway as possible as. Because I love it :)
 
-![screenshot](https://i.gyazo.com/fde9f5c049a94b02019a578d4b7e19c5.png)
+<img src="https://i.gyazo.com/fde9f5c049a94b02019a578d4b7e19c5.png" width="713" alt="screenshot">
 
 |package|coverage|
 |-------|--------|
@@ -89,9 +89,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.006s
+FAIL	github.com/gopwter/gopwtexample	0.017s
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.624s
+FAIL	github.com/gopwter/gopwtexample	0.697s
 ```
 
 ## Example
@@ -550,7 +550,7 @@ FAIL
 exit status 1
 FAIL	github.com/ToQoz/gopwt/_example	0.007s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.731s
+FAIL	github.com/ToQoz/gopwt/_example	0.799s
 ```
 
 ## Tips
