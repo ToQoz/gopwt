@@ -5,6 +5,24 @@ import (
 	"testing"
 )
 
+func TestBcomplex(t *testing.T) {
+	if complex(1, 2) != Bcomplex(1, 2) {
+		t.Errorf("Bcomplex behavior should be equal to complex")
+	}
+
+	if complex(1.0, 2.2) != Bcomplex(1.0, 2.2) {
+		t.Errorf("Bcomplex behavior should be equal to complex, %#v %#v", complex(1.0, 2.2), Bcomplex(1.0, 2.2))
+	}
+
+	if complex(float64(1.0), float64(2.2)) != Bcomplex(float64(1.0), float64(2.2)) {
+		t.Errorf("Bcomplex behavior should be equal to complex, %#v %#v", complex(1.0, 2.2), Bcomplex(1.0, 2.2))
+	}
+
+	if complex(float32(1.0), float32(2.2)) != Bcomplex(float32(1.0), float32(2.2)).(complex64) {
+		t.Errorf("Bcomplex behavior should be equal to complex, %#v %#v", complex(1.0, 2.2), Bcomplex(1.0, 2.2))
+	}
+}
+
 func TestBnew(t *testing.T) {
 	var expected interface{}
 	var got interface{}

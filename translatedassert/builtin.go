@@ -46,6 +46,11 @@ func Bcomplex(r, i interface{}) (c interface{}) {
 	case float64:
 		c = complex(r.(float64), i.(float64))
 		return
+	case int:
+		fr := float64(r.(int))
+		fi := float64(i.(int))
+		c = complex(fr, fi)
+		return
 	}
 
 	panic("complex can take floats")
