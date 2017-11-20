@@ -1,26 +1,31 @@
 package assert
 
 import (
+	"reflect"
 	"testing"
 )
 
 type testingDummy struct {
-	errorCalled bool
-	skipCalled  bool
+	errorCalled     bool
+	errorCalledWith []interface{}
+	skipCalled      bool
+	skipCalledWith  []interface{}
 }
 
 func (t *testingDummy) Error(args ...interface{}) {
 	t.errorCalled = true
+	t.errorCalledWith = args
 }
 
 func (t *testingDummy) Skip(args ...interface{}) {
 	t.skipCalled = true
+	t.skipCalledWith = args
 }
 
 func TestOK(t *testing.T) {
 	td := &testingDummy{}
 
-	_ok(t, true, "caller line")
+	_ok(td, true, "caller line")
 	if td.errorCalled {
 		t.Error("t.Error should not be called if ok")
 	}
@@ -29,12 +34,41 @@ func TestOK(t *testing.T) {
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
+	errorArgs := []interface{}{`[FAIL Assersion] caller line
+
+Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
+If you need more information, see http://github.com/ToQoz/gopwt
+`}
+	if !reflect.DeepEqual(td.errorCalledWith, errorArgs) {
+
+		t.Errorf("t.Error should be called with args.\n(expected)=%+v\n(got)=%+v\n", errorArgs, td.errorCalledWith)
+	}
+}
+
+func TestOKWithAssersionMessage(t *testing.T) {
+	td := &testingDummy{}
+
+	_ok(td, false, "caller line", "dummy message")
+	if !td.errorCalled {
+		t.Error("t.Error should be called if not ok")
+	}
+	expected := []interface{}{`[FAIL Assersion] caller line
+
+Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
+If you need more information, see http://github.com/ToQoz/gopwt
+
+AssersionMessage:
+	- dummy message`}
+	if !reflect.DeepEqual(td.errorCalledWith, expected) {
+
+		t.Errorf("t.Error should be called with args.\n(expected)=%+v\n(got)=%+v\n", expected, td.errorCalledWith)
+	}
 }
 
 func TestRequired(t *testing.T) {
 	td := &testingDummy{}
 
-	_require(t, true, "caller line")
+	_require(td, true, "caller line")
 	if td.errorCalled {
 		t.Error("t.Error should not be called if ok")
 	}
@@ -46,8 +80,53 @@ func TestRequired(t *testing.T) {
 	if !td.errorCalled {
 		t.Error("t.Error should be called if not ok")
 	}
+	expected := []interface{}{`[FAIL Assersion] caller line
+
+Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
+If you need more information, see http://github.com/ToQoz/gopwt
+`}
+	if !reflect.DeepEqual(td.errorCalledWith, expected) {
+
+		t.Errorf("t.Error should be called with args.\n(expected)=%+v\n(got)=%+v\n", expected, td.errorCalledWith)
+	}
+
 	if !td.skipCalled {
 		t.Error("t.Skip should be called if not ok")
+	}
+	skipArgs := []interface{}{"skip by gopwt/assert.Require"}
+	if !reflect.DeepEqual(td.skipCalledWith, skipArgs) {
+
+		t.Errorf("t.Skip should be called with args.\n(expected)=%+v\n(got)=%+v\n", skipArgs, td.skipCalledWith)
+	}
+}
+
+func TestRequiredWithAssersionMessage(t *testing.T) {
+	td := &testingDummy{}
+
+	_require(td, false, "caller line", "dummy message")
+	if !td.errorCalled {
+		t.Error("t.Error should be called if not ok")
+	}
+	errorArgs := []interface{}{`[FAIL Assersion] caller line
+
+Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
+If you need more information, see http://github.com/ToQoz/gopwt
+
+AssersionMessage:
+	- dummy message`}
+
+	if !reflect.DeepEqual(td.errorCalledWith, errorArgs) {
+
+		t.Errorf("t.Error should be called with args.\n(expected)=%+v\n(got)=%+v\n", errorArgs, td.errorCalledWith)
+	}
+
+	if !td.skipCalled {
+		t.Error("t.Skip should be called if not ok")
+	}
+	skipArgs := []interface{}{"skip by gopwt/assert.Require"}
+	if !reflect.DeepEqual(td.skipCalledWith, skipArgs) {
+
+		t.Errorf("t.Skip should be called with args.\n(expected)=%+v\n(got)=%+v\n", skipArgs, td.skipCalledWith)
 	}
 }
 

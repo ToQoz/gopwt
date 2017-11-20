@@ -8,7 +8,7 @@ PowerAssert library for golang. This is out of goway(in my mind), but I'm going 
 
 |package|coverage|
 |-------|--------|
-|gopwt/assert|[62.1%](https://gocover.io/github.com/toqoz/gopwt/assert)|
+|gopwt/assert|[82.8%](https://gocover.io/github.com/toqoz/gopwt/assert)|
 |gopwt/translatedassert|[63.6%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 |gopwt/translator/internal|[60.5%](https://gocover.io/github.com/toqoz/gopwt/translator/internal)|
 
@@ -89,9 +89,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.017s
+FAIL	github.com/gopwter/gopwtexample	0.006s
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.697s
+FAIL	github.com/gopwter/gopwtexample	0.686s
 ```
 
 ## Example
@@ -548,9 +548,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.007s
+FAIL	github.com/ToQoz/gopwt/_example	0.008s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.799s
+FAIL	github.com/ToQoz/gopwt/_example	0.721s
 ```
 
 ## Tips
