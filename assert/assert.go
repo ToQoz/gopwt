@@ -27,7 +27,7 @@ func _ok(t testingInterface, ok bool, callerLine string, messages ...string) {
 
 	msg := `[FAIL Assersion] ` + callerLine + `
 
-Please run tests by command "gopwt". It give you power.
+Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
 `
 
@@ -55,7 +55,7 @@ func _require(t testingInterface, ok bool, callerLine string, messages ...string
 
 	msg := `[FAIL Assersion] ` + callerLine + `
 
-Please run tests by command "gopwt". It give you power.
+Please call gopwt.Empower() in your TestMain(t *testing.M). It give you power.
 If you need more information, see http://github.com/ToQoz/gopwt
 `
 
