@@ -53,7 +53,7 @@ func doMain() error {
 	translator.Verbose(verbose)
 	translator.Testdata(*testdata)
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		translator.TermWidth(getTermCols(os.Stdin.Fd()))
+		translator.TermWidth(getTermCols(os.Stdout.Fd()))
 	}
 
 	tmpGopath, importpath, err := translator.Translate(flag.Arg(0))
