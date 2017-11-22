@@ -101,8 +101,9 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	// Collect fset(*token.FileSet) and files([]*ast.File)
 	fset := token.NewFileSet()
 	files := []*ast.File{}
+	filesMode := map[*ast.File]os.FileMode{}
+	filesOrig := map[*ast.File]*ast.File{}
 	originalFset := token.NewFileSet()
-	origFiles := []*ast.File{}
 	root := filepath.Join(tempGoSrcDir, importPath)
 
 	err = filepath.Walk(root, func(path string, fInfo os.FileInfo, err error) error {
@@ -124,13 +125,14 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			return err
 		}
 		files = append(files, a)
+		filesMode[a] = fInfo.Mode()
 
 		// parse original file
 		o, err := parser.ParseFile(originalFset, filepath.Join(pkgDir, filepath.Base(path)), nil, 0)
 		if err != nil {
 			return err
 		}
-		origFiles = append(origFiles, o)
+		filesOrig[a] = o
 
 		return nil
 	})
@@ -144,7 +146,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	}
 
 	// Rewrite files
-	for i, f := range files {
+	for _, f := range files {
 		path := fset.File(f.Package).Name()
 
 		if !IsTestGoFileName(path) {
@@ -168,14 +170,12 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			}
 		}
 
-		fi, err := os.Stat(path)
+		out, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC, filesMode[f])
 		if err != nil {
 			return err
 		}
-
-		out, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC, fi.Mode())
-		defer out.Close()
-		err = RewriteFile(typesInfo, fset, originalFset, f, origFiles[i], out)
+		err = RewriteFile(typesInfo, fset, originalFset, f, filesOrig[f], out)
+		out.Close()
 		if err != nil {
 			return err
 		}
