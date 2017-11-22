@@ -214,6 +214,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) (fset *token.Fi
 
 		if !IsGoFileName(path) {
 			_, err = io.Copy(out, in)
+			out.Close()
 			return err
 		}
 
