@@ -24,10 +24,10 @@ var (
 	Verbose                     = false
 )
 
-func Rewrite(gopath string, importpath, _filepath string, recursive bool) error {
+func Rewrite(gopath string, importpath, fpath string, recursive bool) error {
 	srcDir := filepath.Join(gopath, "src")
 
-	err := filepath.Walk(_filepath, func(path string, fInfo os.FileInfo, err error) error {
+	err := filepath.Walk(fpath, func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 			return nil
 		}
@@ -48,7 +48,7 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 			return filepath.SkipDir
 		}
 
-		rel, err := filepath.Rel(_filepath, path)
+		rel, err := filepath.Rel(fpath, path)
 		if err != nil {
 			return err
 		}
