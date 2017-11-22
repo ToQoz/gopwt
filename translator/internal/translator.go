@@ -218,6 +218,13 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) (fset *token.Fi
 			return err
 		}
 
+		// parse only pkg's GoFiles
+		if filepath.Dir(path) != pkgDir {
+			_, err = io.Copy(out, in)
+			out.Close()
+			return err
+		}
+
 		a, err := parser.ParseFile(fset, path, in, 0)
 		if err != nil {
 			return err
@@ -225,15 +232,11 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) (fset *token.Fi
 		afiles[path] = a
 		in.Seek(0, os.SEEK_SET) // NOTE: go1.5 and go1.6 doesn't have io.SeekStart
 
-		if filepath.Dir(path) == pkgDir {
-			copied = append(copied, copiedGoFile{
-				path:    outPath,
-				mode:    fInfo.Mode(),
-				content: out,
-			})
-		} else {
-			defer out.Close()
-		}
+		copied = append(copied, copiedGoFile{
+			path:    outPath,
+			mode:    fInfo.Mode(),
+			content: out,
+		})
 
 		if !IsTestGoFileName(path) {
 			_, err = io.Copy(out, in)
