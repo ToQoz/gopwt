@@ -69,7 +69,7 @@ func findPathByImportPath(importPath string) (string, error) {
 }
 
 func findDeps(importPath, srcDir string) ([]string, error) {
-	deps := []string{}
+	deps := map[string]bool{}
 
 	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
 	if err != nil {
@@ -80,24 +80,19 @@ func findDeps(importPath, srcDir string) ([]string, error) {
 		if imp == importPath {
 			continue
 		}
-		deps = append(deps, imp)
+		deps[imp] = true
 	}
 
 	for _, imp := range pkg.TestImports {
 		if imp == importPath {
 			continue
 		}
-
-		f := false
-		for _, arg := range deps {
-			if arg == imp {
-				f = true
-			}
-		}
-
-		if !f {
-			deps = append(deps, imp)
-		}
+		deps[imp] = true
 	}
-	return deps, nil
+
+	ret := make([]string, 0, len(deps))
+	for d, _ := range deps {
+		ret = append(ret, d)
+	}
+	return ret, nil
 }
