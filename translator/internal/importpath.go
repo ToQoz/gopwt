@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, _filepath string, err error) {
+func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, fpath string, err error) {
 	if globalOrLocalImportPath == "" {
 		globalOrLocalImportPath = "."
 	}
@@ -20,19 +20,19 @@ func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, 
 			return
 		}
 
-		_filepath = filepath.Join(wd, globalOrLocalImportPath)
-		if _, err = os.Stat(_filepath); err != nil {
+		fpath = filepath.Join(wd, globalOrLocalImportPath)
+		if _, err = os.Stat(fpath); err != nil {
 			return
 		}
 
-		importpath, err = findImportPathByPath(_filepath)
+		importpath, err = findImportPathByPath(fpath)
 		if err != nil {
 			return
 		}
 	} else {
 		importpath = globalOrLocalImportPath
 
-		_filepath, err = findPathByImportPath(importpath)
+		fpath, err = findPathByImportPath(importpath)
 		if err != nil {
 			return
 		}
