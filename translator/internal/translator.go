@@ -91,9 +91,15 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 	return nil
 }
 
+type copiedGoFile struct {
+	content *os.File
+	path    string
+	mode    os.FileMode
+}
+
 func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	// Copy to tempdir
-	err := copyPackage(pkgDir, importPath, tempGoSrcDir)
+	originalFset, originalAfiles, pkgFiles, err := copyPackage(pkgDir, importPath, tempGoSrcDir)
 	if err != nil {
 		return err
 	}
@@ -103,41 +109,17 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	files := []*ast.File{}
 	filesMode := map[*ast.File]os.FileMode{}
 	filesOrig := map[*ast.File]*ast.File{}
-	originalFset := token.NewFileSet()
-	root := filepath.Join(tempGoSrcDir, importPath)
-
-	err = filepath.Walk(root, func(path string, fInfo os.FileInfo, err error) error {
-		if fInfo.IsDir() {
-			if path == root {
-				return nil
-			}
-
-			return filepath.SkipDir
-		}
-
-		if !IsGoFileName(path) {
-			return nil
-		}
-
+	for _, f := range pkgFiles {
 		// parse copyed & normalized file. e.g. multi-line CompositeLit -> single-line
-		a, err := parser.ParseFile(fset, path, nil, 0)
+		f.content.Seek(0, 0)
+		a, err := parser.ParseFile(fset, f.path, f.content, 0)
 		if err != nil {
 			return err
 		}
 		files = append(files, a)
-		filesMode[a] = fInfo.Mode()
-
-		// parse original file
-		o, err := parser.ParseFile(originalFset, filepath.Join(pkgDir, filepath.Base(path)), nil, 0)
-		if err != nil {
-			return err
-		}
-		filesOrig[a] = o
-
-		return nil
-	})
-	if err != nil {
-		return err
+		filesMode[a] = f.mode
+		filesOrig[a] = originalAfiles[filepath.Join(pkgDir, filepath.Base(f.path))]
+		f.content.Close()
 	}
 
 	typesInfo, err := GetTypeInfo(pkgDir, importPath, tempGoSrcDir, fset, files)
@@ -184,8 +166,12 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	return nil
 }
 
-func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
-	err := filepath.Walk(pkgDir, func(path string, fInfo os.FileInfo, err error) error {
+func copyPackage(pkgDir, importPath string, tempGoSrcDir string) (fset *token.FileSet, afiles map[string]*ast.File, copied []copiedGoFile, err error) {
+	fset = token.NewFileSet()
+	afiles = map[string]*ast.File{}
+	copied = []copiedGoFile{}
+
+	err = filepath.Walk(pkgDir, func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 			return nil
 		}
@@ -221,22 +207,37 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		}
 		defer in.Close()
 
-		out, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE, fInfo.Mode())
+		out, err := os.OpenFile(outPath, os.O_RDWR|os.O_CREATE, fInfo.Mode())
 		if err != nil {
 			return err
 		}
-		defer out.Close()
+
+		if !IsGoFileName(path) {
+			_, err = io.Copy(out, in)
+			return err
+		}
+
+		a, err := parser.ParseFile(fset, path, in, 0)
+		if err != nil {
+			return err
+		}
+		afiles[path] = a
+		in.Seek(0, os.SEEK_SET) // NOTE: go1.5 and go1.6 doesn't have io.SeekStart
+
+		if filepath.Dir(path) == pkgDir {
+			copied = append(copied, copiedGoFile{
+				path:    outPath,
+				mode:    fInfo.Mode(),
+				content: out,
+			})
+		} else {
+			defer out.Close()
+		}
 
 		if !IsTestGoFileName(path) {
 			_, err = io.Copy(out, in)
 			return err
 		}
-
-		a, err := parser.ParseFile(token.NewFileSet(), path, in, 0)
-		if err != nil {
-			return err
-		}
-		in.Seek(0, os.SEEK_SET) // NOTE: go1.5 and go1.6 doesn't have io.SeekStart
 
 		AssertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := GetAssertImport(a)
@@ -262,7 +263,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return printer.Fprint(out, token.NewFileSet(), a)
 	})
 
-	return err
+	return
 }
 
 func RewriteFile(typesInfo *types.Info, fset, originalFset *token.FileSet, file, origFile *ast.File, out io.Writer) error {
