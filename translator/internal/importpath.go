@@ -15,10 +15,6 @@ func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, 
 
 	if strings.HasPrefix(globalOrLocalImportPath, ".") {
 		fpath = filepath.Join(WorkingDir, globalOrLocalImportPath)
-		if _, err = os.Stat(fpath); err != nil {
-			return
-		}
-
 		importpath, err = findImportPathByPath(fpath)
 		if err != nil {
 			return
