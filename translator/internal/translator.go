@@ -208,11 +208,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 					if err != nil {
 						return err
 					}
-					err = os.Mkdir(outPath, di.Mode())
-					if err != nil {
-						return err
-					}
-					return nil
+					return os.Mkdir(outPath, di.Mode())
 				}
 			}
 
@@ -260,12 +256,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 		// 2. replace multiline-compositLit by singleline-one by passing empty token.FileSet
 		// 3. copy
-		err = printer.Fprint(out, token.NewFileSet(), a)
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return printer.Fprint(out, token.NewFileSet(), a)
 	})
 
 	return err
@@ -297,11 +288,7 @@ func RewriteFile(typesInfo *types.Info, fset, originalFset *token.FileSet, file,
 		RewriteAssert(typesInfo, pos, n)
 	})
 
-	err := printer.Fprint(out, fset, file)
-	if err != nil {
-		return err
-	}
-	return nil
+	return printer.Fprint(out, fset, file)
 }
 
 // RewriteAssert rewrites assert to translatedassert
