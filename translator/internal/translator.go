@@ -215,31 +215,34 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 			return filepath.SkipDir
 		}
 
-		out, err := os.OpenFile(outPath, os.O_RDWR|os.O_CREATE, fInfo.Mode())
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+
+		out, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE, fInfo.Mode())
 		if err != nil {
 			return err
 		}
 		defer out.Close()
 
-		outOrig, err := os.OpenFile(outPath+".orig", os.O_RDWR|os.O_CREATE, fInfo.Mode())
-		if err != nil {
-			return err
-		}
-		defer outOrig.Close()
-
 		if !IsTestGoFileName(path) {
-			return CopyFile(path, out)
+			_, err = io.Copy(out, in)
+			return err
 		}
 
-		a, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+		a, err := parser.ParseFile(token.NewFileSet(), path, in, 0)
 		if err != nil {
 			return err
 		}
+		in.Seek(0, io.SeekStart)
 
 		AssertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := GetAssertImport(a)
 		if assertImport == nil {
-			return CopyFile(path, out)
+			_, err = io.Copy(out, in)
+			return err
 		}
 		if assertImport.Name != nil {
 			AssertImportIdent = assertImport.Name
@@ -260,20 +263,6 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	})
 
 	return err
-}
-
-func CopyFile(path string, out io.Writer) error {
-	filedata, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	_, err = out.Write(filedata)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func RewriteFile(typesInfo *types.Info, fset, originalFset *token.FileSet, file, origFile *ast.File, out io.Writer) error {
