@@ -236,7 +236,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		if err != nil {
 			return err
 		}
-		in.Seek(0, io.SeekStart)
+		in.Seek(0, os.SEEK_SET) // NOTE: go1.5 and go1.6 doesn't have io.SeekStart
 
 		AssertImportIdent = &ast.Ident{Name: "assert"}
 		assertImport := GetAssertImport(a)
