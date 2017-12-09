@@ -69,9 +69,11 @@ func doMain() error {
 }
 
 func runTest(gopath string, importpath string, stdout, stderr io.Writer) error {
-	err := os.Setenv("GOPATH", gopath+":"+os.Getenv("GOPATH"))
-	if err != nil {
-		return err
+	if os.Getenv("GOPATH") != "" {
+		err := os.Setenv("GOPATH", gopath+":"+os.Getenv("GOPATH"))
+		if err != nil {
+			return err
+		}
 	}
 	cmd := exec.Command("go", "test")
 
