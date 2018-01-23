@@ -87,5 +87,5 @@ func callerLine(skip int) string {
 		return ""
 	}
 
-	return strings.Trim(s[lnum-1], " \n\t")
+	return strings.Trim(strings.Trim(s[lnum-1], " \n\t"), "\r\n")
 }
