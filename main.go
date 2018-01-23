@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"syscall"
 
 	"github.com/ToQoz/gopwt/translator"
@@ -70,7 +71,7 @@ func doMain() error {
 
 func runTest(gopath string, importpath string, stdout, stderr io.Writer) error {
 	if os.Getenv("GOPATH") != "" {
-		err := os.Setenv("GOPATH", gopath+":"+os.Getenv("GOPATH"))
+		err := os.Setenv("GOPATH", gopath+string(filepath.ListSeparator)+os.Getenv("GOPATH"))
 		if err != nil {
 			return err
 		}
