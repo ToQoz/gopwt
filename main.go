@@ -72,8 +72,8 @@ func doMain() error {
 
 func runTest(gopath string, importpath string, stdout, stderr io.Writer) error {
 	if os.Getenv("GOPATH") == "" {
-		// NOTE
-		// Without this line, we got error() to run. (os=windows, version=1.9.3)
+		// NOTE:
+		// Without this line, we got error() to run. (os=windows, version=1.9.3, repo=ToQoz/gopwt, command=go test./...)
 		err := os.Setenv("GOPATH", gopath+string(filepath.ListSeparator)+build.Default.GOPATH)
 		if err != nil {
 			return err
