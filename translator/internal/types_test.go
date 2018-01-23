@@ -4,8 +4,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -34,10 +34,45 @@ func TestIsTypeConversion(t *testing.T) {
 	// go install fails under ./testdata
 	//   (go install: no install location for directory github.com/ToQoz/gopwt/testdata/is_type_conversion_test outside GOPATH)
 	// So copy to ./tdata temporary
-	cp := exec.Command("cp", "-r", "./testdata", "./tdata")
-	cp.Stdout = os.Stdout
-	cp.Stderr = os.Stderr
-	err := cp.Run()
+
+	err := filepath.Walk("./testdata", func(path string, fInfo os.FileInfo, err error) error {
+		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+			return nil
+		}
+
+		rel, err := filepath.Rel("./testdata", path)
+		if err != nil {
+			return err
+		}
+		outPath := filepath.Join("./tdata", rel)
+
+		if fInfo.IsDir() {
+			di, err := os.Stat(path)
+			if err != nil {
+				return err
+			}
+			err = os.Mkdir(outPath, di.Mode())
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+		in, err := os.OpenFile(path, os.O_RDWR, fInfo.Mode())
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.OpenFile(outPath, os.O_RDWR|os.O_CREATE, fInfo.Mode())
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		io.Copy(out, in)
+		return nil
+	})
+
 	assert.Require(t, err == nil)
 	defer os.RemoveAll("./tdata")
 
