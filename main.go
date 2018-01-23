@@ -3,10 +3,12 @@ package gopwt
 import (
 	"flag"
 	"fmt"
+	"go/build"
 	"io"
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"syscall"
 
 	"github.com/ToQoz/gopwt/translator"
@@ -53,10 +55,10 @@ func doMain() error {
 	translator.Verbose(verbose)
 	translator.Testdata(*testdata)
 	if isatty.IsTerminal(os.Stdout.Fd()) {
-		translator.TermWidth(getTermCols(os.Stdout.Fd()))
+		setTermCols()
 	}
 	if wd, err := os.Getwd(); err == nil {
-		translator.WorkingDir(wd + "/")
+		translator.WorkingDir(wd + string(filepath.Separator))
 	}
 
 	tmpGopath, importpath, err := translator.Translate(flag.Arg(0))
@@ -69,8 +71,15 @@ func doMain() error {
 }
 
 func runTest(gopath string, importpath string, stdout, stderr io.Writer) error {
-	if os.Getenv("GOPATH") != "" {
-		err := os.Setenv("GOPATH", gopath+":"+os.Getenv("GOPATH"))
+	if os.Getenv("GOPATH") == "" {
+		// NOTE:
+		// Without this line, we got error() to run. (os=windows, version=1.9.3, repo=ToQoz/gopwt, command=go test./...)
+		err := os.Setenv("GOPATH", gopath+string(filepath.ListSeparator)+build.Default.GOPATH)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := os.Setenv("GOPATH", gopath+string(filepath.ListSeparator)+os.Getenv("GOPATH"))
 		if err != nil {
 			return err
 		}

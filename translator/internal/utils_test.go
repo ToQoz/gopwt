@@ -101,11 +101,11 @@ func TestContainsGoFile(t *testing.T) {
 	var files []os.FileInfo
 	var err error
 
-	files, err = ioutil.ReadDir("./testdata/go_files")
+	files, err = ioutil.ReadDir(filepath.Join("testdata", "go_files"))
 	assert.Require(t, err == nil)
 	assert.OK(t, ContainsGoFile(files) == true, "./testdata/go_files contains go files")
 
-	files, err = ioutil.ReadDir("./testdata/no_go_files")
+	files, err = ioutil.ReadDir(filepath.Join("testdata", "no_go_files"))
 	assert.Require(t, err == nil)
 	assert.OK(t, ContainsGoFile(files) == false, "./testdata/no_go_files don't contains go files")
 }
@@ -114,11 +114,11 @@ func TestContainDirectory(t *testing.T) {
 	var files []os.FileInfo
 	var err error
 
-	files, err = ioutil.ReadDir("./testdata/dirs")
+	files, err = ioutil.ReadDir(filepath.Join("testdata", "dirs"))
 	assert.Require(t, err == nil)
 	assert.OK(t, ContainsDirectory(files) == true, "./testdata/dirs contains directories")
 
-	files, err = ioutil.ReadDir("./testdata/no_dirs")
+	files, err = ioutil.ReadDir(filepath.Join("testdata", "no_dirs"))
 	assert.Require(t, err == nil)
 	assert.OK(t, ContainsDirectory(files) == false, "./testdata/no_go_files don't contains directories")
 }

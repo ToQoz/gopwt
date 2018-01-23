@@ -54,7 +54,7 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 		}
 
 		for _, tdata := range strings.Split(Testdata, ",") {
-			if strings.Split(rel, "/")[0] == tdata {
+			if strings.Split(rel, string(filepath.Separator))[0] == tdata {
 				return filepath.SkipDir
 			}
 		}

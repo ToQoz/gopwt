@@ -7,6 +7,7 @@ import (
 	"go/printer"
 	"go/token"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/ToQoz/gopwt/assert"
@@ -34,7 +35,8 @@ func TestCopyFile(t *testing.T) {
 	buf := bytes.NewBuffer([]byte{})
 	CopyFile("./testdata/rewrite_file_tests/simple.go", buf)
 
-	assert.OK(t, buf.String() == `package main
+	s := strings.Replace(buf.String(), "\r\n", "\n", -1)
+	assert.OK(t, s == `package main
 
 import (
 	"testing"
@@ -338,5 +340,5 @@ func readFileString(file string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(b), nil
+	return strings.Replace(string(b), "\r\n", "\n", -1), nil
 }
