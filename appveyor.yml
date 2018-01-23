@@ -1,0 +1,25 @@
+version: "{build}"
+
+clone_folder: c:\gopath\src\github.com\ToQoz\gopwt
+
+environment:
+  GOPATH: c:\gopath
+  DEPTESTBYPASS501: 1
+  GOVERSION: 1.9
+
+init:
+  - git config --global core.autocrlf input
+
+install:
+  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.msi
+  - msiexec /i go%GOVERSION%.windows-amd64.msi /q
+  - go version
+  - go env
+
+deploy: false
+build: false
+
+test_script:
+  - cd c:\gopath\src\github.com/ToQoz/gopwt
+  - go get -v ./...
+  - go test -v ./...
