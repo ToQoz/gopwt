@@ -35,16 +35,16 @@ func TestIsTypeConversion(t *testing.T) {
 	//   (go install: no install location for directory github.com/ToQoz/gopwt/testdata/is_type_conversion_test outside GOPATH)
 	// So copy to ./tdata temporary
 
-	err := filepath.Walk("./testdata", func(path string, fInfo os.FileInfo, err error) error {
+	err := filepath.Walk("testdata", func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 			return nil
 		}
 
-		rel, err := filepath.Rel("./testdata", path)
+		rel, err := filepath.Rel("testdata", path)
 		if err != nil {
 			return err
 		}
-		outPath := filepath.Join("./tdata", rel)
+		outPath := filepath.Join("tdata", rel)
 
 		if fInfo.IsDir() {
 			di, err := os.Stat(path)
@@ -74,12 +74,12 @@ func TestIsTypeConversion(t *testing.T) {
 	})
 
 	assert.Require(t, err == nil)
-	defer os.RemoveAll("./tdata")
+	defer os.RemoveAll("tdata")
 
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "./tdata/is_type_conversion_test/main.go", nil, 0)
+	f, err := parser.ParseFile(fset, filepath.Join("tdata", "is_type_conversion_test", "main.go"), nil, 0)
 	assert.Require(t, err == nil)
-	types, err := GetTypeInfo("./tdata/is_type_conversion_test", "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]+"/src", fset, []*ast.File{f})
+	types, err := GetTypeInfo(filepath.Join("tdata", "is_type_conversion_test"), "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]+"/src", fset, []*ast.File{f})
 	assert.Require(t, err == nil)
 
 	// fmt.Println(string([]byte(hello())))

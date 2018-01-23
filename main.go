@@ -58,7 +58,7 @@ func doMain() error {
 		setTermCols()
 	}
 	if wd, err := os.Getwd(); err == nil {
-		translator.WorkingDir(wd + "/")
+		translator.WorkingDir(wd + string(filepath.Separator))
 	}
 
 	tmpGopath, importpath, err := translator.Translate(flag.Arg(0))
