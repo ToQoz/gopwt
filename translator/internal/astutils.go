@@ -604,7 +604,7 @@ func CreateRawStringLit(s string) ast.Expr {
 		Op: token.ADD,
 	}
 	binary := rootBinary
-	for i, _ := range segments {
+	for i := range segments {
 		// reverse for
 		seg := segments[len(segments)-1-i]
 
