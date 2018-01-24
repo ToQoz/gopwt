@@ -31,7 +31,7 @@ var (
 	}
 )
 
-// ReplaceBinaryExpr replace oldExpr by newExpr in parent
+// ReplaceUnaryExpr replace oldExpr by newExpr in parent
 func ReplaceUnaryExpr(parent ast.Node, oldExpr *ast.UnaryExpr, newExpr ast.Expr) {
 	switch parent.(type) {
 	case *ast.CallExpr:
@@ -443,6 +443,7 @@ func CreateUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 	return n
 }
 
+// CreateMemorizedFuncCall creates memorized *ast.CallExpr.
 // f(a, b) -> translatedassert.FRVInterface(translatedassert.MFCall(filename, line, pos, f, translatedassert.RVOf(a), translatedassert.RVOf(b)))
 func CreateMemorizedFuncCall(filename string, line int, pos token.Pos, n *ast.CallExpr, returnType string) *ast.CallExpr {
 	c := &ast.CallExpr{
@@ -591,6 +592,7 @@ func CreatePosValuePairExpr(ps []printExpr) []ast.Expr {
 	return args
 }
 
+// CreateRawStringLit creates raw string literal(ast.Expr) from string.
 // VALUE:"foo"     ---> AST:`foo`
 // VALUE:"foo`bar" ---> AST:`foo` + "`" + `bar` (because we can't escape ` in ``)
 func CreateRawStringLit(s string) ast.Expr {

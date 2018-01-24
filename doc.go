@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 /*
-Command gopwt brings power assert to golang
+Package gopwt brings PowerAssert to golang
 
 Installation
 	$ go get github.com/ToQoz/gopwt/...
