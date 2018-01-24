@@ -11,7 +11,7 @@ PowerAssert library for golang.
 |package|coverage|
 |-------|--------|
 |gopwt/assert|[82.8%](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert|[59.0%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|gopwt/translatedassert|[59.1%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
 |gopwt/translator/internal|[55.6%](https://gocover.io/github.com/toqoz/gopwt/translator/internal)|
 
 ![logo](http://toqoz.net/art/images/gopwt.svg)
@@ -93,7 +93,7 @@ FAIL
 exit status 1
 FAIL	github.com/gopwter/gopwtexample	0.007s
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.613s
+FAIL	github.com/gopwter/gopwtexample	0.979s
 ```
 
 ## Example
@@ -346,13 +346,13 @@ $ go test
 		assert.OK(t, &a == &b)
 		             || |  ||
 		             || |  |"a"
-		             || |  (*interface {})(0xc42000f010)
+		             || |  (*string)(0xc42000efd0)
 		             || false
 		             |"a"
-		             (*interface {})(0xc42000efe0)
+		             (*string)(0xc42000efc0)
 		
-		--- [*interface {}] &b
-		+++ [*interface {}] &a
+		--- [*string] &b
+		+++ [*string] &a
 		@@ -1,1 +1,1@@
 		&"a"
 		
@@ -615,7 +615,7 @@ FAIL
 exit status 1
 FAIL	github.com/ToQoz/gopwt/_example	0.009s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.699s
+FAIL	github.com/ToQoz/gopwt/_example	0.737s
 ```
 
 ## Tips
