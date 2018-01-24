@@ -1,7 +1,6 @@
 package translatedassert
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -54,7 +53,7 @@ func TestFormat(t *testing.T) {
 `)
 
 	if e != o {
-		t.Error(fmt.Sprintf("(expected)%s != (got)%s\n", e, o))
+		t.Errorf("(expected)%s != (got)%s\n", e, o)
 	}
 }
 
@@ -76,8 +75,8 @@ func TestFormat_String(t *testing.T) {
 `)
 
 	if e != o {
-		t.Error(fmt.Sprintf("(expected)\n%s", e))
-		t.Error(fmt.Sprintf("(got)\n%s", o))
+		t.Errorf("(expected)\n%s", e)
+		t.Errorf("(got)\n%s", o)
 	}
 
 	pvs = []posValuePair{
@@ -95,7 +94,7 @@ func TestFormat_String(t *testing.T) {
 "a"
 `)
 	if e != o {
-		t.Error(fmt.Sprintf("(expected)%s != (got)%s\n", e, o))
+		t.Errorf("(expected)%s != (got)%s\n", e, o)
 	}
 }
 
@@ -103,13 +102,13 @@ func TestTruncate(t *testing.T) {
 	e := "to..."
 	o := truncate("toqoz", 5, "...")
 	if e != o {
-		t.Error(fmt.Sprintf("(expected)%s != (got)%s\n", e, o))
+		t.Errorf("(expected)%s != (got)%s\n", e, o)
 	}
 
 	e = " t..."
 	o = truncate(" toqoz", 5, "...")
 	if e != o {
-		t.Error(fmt.Sprintf("(expected)%s != (got)%s\n", e, o))
+		t.Errorf("(expected)%s != (got)%s\n", e, o)
 	}
 }
 
