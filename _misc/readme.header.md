@@ -1,6 +1,8 @@
 # gopwt
 
 [![Travis-CI Build Status](https://travis-ci.org/ToQoz/gopwt.svg?branch=master)](https://travis-ci.org/ToQoz/gopwt)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/5m2c6xiwgs8yamj1/branch/master?svg=true&passingText=Windows%20-%20OK&failingText=Windows%20-%20failed&pendingText=Windows%20-%20pending)](https://ci.appveyor.com/project/ToQoz/gopwt/branch/master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ToQoz/gopwt)](https://goreportcard.com/report/github.com/ToQoz/gopwt)
 
 PowerAssert library for golang.
 

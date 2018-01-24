@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/ToQoz/gopwt"
@@ -35,6 +36,26 @@ func TestBasicLit(t *testing.T) {
 	assert.OK(t, (a+c)+a == b)
 	assert.OK(t, `foo
 bar` == "bar")
+}
+
+func TestUnaryExpr(t *testing.T) {
+	assert.OK(t, +1 == -1)
+
+	a := "a"
+	b := "a"
+	assert.OK(t, &a == &b)
+
+	wg := sync.WaitGroup{}
+	ch := make(chan int)
+
+	wg.Add(1)
+	go func() {
+		assert.OK(t, <-ch == 0)
+		wg.Done()
+	}()
+	ch <- 1
+	wg.Wait()
+	close(ch)
 }
 
 func TestStringDiff(t *testing.T) {
