@@ -32,6 +32,58 @@ var (
 )
 
 // ReplaceBinaryExpr replace oldExpr by newExpr in parent
+func ReplaceUnaryExpr(parent ast.Node, oldExpr *ast.UnaryExpr, newExpr ast.Expr) {
+	switch parent.(type) {
+	case *ast.CallExpr:
+		parent := parent.(*ast.CallExpr)
+		for i, arg := range parent.Args {
+			if arg == oldExpr {
+				parent.Args[i] = newExpr
+				return
+			}
+		}
+	case *ast.KeyValueExpr:
+		parent := parent.(*ast.KeyValueExpr)
+		switch oldExpr {
+		case parent.Key:
+			parent.Key = newExpr
+			return
+		case parent.Value:
+			parent.Value = newExpr
+			return
+		}
+	case *ast.IndexExpr:
+		parent := parent.(*ast.IndexExpr)
+		if parent.Index == oldExpr {
+			parent.Index = newExpr
+			return
+		}
+	case *ast.ParenExpr:
+		parent := parent.(*ast.ParenExpr)
+		if parent.X == oldExpr {
+			parent.X = newExpr
+			return
+		}
+	case *ast.UnaryExpr:
+		parent := parent.(*ast.UnaryExpr)
+		parent.X = newExpr
+		return
+	case *ast.BinaryExpr:
+		parent := parent.(*ast.BinaryExpr)
+		switch oldExpr {
+		case parent.X:
+			parent.X = newExpr
+			return
+		case parent.Y:
+			parent.Y = newExpr
+			return
+		}
+	}
+
+	panic("[gopwt]Unexpected Error on replacing *ast.UnaryExpr by translatedassert.OpUnary*()")
+}
+
+// ReplaceBinaryExpr replace oldExpr by newExpr in parent
 func ReplaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Expr) {
 	switch parent.(type) {
 	case *ast.CallExpr:
@@ -76,7 +128,7 @@ func ReplaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Exp
 		}
 	}
 
-	panic("[gnewExprwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+	panic("[gopwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
 }
 
 // ReplaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
@@ -304,6 +356,31 @@ func CreateBoolIdent(v bool) *ast.Ident {
 	return &ast.Ident{Name: name}
 }
 
+// CreateUntypedExprFromUnaryExpr creates untyped operator-func(translatedassert.UnaryOp*()) from UnaryExpr
+// if given UnaryExpr is untyped, returns it.
+func CreateUntypedExprFromUnaryExpr(n *ast.UnaryExpr) ast.Expr {
+	createFuncOp := func(opName string, x ast.Expr) *ast.CallExpr {
+		return &ast.CallExpr{
+			Fun:  &ast.SelectorExpr{X: translatedAssertImportIdent, Sel: &ast.Ident{Name: "UnaryOp" + opName}},
+			Args: []ast.Expr{x},
+		}
+	}
+
+	// unary(&) has no need to wrap
+	switch n.Op {
+	case token.ADD: // +
+		return createFuncOp("ADD", n.X)
+	case token.SUB: // -
+		return createFuncOp("SUB", n.X)
+	case token.MUL: // *
+		return createFuncOp("MUL", n.X)
+	case token.ARROW: // <-
+		return createFuncOp("ARROW", n.X)
+	}
+
+	return n
+}
+
 // CreateUntypedExprFromBinaryExpr creates untyped operator-func(translatedassert.Op*()) from BinaryExpr
 // if given BinaryExpr is untyped, returns it.
 func CreateUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
@@ -367,7 +444,7 @@ func CreateUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 }
 
 // f(a, b) -> translatedassert.FRVInterface(translatedassert.MFCall(filename, line, pos, f, translatedassert.RVOf(a), translatedassert.RVOf(b)))
-func CreateMemorizedFuncCall(filename string, line int, n *ast.CallExpr, returnType string) *ast.CallExpr {
+func CreateMemorizedFuncCall(filename string, line int, pos token.Pos, n *ast.CallExpr, returnType string) *ast.CallExpr {
 	c := &ast.CallExpr{
 		Fun: &ast.SelectorExpr{
 			X:   translatedAssertImportIdent,
@@ -376,7 +453,7 @@ func CreateMemorizedFuncCall(filename string, line int, n *ast.CallExpr, returnT
 		Args: []ast.Expr{
 			&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(filename)},
 			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(line)},
-			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(n.Pos()))},
+			&ast.BasicLit{Kind: token.INT, Value: strconv.Itoa(int(pos))},
 			CreateReflectValueOfExpr(n.Fun),
 		},
 	}

@@ -422,13 +422,21 @@ func ExtractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 		n := n.(*ast.StarExpr)
 		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 		ps = append(ps, ExtractPrintExprs(typesInfo, filename, line, offset, n, n.X)...)
+	// "+" | "-" | "!" | "^" | "*" | "&" | "<-" .
 	case *ast.UnaryExpr:
 		n := n.(*ast.UnaryExpr)
+
 		x := ExtractPrintExprs(typesInfo, filename, line, offset, n, n.X)
 
-		n.X = CreateReflectBoolExpr(CreateReflectValueOfExpr(n.X))
+		untyped, ok := CreateUntypedExprFromUnaryExpr(n).(*ast.CallExpr)
+		if ok {
+			newExpr := CreateMemorizedFuncCall(filename, line, n.Pos(), untyped, "Interface")
+			ReplaceUnaryExpr(parent, n, newExpr)
+			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr, original))
+		} else {
+			ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
+		}
 
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
 		ps = append(ps, x...)
 	case *ast.BinaryExpr:
 		n := n.(*ast.BinaryExpr)
@@ -505,9 +513,9 @@ func ExtractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 			var memorized *ast.CallExpr
 
 			if p, ok := parent.(*ast.CallExpr); ok && IsAssert(AssertImportIdent, p) {
-				memorized = CreateMemorizedFuncCall(filename, line, n, "Bool")
+				memorized = CreateMemorizedFuncCall(filename, line, n.Pos(), n, "Bool")
 			} else {
-				memorized = CreateMemorizedFuncCall(filename, line, n, "Interface")
+				memorized = CreateMemorizedFuncCall(filename, line, n.Pos(), n, "Interface")
 			}
 
 			ps = append(ps, newPrintExpr(n.Pos()-offset, memorized, original))

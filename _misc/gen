@@ -66,7 +66,8 @@ $ go test' >> $out
 d=$(pwd)
 
 ls $GOPATH/src/github.com/$dummy_user/gopwtexample || mkdir -p $GOPATH/src/github.com/$dummy_user/gopwtexample
-cd $GOPATH/src//github.com/$dummy_user/gopwtexample
+cd $GOPATH/src/github.com/$dummy_user/gopwtexample
+
 cat <<EOF > main_test.go
 package main
 
