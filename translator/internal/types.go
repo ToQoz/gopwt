@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"bytes"
+	"fmt"
 	"go/ast"
 	"go/importer"
 	// "go/internal/gcimporter"
@@ -52,13 +54,15 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
 		install.Stdout = os.Stdout
-		install.Stderr = os.Stderr
+		b := []byte{}
+		buf := bytes.NewBuffer(b)
+		install.Stderr = buf
 		if Verbose {
 			install.Args = append(install.Args, "-v")
 		}
 		install.Args = append(install.Args, deps...)
 		if err := install.Run(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
 		}
 	}
 
