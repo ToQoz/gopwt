@@ -535,6 +535,7 @@ func ExtractPrintExprs(typesInfo *types.Info, filename string, line int, offset 
 	return ps
 }
 
+// ResultPosOf returns result position of given expr.
 // "a" -> 0
 // "obj.Fn" -> 3
 // "1 + 2" -> 2

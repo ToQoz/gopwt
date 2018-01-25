@@ -20,6 +20,7 @@ var (
 	testdata = flag.String("testdata", "testdata", "name of test data directories. e.g. -testdata testdata,migrations")
 )
 
+// Empower empower your tests. Call in `func TestMain(m *testing.M)`
 func Empower() {
 	if os.Getenv("GOPWT_OFF") != "" {
 		return
@@ -32,7 +33,7 @@ func Empower() {
 			if s, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				os.Exit(s.ExitStatus())
 			} else {
-				panic(fmt.Errorf("Unimplemented for system where exec.ExitError.Sys() is not syscall.WaitStatus."))
+				panic(fmt.Errorf("unimplemented for system where exec.ExitError.Sys() is not syscall.WaitStatus"))
 			}
 		}
 

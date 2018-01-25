@@ -52,7 +52,7 @@ func OK(t *testing.T, e bool, messages []string, header, filename string, line i
 		terrorw := tabw * 2
 
 		if stdoutIsatty && runewidth.StringWidth(line) > termw-terrorw {
-			lines = append(lines, truncate(line, termw-terrorw, "[ommitted]..."))
+			lines = append(lines, truncate(line, termw-terrorw, "[omitted]..."))
 		} else {
 			lines = append(lines, line)
 		}

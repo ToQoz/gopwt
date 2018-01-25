@@ -39,7 +39,7 @@ func UnaryOpADD(x interface{}) interface{} {
 	panic("unary(+) can take integers, floats, complex values")
 }
 
-// OpSUB has nodoc
+// UnaryOpSUB has nodoc
 func UnaryOpSUB(x interface{}) interface{} {
 	switch x.(type) {
 	case uint8:
