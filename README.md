@@ -3,16 +3,11 @@
 [![Travis-CI Build Status](https://travis-ci.org/ToQoz/gopwt.svg?branch=master)](https://travis-ci.org/ToQoz/gopwt)
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/5m2c6xiwgs8yamj1/branch/master?svg=true&passingText=Windows%20-%20OK&failingText=Windows%20-%20failed&pendingText=Windows%20-%20pending)](https://ci.appveyor.com/project/ToQoz/gopwt/branch/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ToQoz/gopwt)](https://goreportcard.com/report/github.com/ToQoz/gopwt)
+[![codecov](https://codecov.io/gh/ToQoz/gopwt/branch/master/graph/badge.svg)](https://codecov.io/gh/ToQoz/gopwt)
 
 PowerAssert library for golang.
 
 <img src="https://i.gyazo.com/fde9f5c049a94b02019a578d4b7e19c5.png" width="713" alt="screenshot">
-
-|package|coverage|
-|-------|--------|
-|gopwt/assert|[82.8%](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert|[51.8%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
-|gopwt/translator/internal|[55.9%](https://gocover.io/github.com/toqoz/gopwt/translator/internal)|
 
 ![logo](http://toqoz.net/art/images/gopwt.svg)
 
@@ -91,9 +86,10 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.009s
+FAIL	github.com/gopwter/gopwtexample	0.008s
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.907s
+exit status 1
+FAIL	github.com/gopwter/gopwtexample	0.869s
 ```
 
 ## Example
@@ -346,10 +342,10 @@ $ go test
 		assert.OK(t, &a == &b)
 		             || |  ||
 		             || |  |"a"
-		             || |  (*string)(0xc42000f0b0)
+		             || |  (*string)(0xc42008f0c0)
 		             || false
 		             |"a"
-		             (*string)(0xc42000f0a0)
+		             (*string)(0xc42008f0b0)
 		
 		--- [*string] &b
 		+++ [*string] &a
@@ -360,7 +356,7 @@ $ go test
 		assert.OK(t, <-ch == 0)
 		             | |  |
 		             | |  false
-		             | (chan int)(0xc420026900)
+		             | (chan int)(0xc42008c600)
 		             1
 		
 		--- [int] 0
@@ -613,9 +609,10 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.011s
+FAIL	github.com/ToQoz/gopwt/_example	0.009s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.842s
+exit status 1
+FAIL	github.com/ToQoz/gopwt/_example	0.990s
 ```
 
 ## Tips

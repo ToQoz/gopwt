@@ -7,10 +7,7 @@ out=$root/README.md
 
 git_latest_tag=$(git describe --tags --abbrev=0)
 cat $root/_misc/readme.header.md > $out
-echo "" >> $out
-_misc/cov >> $out
-echo "" >> $out
-cat $root/_misc/readme.header2.md >> $out
+echo >> $out
 
 # install
 echo "## Install" >> $out
