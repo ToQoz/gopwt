@@ -11,4 +11,7 @@ test-all: gopwt
 example: gopwt
 	go test ./_example
 readme: gopwt
-	_misc/gen
+	_misc/gen-readme.bash
+op:
+	_misc/gen-op.bash
+gen: op readme
