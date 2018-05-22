@@ -12,17 +12,93 @@ type Example struct {
 
 func TestOpADD(t *testing.T) {
 	tests := []Example{
-		{2, 3, 5},
-		{uint(2), uint(4), uint(6)},
-		{2.3, 2.5, 4.8},
-		{1 + 1i, 2 + 1i, 3 + 2i},
+		// int
+		{2, 3, 2 + 3},
+		{int32(1), 1, int32(1) + 1},
+		{1, int32(1), 1 + int32(1)},
+		{int64(2147483647), 1, int64(2147483647) + 1},
+		{1, int64(2147483647), 1 + int64(2147483647)},
+		// uint
+		{uint(2), uint(4), uint(2) + uint(4)},
+		{uint8(2), uint8(4), uint8(2) + uint8(4)},
+		{uint16(2), uint16(4), uint16(2) + uint16(4)},
+		{uint32(2), uint32(4), uint32(2) + uint32(4)},
+		{uint64(2), uint64(4), uint64(2) + uint64(4)},
+		// float
+		{2.3, 2.5, 2.3 + 2.5},
+		{2.3, 1, 2.3 + 1},
+		{1, 2.3, 1 + 2.3},
+		{float32(2.3), float32(1), float32(2.3) + float32(1)},
+		{float32(2.3), 1, float32(2.3) + 1},
+		{1, float32(2.3), 1 + float32(2.3)},
+		{float64(2.3), float64(1), float64(2.3) + float64(1)},
+		{float64(2.3), 1, float64(2.3) + 1},
+		{1, float64(2.3), 1 + float64(2.3)},
+		// complex
+		{(1 + 1i), (2 + 1i), (1 + 1i) + (2 + 1i)},
+		{1, (2 + 1i), 1 + (2 + 1i)},
+		{(2 + 1i), 1, (2 + 1i) + 1},
+		{1.1, (2 + 1i), 1.1 + (2 + 1i)},
+		{(2 + 1i), 1.1, 1.1 + (2 + 1i)},
+		{complex(1, 2), complex(1, 1), complex(1, 2) + complex(1, 1)},
+		{complex(1, 2), 1, complex(1, 2) + 1},
+		{1, complex(1, 2), 1 + complex(1, 2)},
+		{complex64(complex(1, 2)), complex64(complex(1, 1)), complex64(complex(1, 2)) + complex64(complex(1, 1))},
+		{complex64(complex(1, 2)), 1, complex64(complex(1, 2)) + 1},
+		{1, complex64(complex(1, 2)), 1 + complex64(complex(1, 2))},
+		{complex128(complex(1, 2)), complex128(complex(1, 1)), complex128(complex(1, 2)) + complex128(complex(1, 1))},
+		{complex128(complex(1, 2)), 1, complex128(complex(1, 2)) + 1},
+		{1, complex128(complex(1, 2)), 1 + complex128(complex(1, 2))},
+		// string
 		{"a", "b", "ab"},
 	}
 
-	for _, test := range LeftRightTests(tests) {
-		got := OpADD(test.a, test.b)
+	for _, test := range tests {
+		got := Op("ADD", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpAdd(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("ADD", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
+		}
+	}
+}
+
+func TestOpWithUserDefinedType(t *testing.T) {
+	type myint int
+	var a myint = 1
+	type myfloat float64
+	var b myfloat = 2.5
+	tests := []Example{
+		{myint(1), 3, myint(1) + 3},
+		{3, myint(1), 3 + myint(1)},
+		{a, 3, a + 3},
+		{3, a, 3 + a},
+		{a, a, a + a},
+		{b, 1, b + 1},
+		{1, b, 1 + b},
+		{b, b, b + b},
+		{b, b, b + b},
+	}
+
+	for _, test := range tests {
+		got := Op("ADD", test.a, test.b)
+		if !eq(test.expected, got) {
+			t.Errorf(`Op("ADD", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
+		}
+	}
+}
+
+func TestOpShiftWithUserDefinedType(t *testing.T) {
+	type myint int
+	type myuint uint
+	tests := []Example{
+		{myint(1), 1, myint(1) << 1},
+		{1, myuint(1), 1 << myuint(1)},
+		{myint(1), myuint(1), myint(1) << myuint(1)},
+	}
+
+	for _, test := range tests {
+		got := OpShift("SHL", test.a, test.b)
+		if !eq(test.expected, got) {
+			t.Errorf(`OpShift("SHL", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -36,9 +112,9 @@ func TestOpSUB(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpSUB(test.a, test.b)
+		got := Op("SUB", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpSUB(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("SUB", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -52,9 +128,9 @@ func TestOpMUL(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpMUL(test.a, test.b)
+		got := Op("MUL", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpMUL(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("MUL", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -69,9 +145,9 @@ func TestOpQUO(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpQUO(test.a, test.b)
+		got := Op("QUO", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpQUO(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("QUO", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -84,9 +160,9 @@ func TestOpREM(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpREM(test.a, test.b)
+		got := Op("REM", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpREM(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("REM", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -100,9 +176,9 @@ func TestOpAND(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpAND(test.a, test.b)
+		got := Op("AND", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpAND(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("AND", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -116,9 +192,9 @@ func TestOpOR(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpOR(test.a, test.b)
+		got := Op("OR", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpOR(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("OR", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -132,9 +208,9 @@ func TestOpXOR(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpXOR(test.a, test.b)
+		got := Op("XOR", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpXOR(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("XOR", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -150,9 +226,9 @@ func TestOpANDNOT(t *testing.T) {
 	}
 
 	for _, test := range LeftRightTests(tests) {
-		got := OpANDNOT(test.a, test.b)
+		got := Op("ANDNOT", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpANDNOT(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("ANDNOT", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -164,7 +240,7 @@ func TestOpSHL(t *testing.T) {
 	}
 
 	for _, test := range leftIntRightUintTests(tests) {
-		got := OpSHL(test.a, test.b)
+		got := OpShift("SHL", test.a, test.b)
 		if !eq(test.expected, got) {
 			t.Errorf("OpSHL(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
 		}
@@ -179,9 +255,9 @@ func TestOpSHR(t *testing.T) {
 	}
 
 	for _, test := range leftIntRightUintTests(tests) {
-		got := OpSHR(test.a, test.b)
+		got := OpShift("SHR", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpSHL(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("SHR", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -195,9 +271,9 @@ func TestOpLAND(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := OpLAND(test.a, test.b)
+		got := Op("LAND", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpLAND(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("LAND", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }
@@ -211,9 +287,9 @@ func TestOpLOR(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := OpLOR(test.a, test.b)
+		got := Op("LOR", test.a, test.b)
 		if !eq(test.expected, got) {
-			t.Errorf("OpLOR(%v, %v) = %v, but got %v", test.a, test.b, test.expected, got)
+			t.Errorf(`Op("LOR", %v, %v) = %v, but got %v`, test.a, test.b, test.expected, got)
 		}
 	}
 }

@@ -242,6 +242,7 @@ func TestConvertFuncCallToMemorized(t *testing.T) {
 }
 
 func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
+	add := "`ADD`"
 	// CallExpr
 	func() {
 		parent := MustParseExpr("f(b + a)").(*ast.CallExpr)
@@ -249,8 +250,8 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 		if newExpr != parent.Args[0].(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Args[0].(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `f(translatedassert.OpADD(b, a))`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(b, a)`)
+		assert.OK(t, astToCode(parent) == `f(translatedassert.Op(`+add+`, b, a))`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, b, a)`)
 	}()
 	func() {
 		parent := MustParseExpr("f(b, b + a)").(*ast.CallExpr)
@@ -258,8 +259,8 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 		if newExpr != parent.Args[1].(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Args[1].(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `f(b, translatedassert.OpADD(b, a))`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(b, a)`)
+		assert.OK(t, astToCode(parent) == `f(b, translatedassert.Op(`+add+`, b, a))`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, b, a)`)
 	}()
 	// ParentExpr
 	func() {
@@ -268,8 +269,8 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 		if newExpr != parent.X.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.X.(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `(translatedassert.OpADD(b, a))`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(b, a)`)
+		assert.OK(t, astToCode(parent) == `(translatedassert.Op(`+add+`, b, a))`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, b, a)`)
 	}()
 	// BinaryExpr
 	func() {
@@ -278,14 +279,14 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 		if newExpr != parent.X.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.X.(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `translatedassert.OpADD(b, a) == c+d`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(b, a)`)
+		assert.OK(t, astToCode(parent) == `translatedassert.Op(`+add+`, b, a) == c+d`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, b, a)`)
 		newExpr = CreateUntypedExprFromBinaryExpr(parent.Y.(*ast.BinaryExpr))
 		if newExpr != parent.Y.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Y.(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `translatedassert.OpADD(b, a) == translatedassert.OpADD(c, d)`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(c, d)`)
+		assert.OK(t, astToCode(parent) == `translatedassert.Op(`+add+`, b, a) == translatedassert.Op(`+add+`, c, d)`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, c, d)`)
 	}()
 	// KeyValuePair
 	func() {
@@ -295,14 +296,14 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 		if newExpr != parent.Key.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Key.(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `translatedassert.OpADD(a, b): c + d`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(a, b)`)
+		assert.OK(t, astToCode(parent) == `translatedassert.Op(`+add+`, a, b): c + d`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, a, b)`)
 		newExpr = CreateUntypedExprFromBinaryExpr(parent.Value.(*ast.BinaryExpr))
 		if newExpr != parent.Value.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Value.(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `translatedassert.OpADD(a, b): translatedassert.OpADD(c, d)`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(c, d)`)
+		assert.OK(t, astToCode(parent) == `translatedassert.Op(`+add+`, a, b): translatedassert.Op(`+add+`, c, d)`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, c, d)`)
 	}()
 	// IndexExpr
 	func() {
@@ -311,8 +312,8 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 		if newExpr != parent.Index.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Index.(*ast.BinaryExpr), newExpr)
 		}
-		assert.OK(t, astToCode(parent) == `a[translatedassert.OpADD(a, b)]`)
-		assert.OK(t, astToCode(newExpr) == `translatedassert.OpADD(a, b)`)
+		assert.OK(t, astToCode(parent) == `a[translatedassert.Op(`+add+`, a, b)]`)
+		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, a, b)`)
 	}()
 }
 

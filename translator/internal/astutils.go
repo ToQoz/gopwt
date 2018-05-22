@@ -386,8 +386,14 @@ func CreateUntypedExprFromUnaryExpr(n *ast.UnaryExpr) ast.Expr {
 func CreateUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 	createFuncOp := func(opName string, x ast.Expr, y ast.Expr) *ast.CallExpr {
 		return &ast.CallExpr{
-			Fun:  &ast.SelectorExpr{X: translatedAssertImportIdent, Sel: &ast.Ident{Name: "Op" + opName}},
-			Args: []ast.Expr{x, y},
+			Fun:  &ast.SelectorExpr{X: translatedAssertImportIdent, Sel: &ast.Ident{Name: "Op"}},
+			Args: []ast.Expr{CreateRawStringLit(opName), x, y},
+		}
+	}
+	createFuncOpShift := func(opName string, x ast.Expr, y ast.Expr) *ast.CallExpr {
+		return &ast.CallExpr{
+			Fun:  &ast.SelectorExpr{X: translatedAssertImportIdent, Sel: &ast.Ident{Name: "OpShift"}},
+			Args: []ast.Expr{CreateRawStringLit(opName), x, y},
 		}
 	}
 
@@ -431,9 +437,9 @@ func CreateUntypedExprFromBinaryExpr(n *ast.BinaryExpr) ast.Expr {
 	case token.AND_NOT: // &^
 		return createFuncOp("ANDNOT", n.X, n.Y)
 	case token.SHL: // <<
-		return createFuncOp("SHL", n.X, n.Y)
+		return createFuncOpShift("SHL", n.X, n.Y)
 	case token.SHR: // >>
-		return createFuncOp("SHR", n.X, n.Y)
+		return createFuncOpShift("SHR", n.X, n.Y)
 	case token.LAND: // &&
 		return createFuncOp("LAND", n.X, n.Y)
 	case token.LOR: // ||

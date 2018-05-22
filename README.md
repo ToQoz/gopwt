@@ -11,8 +11,8 @@ PowerAssert library for golang.
 |package|coverage|
 |-------|--------|
 |gopwt/assert|[82.8%](https://gocover.io/github.com/toqoz/gopwt/assert)|
-|gopwt/translatedassert|[59.1%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
-|gopwt/translator/internal|[55.6%](https://gocover.io/github.com/toqoz/gopwt/translator/internal)|
+|gopwt/translatedassert|[51.8%](https://gocover.io/github.com/toqoz/gopwt/translatedassert)|
+|gopwt/translator/internal|[55.9%](https://gocover.io/github.com/toqoz/gopwt/translator/internal)|
 
 ![logo](http://toqoz.net/art/images/gopwt.svg)
 
@@ -91,9 +91,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.007s
+FAIL	github.com/gopwter/gopwtexample	0.009s
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.979s
+FAIL	github.com/gopwter/gopwtexample	0.907s
 ```
 
 ## Example
@@ -346,10 +346,10 @@ $ go test
 		assert.OK(t, &a == &b)
 		             || |  ||
 		             || |  |"a"
-		             || |  (*string)(0xc42000efd0)
+		             || |  (*string)(0xc42000f0b0)
 		             || false
 		             |"a"
-		             (*string)(0xc42000efc0)
+		             (*string)(0xc42000f0a0)
 		
 		--- [*string] &b
 		+++ [*string] &a
@@ -613,9 +613,9 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.009s
+FAIL	github.com/ToQoz/gopwt/_example	0.011s
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.737s
+FAIL	github.com/ToQoz/gopwt/_example	0.842s
 ```
 
 ## Tips
