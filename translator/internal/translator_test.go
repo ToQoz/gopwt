@@ -14,6 +14,11 @@ import (
 	. "github.com/ToQoz/gopwt/translator/internal"
 )
 
+var ctx = &Context{
+	AssertImport:           &ast.Ident{Name: "assert"},
+	TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
+}
+
 func TestDontPanic_OnTypeConversion(t *testing.T) {
 	a := func() rune {
 		return 'a'
@@ -43,7 +48,7 @@ func TestRewriteFile(t *testing.T) {
 	assert.Require(t, err == nil)
 
 	buf := bytes.NewBuffer([]byte{})
-	RewriteFile(nil, fset, fset, f, f, buf)
+	RewriteFile(ctx, nil, fset, fset, f, f, buf)
 	got := buf.String()
 
 	assert.OK(t, got == expected)
@@ -51,28 +56,28 @@ func TestRewriteFile(t *testing.T) {
 
 func TestCreateReflectTypeExprFromTypeExpr(t *testing.T) {
 	// built in type
-	assert.OK(t, "translatedassert.RVOf(new(string)).Elem().Type()" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("string"))))
-	assert.OK(t, "translatedassert.RVOf(new(int)).Elem().Type()" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("int"))))
+	assert.OK(t, "translatedassert.RVOf(new(string)).Elem().Type()" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("string"))))
+	assert.OK(t, "translatedassert.RVOf(new(int)).Elem().Type()" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("int"))))
 	// chan
-	assert.OK(t, "translatedassert.RVOf(new(chan int)).Elem().Type()" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("chan int"))))
+	assert.OK(t, "translatedassert.RVOf(new(chan int)).Elem().Type()" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("chan int"))))
 	// map, slice
-	assert.OK(t, "translatedassert.RTOf([]string{})" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("[]string"))))
-	assert.OK(t, "translatedassert.RTOf(map[string]string{})" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("map[string]string"))))
+	assert.OK(t, "translatedassert.RTOf([]string{})" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("[]string"))))
+	assert.OK(t, "translatedassert.RTOf(map[string]string{})" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("map[string]string"))))
 	// func
-	assert.OK(t, "translatedassert.RTOf(func(){})" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("func()"))))
+	assert.OK(t, "translatedassert.RTOf(func(){})" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("func()"))))
 	// other type
-	assert.OK(t, "translatedassert.RTOf(foo{})" == astToCode(CreateReflectTypeExprFromTypeExpr(MustParseExpr("foo"))))
+	assert.OK(t, "translatedassert.RTOf(foo{})" == astToCode(CreateReflectTypeExprFromTypeExpr(ctx, MustParseExpr("foo"))))
 }
 
 func TestExtractPrintExprs_SingleLineStringLit(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr(`"foo" == "bar"`))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr(`"foo" == "bar"`))
 	assert.OK(t, len(ps) == 3)
 	// ==
 	assert.OK(t, ps[1].Pos == len(`"foo" `)+1)
 }
 
 func TestExtractPrintExprs_MultiLineStringLit(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr(`"foo\nbar" == "bar"`))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr(`"foo\nbar" == "bar"`))
 	assert.OK(t, len(ps) == 3)
 	assert.OK(t, ps[0].Pos == 1)
 	assert.OK(t, ps[0].Expr.(*ast.BasicLit).Value == `"foo\nbar"`)
@@ -83,7 +88,7 @@ func TestExtractPrintExprs_MultiLineStringLit(t *testing.T) {
 func TestExtractPrintExprs_UnaryExpr(t *testing.T) {
 	// FIXME
 	// !a -> !translatedassert.RVBool(translatedassert.RVOf(a))
-	//ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("!a"))
+	//ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("!a"))
 	//assert.OK(t, len(ps) == 2)
 	//assert.OK(t, ps[0].Pos == 1)
 	//assert.OK(t, ps[0].Expr.(*ast.UnaryExpr).X.(*ast.CallExpr).Fun.(*ast.SelectorExpr).X.(*ast.Ident).Name == "translatedassert")
@@ -93,7 +98,7 @@ func TestExtractPrintExprs_UnaryExpr(t *testing.T) {
 }
 
 func TestExtractPrintExprs_StarExpr(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("*a"))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("*a"))
 	assert.OK(t, len(ps) == 2)
 	assert.OK(t, ps[0].Pos == 1)
 	assert.OK(t, ps[0].Expr.(*ast.StarExpr).X.(*ast.Ident).Name == "a")
@@ -102,14 +107,14 @@ func TestExtractPrintExprs_StarExpr(t *testing.T) {
 }
 
 func TestExtractPrintExprs_SliceExpr(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr(`"foo"[a1:a2]`))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr(`"foo"[a1:a2]`))
 	assert.OK(t, len(ps) == 2)
 	assert.OK(t, ps[0].Pos == len(`"foo"[`)+1)
 	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "a1")
 	assert.OK(t, ps[1].Pos == len(`"foo"[a1:`)+1)
 	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a2")
 
-	ps = ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr(`"foo"[a1:a2:a3]`))
+	ps = ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr(`"foo"[a1:a2:a3]`))
 	assert.OK(t, len(ps) == 3)
 	assert.OK(t, ps[0].Pos == len(`"foo"[`)+1)
 	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "a1")
@@ -120,7 +125,7 @@ func TestExtractPrintExprs_SliceExpr(t *testing.T) {
 }
 
 func TestExtractPrintExprs_IndexExpr(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("ary[i] == ary2[i2]"))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("ary[i] == ary2[i2]"))
 	assert.OK(t, len(ps) == 7)
 
 	// ary
@@ -149,7 +154,7 @@ func TestExtractPrintExprs_IndexExpr(t *testing.T) {
 }
 
 func TestExtractPrintExprs_ArrayType(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual([]string{c}, []string{})"))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual([]string{c}, []string{})"))
 	assert.OK(t, len(ps) == 4)
 	// reflect.DeepEqual
 	assert.OK(t, ps[0].Pos == 1)
@@ -161,7 +166,7 @@ func TestExtractPrintExprs_ArrayType(t *testing.T) {
 	// []string{}
 	assert.OK(t, ps[3].Pos == len("reflect.DeepEqual([]string{c}, ")+1)
 
-	ps = ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual([4]string{d}, []string{})"))
+	ps = ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual([4]string{d}, []string{})"))
 	assert.OK(t, len(ps) == 4)
 	// reflect.DeeepEqual
 	assert.OK(t, ps[0].Pos == 1)
@@ -174,7 +179,7 @@ func TestExtractPrintExprs_ArrayType(t *testing.T) {
 }
 
 func TestExtractPrintExprs_MapType(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual(map[string]string{a:b}, map[string]string{})"))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual(map[string]string{a:b}, map[string]string{})"))
 	assert.OK(t, len(ps) == 5)
 
 	// reflect.DeepEqual
@@ -196,7 +201,7 @@ func TestExtractPrintExprs_MapType(t *testing.T) {
 }
 
 func TestExtractPrintExprs_StructType(t *testing.T) {
-	ps := ExtractPrintExprs(nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual(struct{Name string}{}, struct{Name string}{Name: foo})"))
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("reflect.DeepEqual(struct{Name string}{}, struct{Name string}{Name: foo})"))
 	assert.OK(t, len(ps) == 4)
 	// reflect.DeepEqual
 	assert.OK(t, ps[0].Pos == 1)
@@ -214,11 +219,11 @@ func TestConvertFuncCallToMemorized(t *testing.T) {
 
 	expected := `translatedassert.FRVInterface(translatedassert.MFCall("", 0, 1, translatedassert.RVOf(f), translatedassert.RVOf(a), translatedassert.RVOf(b)))`
 	n = MustParseExpr("f(a, b)").(*ast.CallExpr)
-	assert.OK(t, astToCode(CreateMemorizedFuncCall("", 0, n.Pos(), n, "Interface")) == expected)
+	assert.OK(t, astToCode(CreateMemorizedFuncCall(ctx, "", 0, n.Pos(), n, "Interface")) == expected)
 
 	expected = `translatedassert.FRVBool(translatedassert.MFCall("", 0, 1, translatedassert.RVOf(f), translatedassert.RVOf(b)))`
 	n = MustParseExpr("f(b)").(*ast.CallExpr)
-	assert.OK(t, astToCode(CreateMemorizedFuncCall("", 0, n.Pos(), n, "Bool")) == expected)
+	assert.OK(t, astToCode(CreateMemorizedFuncCall(ctx, "", 0, n.Pos(), n, "Bool")) == expected)
 }
 
 func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
@@ -226,7 +231,7 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 	// CallExpr
 	func() {
 		parent := MustParseExpr("f(b + a)").(*ast.CallExpr)
-		newExpr := CreateUntypedExprFromBinaryExpr(parent.Args[0].(*ast.BinaryExpr))
+		newExpr := CreateUntypedExprFromBinaryExpr(ctx, parent.Args[0].(*ast.BinaryExpr))
 		if newExpr != parent.Args[0].(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Args[0].(*ast.BinaryExpr), newExpr)
 		}
@@ -235,7 +240,7 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 	}()
 	func() {
 		parent := MustParseExpr("f(b, b + a)").(*ast.CallExpr)
-		newExpr := CreateUntypedExprFromBinaryExpr(parent.Args[1].(*ast.BinaryExpr))
+		newExpr := CreateUntypedExprFromBinaryExpr(ctx, parent.Args[1].(*ast.BinaryExpr))
 		if newExpr != parent.Args[1].(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Args[1].(*ast.BinaryExpr), newExpr)
 		}
@@ -245,7 +250,7 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 	// ParentExpr
 	func() {
 		parent := MustParseExpr("(b + a)").(*ast.ParenExpr)
-		newExpr := CreateUntypedExprFromBinaryExpr(parent.X.(*ast.BinaryExpr))
+		newExpr := CreateUntypedExprFromBinaryExpr(ctx, parent.X.(*ast.BinaryExpr))
 		if newExpr != parent.X.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.X.(*ast.BinaryExpr), newExpr)
 		}
@@ -255,13 +260,13 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 	// BinaryExpr
 	func() {
 		parent := MustParseExpr("b + a == c + d").(*ast.BinaryExpr)
-		newExpr := CreateUntypedExprFromBinaryExpr(parent.X.(*ast.BinaryExpr))
+		newExpr := CreateUntypedExprFromBinaryExpr(ctx, parent.X.(*ast.BinaryExpr))
 		if newExpr != parent.X.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.X.(*ast.BinaryExpr), newExpr)
 		}
 		assert.OK(t, astToCode(parent) == `translatedassert.Op(`+add+`, b, a) == c+d`)
 		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, b, a)`)
-		newExpr = CreateUntypedExprFromBinaryExpr(parent.Y.(*ast.BinaryExpr))
+		newExpr = CreateUntypedExprFromBinaryExpr(ctx, parent.Y.(*ast.BinaryExpr))
 		if newExpr != parent.Y.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Y.(*ast.BinaryExpr), newExpr)
 		}
@@ -272,13 +277,13 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 	func() {
 		_parent := MustParseExpr("map[string]string{a + b: c + d}").(*ast.CompositeLit)
 		parent := _parent.Elts[0].(*ast.KeyValueExpr)
-		newExpr := CreateUntypedExprFromBinaryExpr(parent.Key.(*ast.BinaryExpr))
+		newExpr := CreateUntypedExprFromBinaryExpr(ctx, parent.Key.(*ast.BinaryExpr))
 		if newExpr != parent.Key.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Key.(*ast.BinaryExpr), newExpr)
 		}
 		assert.OK(t, astToCode(parent) == `translatedassert.Op(`+add+`, a, b): c + d`)
 		assert.OK(t, astToCode(newExpr) == `translatedassert.Op(`+add+`, a, b)`)
-		newExpr = CreateUntypedExprFromBinaryExpr(parent.Value.(*ast.BinaryExpr))
+		newExpr = CreateUntypedExprFromBinaryExpr(ctx, parent.Value.(*ast.BinaryExpr))
 		if newExpr != parent.Value.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Value.(*ast.BinaryExpr), newExpr)
 		}
@@ -288,7 +293,7 @@ func Test_CreateUntypedExprFromBinaryExpr_and_ReplaceBinaryExpr(t *testing.T) {
 	// IndexExpr
 	func() {
 		parent := MustParseExpr("a[a+b]").(*ast.IndexExpr)
-		newExpr := CreateUntypedExprFromBinaryExpr(parent.Index.(*ast.BinaryExpr))
+		newExpr := CreateUntypedExprFromBinaryExpr(ctx, parent.Index.(*ast.BinaryExpr))
 		if newExpr != parent.Index.(*ast.BinaryExpr) {
 			ReplaceBinaryExpr(parent, parent.Index.(*ast.BinaryExpr), newExpr)
 		}
