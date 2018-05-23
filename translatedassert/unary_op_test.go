@@ -10,6 +10,7 @@ type UnaryExample struct {
 func TestUnaryOpADD(t *testing.T) {
 	tests := []UnaryExample{
 		{1, 1},
+		{uint(1), uint(1)},
 		{uint8(1), uint8(1)},
 		{uint16(1), uint16(1)},
 		{uint32(1), uint32(1)},
