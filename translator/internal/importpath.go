@@ -46,7 +46,10 @@ func findImportPathByPath(path string) (string, error) {
 		if path, err := filepath.EvalSymlinks(path); err == nil {
 			if srcDir, err := filepath.EvalSymlinks(srcDir); err == nil {
 				if strings.HasPrefix(path, srcDir) {
-					return strings.TrimPrefix(strings.Replace(path, srcDir, "", 1), string(filepath.Separator)), nil
+					imp := strings.TrimPrefix(strings.Replace(path, srcDir, "", 1), string(filepath.Separator))
+					// windows: github.com\ToQoz\gopwt -> github.com/ToQoz/gopwt
+					imp = strings.Replace(imp, `\`, "/", -1)
+					return imp, nil
 				}
 			}
 		}

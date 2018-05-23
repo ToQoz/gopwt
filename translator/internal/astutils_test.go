@@ -327,3 +327,56 @@ func TestCreateUntypedExprFromBinaryExpr(t *testing.T) {
 	assert.OK(t, f.Args[1].(*ast.Ident).Name == "false")
 	assert.OK(t, f.Args[2].(*ast.Ident).Name == "false")
 }
+
+func TestReplaceUnaryExpr(t *testing.T) {
+	newExpr := MustParseExpr("rep()")
+
+	{
+		parent := MustParseExpr("a(!true)").(*ast.CallExpr)
+		oldExpr := parent.Args[0].(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "a(rep())")
+	}
+	{
+		parent := MustParseExpr("map[int]bool{1:!true}").(*ast.CompositeLit).Elts[0].(*ast.KeyValueExpr)
+		oldExpr := parent.Value.(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "1: rep()")
+	}
+	{
+		parent := MustParseExpr("a[!true]").(*ast.IndexExpr)
+		oldExpr := parent.Index.(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "a[rep()]")
+	}
+	{
+		parent := MustParseExpr("(!true)").(*ast.ParenExpr)
+		oldExpr := parent.X.(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "(rep())")
+	}
+	{
+		parent := MustParseExpr("!!true").(*ast.UnaryExpr)
+		oldExpr := parent.X.(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "!rep()")
+	}
+	{
+		parent := MustParseExpr("!true + 1").(*ast.BinaryExpr)
+		oldExpr := parent.X.(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "rep() + 1")
+	}
+	{
+		parent := MustParseExpr("1 + !true").(*ast.BinaryExpr)
+		oldExpr := parent.Y.(*ast.UnaryExpr)
+		ReplaceUnaryExpr(parent, oldExpr, newExpr)
+		assert.OK(t, astToCode(parent) == "1 + rep()")
+	}
+}
+
+func TestIsReflectDeepEqual(t *testing.T) {
+	assert.OK(t, IsReflectDeepEqual(MustParseExpr("reflect.DeepEqual(1, 1)")) == true)
+	assert.OK(t, IsReflectDeepEqual(MustParseExpr("reflect.DeepEqual2(1, 1)")) == false)
+	assert.OK(t, IsReflectDeepEqual(MustParseExpr("reflect.DeepEqua(1, 1)")) == false)
+}
