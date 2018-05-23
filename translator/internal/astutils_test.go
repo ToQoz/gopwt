@@ -374,3 +374,9 @@ func TestReplaceUnaryExpr(t *testing.T) {
 		assert.OK(t, astToCode(parent) == "1 + rep()")
 	}
 }
+
+func TestIsReflectDeepEqual(t *testing.T) {
+	assert.OK(t, IsReflectDeepEqual(MustParseExpr("reflect.DeepEqual(1, 1)")) == true)
+	assert.OK(t, IsReflectDeepEqual(MustParseExpr("reflect.DeepEqual2(1, 1)")) == false)
+	assert.OK(t, IsReflectDeepEqual(MustParseExpr("reflect.DeepEqua(1, 1)")) == false)
+}
