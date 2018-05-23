@@ -89,7 +89,7 @@ exit status 1
 FAIL	github.com/gopwter/gopwtexample	0.008s
 exit status 1
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.869s
+FAIL	github.com/gopwter/gopwtexample	0.876s
 ```
 
 ## Example
@@ -432,16 +432,9 @@ $ go test
 		
 		--- [map[string]string] map[string]string{"a": "a", k: v}
 		+++ [map[string]string] map[string]string{}
-<<<<<<< HEAD
 		@@ -1,3 +1,1@@
 		-map[string]string{ "a":            "a",
 		-                   "b--------key": "b------value",
-=======
-		@@ -1,4 +1,1@@
-		-{
-		-  "b--------key": "b------value",
-		-  "a":            "a",
->>>>>>> chore(readme): make readme (little bit speed up on example)
 		-}
 		+map[string]string{}
 		
@@ -616,16 +609,10 @@ $ go test
 		
 FAIL
 exit status 1
-<<<<<<< HEAD
-FAIL	github.com/ToQoz/gopwt/_example	0.009s
+FAIL	github.com/ToQoz/gopwt/_example	0.008s
 exit status 1
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.990s
-=======
-FAIL	github.com/ToQoz/gopwt/_example	0.007s
-exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.699s
->>>>>>> chore(readme): make readme (little bit speed up on example)
+FAIL	github.com/ToQoz/gopwt/_example	0.978s
 ```
 
 ## Tips
