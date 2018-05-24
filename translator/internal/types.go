@@ -18,6 +18,9 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	typesConfig := types.Config{}
 
 	// Install binaries
+	if os.Getenv("GOPWT_DEBUG") != "" {
+		fmt.Printf("build.Default.Import: %s\n", importPath)
+	}
 	buildPkg, err := build.Default.Import(importPath, "", build.AllowBinary)
 	if err != nil {
 		return nil, err
@@ -37,23 +40,33 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		if old {
 			installDeps = append(installDeps, importPath)
 		}
+		deps = append(deps, ".")
 	}
 
-	for _, d := range deps {
-		pkg, err := build.Default.Import(d, "", build.FindOnly)
-		if err != nil {
-			return nil, err
-		}
-		old, err := isOldBinary(pkg)
-		if err != nil {
-			return nil, err
-		}
-		if old {
-			installDeps = append(installDeps, d)
-		}
+	//	for _, d := range deps {
+	//		if os.Getenv("GOPWT_DEBUG") != "" {
+	//			fmt.Printf("build.Default.Import: %s\n", d)
+	//		}
+	//		pkg, err := build.Default.Import(d, "", build.AllowBinary)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		old, err := isOldBinary(pkg)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		if old {
+	//			installDeps = append(installDeps, d)
+	//		}
+	//	}
+
+	if os.Getenv("GOPWT_DEBUG") != "" {
+		fmt.Printf("installDeps: %v\n", installDeps)
 	}
 
-	if len(installDeps) > 0 {
+	// FIXME
+	// if len(installDeps) > 0 {
+	if len(deps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
 		install.Stdout = os.Stdout
@@ -63,7 +76,9 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		if Verbose {
 			install.Args = append(install.Args, "-v")
 		}
-		install.Args = append(install.Args, installDeps...)
+		// FIXME
+		// install.Args = append(install.Args, installDeps...)
+		install.Args = append(install.Args, deps...)
 		if err := install.Run(); err != nil {
 			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
 		}

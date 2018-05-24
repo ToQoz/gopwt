@@ -75,13 +75,6 @@ func findDeps(pkg *build.Package, importPath string) ([]string, error) {
 		deps[imp] = true
 	}
 
-	for _, imp := range pkg.XTestImports {
-		if imp == importPath {
-			continue
-		}
-		deps[imp] = true
-	}
-
 	ret := make([]string, 0, len(deps))
 	for d, _ := range deps {
 		ret = append(ret, d)
