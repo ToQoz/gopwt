@@ -27,7 +27,7 @@ func TestIsAssert_Regression(t *testing.T) {
 	}
 
 	// Check no panic on IsAssert when *ast.SelectorExpr.X is not *ast.Ident
-	IsAssert(AssertImportIdent, exprs.(*ast.CallExpr))
+	IsAssert(ctx.AssertImport, exprs.(*ast.CallExpr))
 }
 
 func TestInspectAssert(t *testing.T) {
@@ -35,7 +35,7 @@ func TestInspectAssert(t *testing.T) {
 	assert.Require(t, err == nil)
 
 	asserts := []string{}
-	InspectAssert(file, func(n *ast.CallExpr) {
+	InspectAssert(ctx, file, func(n *ast.CallExpr) {
 		asserts = append(asserts, astToCode(n))
 	})
 	assert.OK(t, len(asserts) == 2)
@@ -221,107 +221,107 @@ func TestCreateRawStringLit(t *testing.T) {
 func TestCreateUntypedCallExprFromBuiltinCallExpr(t *testing.T) {
 	var expr ast.Expr
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("make(typ)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("make(typ)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Bmake(translatedassert.RTOf(typ{}))")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("new(typ)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("new(typ)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Bnew(translatedassert.RTOf(typ{}))")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("cap(a)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("cap(a)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Bcap(a)")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("complex(a, b)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("complex(a, b)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Bcomplex(a, b)")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("copy(a, b)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("copy(a, b)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Bcopy(a, b)")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("imag(a)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("imag(a)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Bimag(a)")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("len(a)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("len(a)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Blen(a)")
 
-	expr = CreateUntypedCallExprFromBuiltinCallExpr(MustParseExpr("real(a)").(*ast.CallExpr))
+	expr = CreateUntypedCallExprFromBuiltinCallExpr(ctx, MustParseExpr("real(a)").(*ast.CallExpr))
 	assert.OK(t, astToCode(expr) == "translatedassert.Breal(a)")
 }
 
 func TestCreateUntypedExprFromBinaryExpr(t *testing.T) {
 	var f *ast.CallExpr
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 + 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 + 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`ADD`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 - 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 - 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`SUB`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 * 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 * 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`MUL`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 / 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 / 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`QUO`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 % 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 % 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`REM`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 & 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 & 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`AND`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 | 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 | 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`OR`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 ^ 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 ^ 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`XOR`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 &^ 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 &^ 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`ANDNOT`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 << 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 << 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "OpShift")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`SHL`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("1 >> 2").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("1 >> 2").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "OpShift")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`SHR`")
 	assert.OK(t, f.Args[1].(*ast.BasicLit).Value == "1")
 	assert.OK(t, f.Args[2].(*ast.BasicLit).Value == "2")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("true && true").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("true && true").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`LAND`")
 	assert.OK(t, f.Args[1].(*ast.Ident).Name == "true")
 	assert.OK(t, f.Args[2].(*ast.Ident).Name == "true")
 
-	f = CreateUntypedExprFromBinaryExpr(MustParseExpr("false || false").(*ast.BinaryExpr)).(*ast.CallExpr)
+	f = CreateUntypedExprFromBinaryExpr(ctx, MustParseExpr("false || false").(*ast.BinaryExpr)).(*ast.CallExpr)
 	assert.OK(t, f.Fun.(*ast.SelectorExpr).Sel.Name == "Op")
 	assert.OK(t, f.Args[0].(*ast.BasicLit).Value == "`LOR`")
 	assert.OK(t, f.Args[1].(*ast.Ident).Name == "false")

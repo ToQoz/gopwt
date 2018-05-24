@@ -3,7 +3,6 @@ package translator
 import (
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/ToQoz/gopwt/translator/internal"
 )
@@ -27,12 +26,6 @@ func Verbose(v bool) {
 func Translate(path string) (gopath, importpath string, err error) {
 	var _filepath string
 
-	recursive := false
-	if strings.HasSuffix(path, "/...") {
-		path = strings.TrimSuffix(path, "/...")
-		recursive = true
-	}
-
 	gopath, err = ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return
@@ -43,7 +36,7 @@ func Translate(path string) (gopath, importpath string, err error) {
 		return
 	}
 
-	err = internal.Rewrite(gopath, importpath, _filepath, recursive)
+	err = internal.Rewrite(gopath, importpath, _filepath)
 	if err != nil {
 		return
 	}

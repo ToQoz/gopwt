@@ -8,31 +8,21 @@ import (
 	"strings"
 )
 
-func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, _filepath string, err error) {
+func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, fpath string, err error) {
 	if globalOrLocalImportPath == "" {
 		globalOrLocalImportPath = "."
 	}
 
 	if strings.HasPrefix(globalOrLocalImportPath, ".") {
-		wd, e := os.Getwd()
-		if e != nil {
-			err = e
-			return
-		}
-
-		_filepath = filepath.Join(wd, globalOrLocalImportPath)
-		if _, err = os.Stat(_filepath); err != nil {
-			return
-		}
-
-		importpath, err = findImportPathByPath(_filepath)
+		fpath = filepath.Join(WorkingDir, globalOrLocalImportPath)
+		importpath, err = findImportPathByPath(fpath)
 		if err != nil {
 			return
 		}
 	} else {
 		importpath = globalOrLocalImportPath
 
-		_filepath, err = findPathByImportPath(importpath)
+		fpath, err = findPathByImportPath(importpath)
 		if err != nil {
 			return
 		}
@@ -68,36 +58,26 @@ func findPathByImportPath(importPath string) (string, error) {
 	return "", fmt.Errorf("package %s is not found in $GOPATH/src(%q)", importPath, build.Default.SrcDirs())
 }
 
-func findDeps(importPath, srcDir string) ([]string, error) {
-	deps := []string{}
-
-	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
-	if err != nil {
-		return nil, err
-	}
+func findDeps(pkg *build.Package, importPath string) ([]string, error) {
+	deps := map[string]bool{}
 
 	for _, imp := range pkg.Imports {
 		if imp == importPath {
 			continue
 		}
-		deps = append(deps, imp)
+		deps[imp] = true
 	}
 
 	for _, imp := range pkg.TestImports {
 		if imp == importPath {
 			continue
 		}
-
-		f := false
-		for _, arg := range deps {
-			if arg == imp {
-				f = true
-			}
-		}
-
-		if !f {
-			deps = append(deps, imp)
-		}
+		deps[imp] = true
 	}
-	return deps, nil
+
+	ret := make([]string, 0, len(deps))
+	for d, _ := range deps {
+		ret = append(ret, d)
+	}
+	return ret, nil
 }

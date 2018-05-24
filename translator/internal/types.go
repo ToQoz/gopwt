@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/importer"
-	// "go/internal/gcimporter"
 	"go/token"
 	"go/types"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -15,41 +16,56 @@ import (
 
 func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
 	typesConfig := types.Config{}
-	// I gave up to loading pkg from source.(by using "code.google.com/p/go.tools/go/loader")
-	// 	typesConfig.Import = func(imports map[string]*types.Package, path string) (*types.Package, error) {
-	// 		// Import from source if fail to import from binary
-	// 		pkg, err := gcimporter.Import(imports, path)
-	// 		if err == nil {
-	// 			return pkg, nil
-	// 		}
-	//
-	// 		lConfig := loader.Config{}
-	// 		lConfig.TypeChecker = typesConfig
-	// 		lConfig.Build = &build.Default
-	// 		lConfig.SourceImports = true
-	// 		lConfig.Import(path)
-	//
-	// 		prog, err := lConfig.Load()
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		fmt.Println(prog.Imported[path].Types)
-	// 		return prog.Imported[path].Pkg, nil
-	// 	}
-	// Because
-	//   - it is slow.
-	//   - i met strange errors.
-	//       (e.g. github.com/ToQoz/gopwt/translator.go:201:29: cannot pass argument token.NewFileSet() (value of type *go/token.FileSet) to parameter of type *go/token.FileSet)
 
 	// Install binaries
-	deps, err := findDeps(importPath, tempGoSrcDir)
+	if os.Getenv("GOPWT_DEBUG") != "" {
+		fmt.Printf("build.Default.Import: %s\n", importPath)
+	}
+	buildPkg, err := build.Default.Import(importPath, "", build.AllowBinary)
 	if err != nil {
 		return nil, err
 	}
+	deps, err := findDeps(buildPkg, importPath)
+	if err != nil {
+		return nil, err
+	}
+
+	installDeps := []string{}
 	if IsBuildableFileSet(fset) {
 		// install self
+		old, err := isOldBinary(buildPkg)
+		if err != nil {
+			return nil, err
+		}
+		if old {
+			installDeps = append(installDeps, importPath)
+		}
 		deps = append(deps, ".")
 	}
+
+	//	for _, d := range deps {
+	//		if os.Getenv("GOPWT_DEBUG") != "" {
+	//			fmt.Printf("build.Default.Import: %s\n", d)
+	//		}
+	//		pkg, err := build.Default.Import(d, "", build.AllowBinary)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		old, err := isOldBinary(pkg)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//		if old {
+	//			installDeps = append(installDeps, d)
+	//		}
+	//	}
+
+	if os.Getenv("GOPWT_DEBUG") != "" {
+		fmt.Printf("installDeps: %v\n", installDeps)
+	}
+
+	// FIXME
+	// if len(installDeps) > 0 {
 	if len(deps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
@@ -60,6 +76,8 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		if Verbose {
 			install.Args = append(install.Args, "-v")
 		}
+		// FIXME
+		// install.Args = append(install.Args, installDeps...)
 		install.Args = append(install.Args, deps...)
 		if err := install.Run(); err != nil {
 			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
@@ -67,7 +85,6 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	}
 
 	// Assume types from ast.Node
-	// typesConfig.Import = gcimporter.Import
 	typesConfig.Importer = importer.Default()
 	pkg := types.NewPackage(importPath, "")
 	info := &types.Info{
@@ -146,4 +163,22 @@ func IsTypeConversion(info *types.Info, e *ast.CallExpr) bool {
 	}
 
 	panic("unexpected error")
+}
+
+func isOldBinary(pkg *build.Package) (bool, error) {
+	ps, err := os.Stat(pkg.PkgObj)
+	if err != nil {
+		return true, nil
+	}
+	pt := ps.ModTime()
+	fs, err := ioutil.ReadDir(pkg.Dir)
+	if err != nil {
+		return false, err
+	}
+	for _, f := range fs {
+		if f.ModTime().After(pt) {
+			return true, nil
+		}
+	}
+	return false, nil
 }

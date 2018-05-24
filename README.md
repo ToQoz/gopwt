@@ -89,7 +89,7 @@ exit status 1
 FAIL	github.com/gopwter/gopwtexample	0.008s
 exit status 1
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.869s
+FAIL	github.com/gopwter/gopwtexample	0.876s
 ```
 
 ## Example
@@ -609,10 +609,10 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.009s
+FAIL	github.com/ToQoz/gopwt/_example	0.008s
 exit status 1
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.990s
+FAIL	github.com/ToQoz/gopwt/_example	0.978s
 ```
 
 ## Tips
