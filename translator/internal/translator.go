@@ -3,7 +3,6 @@ package internal
 import (
 	"bytes"
 	"go/ast"
-	"go/build"
 	"go/parser"
 	"go/printer"
 	"go/token"
@@ -29,16 +28,9 @@ var (
 	Verbose    = false
 )
 
-type pack struct {
-	path       string
-	importPath string
-	srcDir     string
-}
-
-func Rewrite(gopath string, importpath, fpath string, recursive bool) error {
+func Rewrite(gopath string, importpath, fpath string) error {
 	srcDir := filepath.Join(gopath, "src")
 	testdata := strings.Split(Testdata, ",")
-	packs := []*pack{}
 
 	err := filepath.Walk(fpath, func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
@@ -73,13 +65,7 @@ func Rewrite(gopath string, importpath, fpath string, recursive bool) error {
 		}
 
 		if rel != "." {
-			if filepath.HasPrefix(rel, ".") {
-				return filepath.SkipDir
-			}
-
-			if !recursive {
-				return filepath.SkipDir
-			}
+			return filepath.SkipDir
 		}
 
 		importpath := filepath.Join(importpath, rel)
@@ -89,63 +75,10 @@ func Rewrite(gopath string, importpath, fpath string, recursive bool) error {
 			return err
 		}
 
-		packs = append(packs, &pack{path: path, importPath: importpath, srcDir: srcDir})
+		rewritePackage(path, importpath, srcDir)
 		return nil
 	})
 
-	wg := &sync.WaitGroup{}
-	ok := map[string]chan struct{}{}
-	depsMap := map[string][]string{}
-	depsCount := map[string]int{}
-
-	for _, p := range packs {
-		ok[p.importPath] = make(chan struct{})
-		buildPkg, err := build.Default.Import(p.importPath, "", build.AllowBinary)
-		if err != nil {
-			return err
-		}
-		deps, err := findDeps(buildPkg, p.importPath)
-		if err != nil {
-			return err
-		}
-		for _, d := range deps {
-			for _, p := range packs {
-				if d == p.importPath {
-					// found
-					depsMap[p.importPath] = append(depsMap[p.importPath], d)
-					depsCount[p.importPath]++
-					break
-				}
-			}
-		}
-	}
-
-	for _, p := range packs {
-		wg.Add(1)
-		go func(p *pack) {
-			defer wg.Done()
-
-			if depsCount[p.importPath] != 0 {
-				<-ok[p.importPath]
-			}
-
-			rewritePackage(p.path, p.importPath, p.srcDir)
-
-			for s, ds := range depsMap {
-				for _, d := range ds {
-					if d == p.importPath {
-						depsCount[s]--
-						// all dependencies are rewrited
-						if depsCount[s] == 0 {
-							ok[s] <- struct{}{}
-						}
-						break
-					}
-				}
-			}
-		}(p)
-	}
-	wg.Wait()
 	return err
 }
 
