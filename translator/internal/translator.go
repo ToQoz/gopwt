@@ -123,7 +123,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 		ctx := &Context{
 			AssertImport:           &ast.Ident{Name: "assert"},
-			TranslatedassertImport: &ast.Ident{Name: "translatedassertImport"},
+			TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
 		}
 		assertImport := GetAssertImport(f.rewrited)
 		if assertImport == nil {
@@ -252,7 +252,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) (originalFset *
 
 		ctx := &Context{
 			AssertImport:           &ast.Ident{Name: "assert"},
-			TranslatedassertImport: &ast.Ident{Name: "translatedassertImport"},
+			TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
 		}
 		assertImport := GetAssertImport(a)
 		if assertImport == nil {
