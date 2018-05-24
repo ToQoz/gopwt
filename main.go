@@ -65,6 +65,8 @@ func doMain() error {
 	tmpGopath, importpath, err := translator.Translate(flag.Arg(0))
 	if os.Getenv("GOPWT_DEBUG") == "" { // NOTE: don't remove translated files on GOPWT_DEBUG=1
 		defer os.RemoveAll(tmpGopath)
+	} else {
+		fmt.Println(tmpGopath)
 	}
 	if err != nil {
 		return err

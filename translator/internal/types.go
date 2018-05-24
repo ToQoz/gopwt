@@ -18,7 +18,7 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	typesConfig := types.Config{}
 
 	// Install binaries
-	buildPkg, err := build.Default.Import(importPath, "", build.FindOnly)
+	buildPkg, err := build.Default.Import(importPath, "", build.AllowBinary)
 	if err != nil {
 		return nil, err
 	}
