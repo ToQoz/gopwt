@@ -28,9 +28,13 @@ cd "$workspace"
 (
   cd "$workspace/regression/issue36"
   go get -v github.com/bmuschko/go-testing-frameworks/calc
-  if [ ! -e "$GOPATH/bin/dep" ] && [ ! -e "$workspace/dep"  ]; then
-    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTALL_DIRECTORY="$workspace" sh
+  if ! /usr/bin/which -s dep; then
+    if [ ! -e "$workspace/dep"  ]; then
+      curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTALL_DIRECTORY="$workspace" sh
+    fi
+    "$workspace/dep" ensure
+  else
+    dep ensure
   fi
-  "$workspace/dep" ensure
   go test
 )
