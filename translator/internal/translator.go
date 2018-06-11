@@ -215,6 +215,18 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 					return nil
 				}
 			}
+			// copy all files in <pkgDir>/vendor/**/*
+			if strings.Split(pathFromImportDir, string(filepath.Separator))[0] == "vendor" {
+				di, err := os.Stat(filepath.Dir(path))
+				if err != nil {
+					return err
+				}
+				err = os.Mkdir(outPath, di.Mode())
+				if err != nil {
+					return err
+				}
+				return nil
+			}
 
 			return filepath.SkipDir
 		}
