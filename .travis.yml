@@ -10,9 +10,11 @@ go:
 sudo: false
 before_script:
   - go get -v ./...
+  # for integration tests
+  - go get github.com/golang/dep/cmd/dep
 script:
   - make test
-  - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then GOPWT_OFF=1 go test -race -coverprofile=coverage.txt -covermode=atomic ./...; fi
+  - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then make coverage; fi
 after_success:
   - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then bash <(curl -s https://codecov.io/bash); fi
 notifications:

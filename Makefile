@@ -4,8 +4,9 @@ VERBOSE_FLAG = $(if $(VERBOSE),-v)
 gopwt:
 	go build
 test:
-	go test $(VERBOSE_FLAG) $(TESTPKG)
-	cd _integrationtest && ./test.sh
+	go test -tags=integration $(VERBOSE_FLAG) $(TESTPKG)
+coverage:
+	GOPWT_OFF=1 go test -tags=integration -race -coverprofile=coverage.txt -covermode=atomic $(TESTPKG)
 test-all: gopwt
 	_misc/test-all
 example: gopwt
