@@ -99,5 +99,22 @@ func findDeps(importPath, srcDir string) ([]string, error) {
 			deps = append(deps, imp)
 		}
 	}
+
+	for _, imp := range pkg.XTestImports {
+		if imp == importPath {
+			continue
+		}
+
+		f := false
+		for _, arg := range deps {
+			if arg == imp {
+				f = true
+			}
+		}
+
+		if !f {
+			deps = append(deps, imp)
+		}
+	}
 	return deps, nil
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 # dep is not working with  _ prefiexed ( like a `_integrationtest` ) dir
 workspace="/tmp/gopath-gopwt-integrationtest-$$/src"

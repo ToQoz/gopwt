@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -21,8 +23,20 @@ var (
 	Testdata                    = "testdata"
 	TermWidth                   = 0
 	WorkingDir                  = ""
+	GopwtDir                    = ""
 	Verbose                     = false
 )
+
+func init() {
+	GopwtDir = func() string {
+		dir, err := homedir.Dir()
+		if err != nil {
+			panic(err)
+		}
+		return filepath.Join(dir, ".gopwt")
+	}()
+	os.MkdirAll(filepath.Join(GopwtDir, "pkg"), 0755)
+}
 
 func Rewrite(gopath string, importpath, _filepath string, recursive bool) error {
 	srcDir := filepath.Join(gopath, "src")
@@ -185,10 +199,11 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 }
 
 func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
+	// Search vendor in current or parent directories
 	vendor, found := FindVendor(pkgDir, strings.Count(importPath, "/")+1)
 	if found {
 		err := filepath.Walk(vendor, func(path string, finfo os.FileInfo, err error) error {
-			rel, err := filepath.Rel(pkgDir, vendor)
+			rel, err := filepath.Rel(pkgDir, path)
 			if err != nil {
 				return err
 			}

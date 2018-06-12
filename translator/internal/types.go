@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"go/ast"
 	"go/importer"
+	"io"
+	"path/filepath"
 	// "go/internal/gcimporter"
 	"go/token"
 	"go/types"
@@ -46,29 +48,60 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 	if err != nil {
 		return nil, err
 	}
+
+	installDeps := []string{}
+	vendor, found := FindVendor(pkgDir, strings.Count(importPath, "/")+1)
+	if found {
+		for _, dep := range deps {
+			if _, err := os.Stat(filepath.Join(vendor, dep)); err == nil {
+				// ignore
+				continue
+			}
+			installDeps = append(installDeps, dep)
+		}
+		pkgToVendor, err := filepath.Rel(pkgDir, vendor)
+		if err != nil {
+			return nil, err
+		}
+		installDeps = append(installDeps, "./"+filepath.Join(pkgToVendor, "..."))
+	} else {
+		installDeps = deps
+	}
 	if IsBuildableFileSet(fset) {
 		// install self
-		deps = append(deps, ".")
+		installDeps = append(installDeps, "./...")
 	}
-	if len(deps) > 0 {
+
+	pkgdir := filepath.Join(GopwtDir, "pkg")
+	if len(installDeps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
 		install.Stdout = os.Stdout
 		b := []byte{}
 		buf := bytes.NewBuffer(b)
 		install.Stderr = buf
-		if Verbose {
+		install.Args = append(install.Args, "-a", "-pkgdir", pkgdir)
+		if Verbose || true {
 			install.Args = append(install.Args, "-v")
 		}
-		install.Args = append(install.Args, deps...)
+		install.Args = append(install.Args, installDeps...)
 		if err := install.Run(); err != nil {
-			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
+			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(installDeps, " "), buf.String())
 		}
 	}
 
 	// Assume types from ast.Node
 	// typesConfig.Import = gcimporter.Import
-	typesConfig.Importer = importer.Default()
+	typesConfig.Importer = importer.For("gc", func(path string) (io.ReadCloser, error) {
+		if pkg, err := os.Open(filepath.Join(pkgdir, path) + ".a"); err == nil {
+			return pkg, nil
+		}
+		rel, err := filepath.Rel(pkgDir, vendor)
+		if err != nil {
+			return nil, err
+		}
+		return os.Open(filepath.Join(pkgdir, importPath, rel, path) + ".a")
+	})
 	pkg := types.NewPackage(importPath, "")
 	info := &types.Info{
 		Types:      map[ast.Expr]types.TypeAndValue{},
