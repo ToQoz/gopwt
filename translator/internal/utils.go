@@ -46,6 +46,24 @@ func IsVendor(fpath string) bool {
 	return strings.Split(fpath, string(filepath.Separator))[0] == "vendor"
 }
 
+func FindVendor(fpath string, nest int) (string, bool) {
+	vdir := fpath
+	n := 0
+	for {
+		v := filepath.Join(vdir, "vendor")
+		_, err := os.Stat(v)
+		if err == nil {
+			return v, true
+		}
+		n++
+		if n > nest {
+			break
+		}
+		vdir = filepath.Dir(fpath)
+	}
+	return "", false
+}
+
 func isGoFile(f os.FileInfo) bool {
 	name := f.Name()
 	return !f.IsDir() && IsGoFileName(name)
