@@ -35,6 +35,22 @@ func TestMust(t *testing.T) {
 	}()
 }
 
+func TestIsVendor(t *testing.T) {
+	assert.OK(t, IsVendor("vendor/x/a/a.go") == true)
+	assert.OK(t, IsVendor("vendor/x/a/a.txt") == true)
+	assert.OK(t, IsVendor("vendor/x/a/a") == true)
+	assert.OK(t, IsVendor("vendor/x.go") == true)
+	assert.OK(t, IsVendor("not_vendor/x.go") == false)
+}
+
+func TestIsTestdata(t *testing.T) {
+	assert.OK(t, IsTestdata("testdata/x/a/a.go") == true)
+	assert.OK(t, IsTestdata("testdata/x/a/a.txt") == true)
+	assert.OK(t, IsTestdata("testdata/x/a/a") == true)
+	assert.OK(t, IsTestdata("testdata/x.go") == true)
+	assert.OK(t, IsTestdata("not_testdata/x.go") == false)
+}
+
 func TestIsGoFileName(t *testing.T) {
 	assert.OK(t, IsGoFileName("a.go") == true, "a.go is go file")
 	assert.OK(t, IsGoFileName("a_test.go") == true, "a_test.go is go file")

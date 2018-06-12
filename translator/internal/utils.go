@@ -33,6 +33,19 @@ func ContainsGoFile(files []os.FileInfo) bool {
 	return false
 }
 
+func IsTestdata(fpath string) bool {
+	for _, tdata := range strings.Split(Testdata, ",") {
+		if strings.Split(fpath, string(filepath.Separator))[0] == tdata {
+			return true
+		}
+	}
+	return false
+}
+
+func IsVendor(fpath string) bool {
+	return strings.Split(fpath, string(filepath.Separator))[0] == "vendor"
+}
+
 func isGoFile(f os.FileInfo) bool {
 	name := f.Name()
 	return !f.IsDir() && IsGoFileName(name)
