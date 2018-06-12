@@ -26,6 +26,9 @@ cd "$workspace"
 )
 
 (
+  GOPATH=$(dirname $workspace)
+  export GOPATH
+
   cd "$workspace/regression/issue36"
   go get -v github.com/bmuschko/go-testing-frameworks/calc
   if ! /usr/bin/which -s dep; then
@@ -36,5 +39,5 @@ cd "$workspace"
   else
     dep ensure
   fi
-  go test
+  go test ./...
 )
