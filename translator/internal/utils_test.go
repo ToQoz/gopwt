@@ -36,19 +36,19 @@ func TestMust(t *testing.T) {
 }
 
 func TestIsVendor(t *testing.T) {
-	assert.OK(t, IsVendor("vendor/x/a/a.go") == true)
-	assert.OK(t, IsVendor("vendor/x/a/a.txt") == true)
-	assert.OK(t, IsVendor("vendor/x/a/a") == true)
-	assert.OK(t, IsVendor("vendor/x.go") == true)
-	assert.OK(t, IsVendor("not_vendor/x.go") == false)
+	assert.OK(t, IsVendor(filepath.Join("vendor", "x", "a", "a.go")) == true)
+	assert.OK(t, IsVendor(filepath.Join("vendor", "x", "a", "a.txt")) == true)
+	assert.OK(t, IsVendor(filepath.Join("vendor", "x", "a", "a")) == true)
+	assert.OK(t, IsVendor(filepath.Join("vendor", "x.go")) == true)
+	assert.OK(t, IsVendor(filepath.Join("not_vendor", "x.go")) == false)
 }
 
 func TestIsTestdata(t *testing.T) {
-	assert.OK(t, IsTestdata("testdata/x/a/a.go") == true)
-	assert.OK(t, IsTestdata("testdata/x/a/a.txt") == true)
-	assert.OK(t, IsTestdata("testdata/x/a/a") == true)
-	assert.OK(t, IsTestdata("testdata/x.go") == true)
-	assert.OK(t, IsTestdata("not_testdata/x.go") == false)
+	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a.go")) == true)
+	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a.txt")) == true)
+	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a")) == true)
+	assert.OK(t, IsTestdata(filepath.Join("testdata", "x.go")) == true)
+	assert.OK(t, IsTestdata(filepath.Join("not_testdata", "x.go")) == false)
 }
 
 func TestIsGoFileName(t *testing.T) {
