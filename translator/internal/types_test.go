@@ -79,7 +79,7 @@ func TestIsTypeConversion(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, filepath.Join("tdata", "is_type_conversion_test", "main.go"), nil, 0)
 	assert.Require(t, err == nil)
-	types, err := GetTypeInfo(filepath.Join("tdata", "is_type_conversion_test"), "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]+"/src", fset, []*ast.File{f})
+	types, err := GetTypeInfo("", false, filepath.Join("tdata", "is_type_conversion_test"), "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]+"/src", fset, []*ast.File{f})
 	assert.Require(t, err == nil)
 
 	// fmt.Println(string([]byte(hello())))

@@ -77,7 +77,8 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 			return err
 		}
 
-		err = rewritePackage(path, importpath, srcDir)
+		vendor, found := FindVendor(path, strings.Count(importpath, "/")+1)
+		err = rewritePackage(vendor, found, path, importpath, srcDir)
 		if err != nil {
 			return err
 		}
@@ -92,9 +93,9 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 	return nil
 }
 
-func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
+func rewritePackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) error {
 	// Copy to tempdir
-	err := copyPackage(pkgDir, importPath, tempGoSrcDir)
+	err := copyPackage(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
-	typesInfo, err := GetTypeInfo(pkgDir, importPath, tempGoSrcDir, fset, files)
+	typesInfo, err := GetTypeInfo(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir, fset, files)
 	if err != nil {
 		return err
 	}
@@ -185,10 +186,8 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	return nil
 }
 
-func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
-	// Search vendor in current or parent directories
-	vendor, found := FindVendor(pkgDir, strings.Count(importPath, "/")+1)
-	if found {
+func copyPackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) error {
+	if hasVendor {
 		err := filepath.Walk(vendor, func(path string, finfo os.FileInfo, err error) error {
 			rel, err := filepath.Rel(pkgDir, path)
 			if err != nil {
@@ -237,7 +236,6 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 			// copy all files in
 			//   - <pkgDir>/testdata/**/*
-			//   - <pkgDir>/vendor/**/*
 			if IsTestdata(pathFromImportDir) {
 				di, err := os.Stat(filepath.Dir(path))
 				if err != nil {

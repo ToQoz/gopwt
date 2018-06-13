@@ -16,15 +16,14 @@ import (
 	"strings"
 )
 
-func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
+func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
 	deps, err := findDeps(importPath, tempGoSrcDir)
 	if err != nil {
 		return nil, err
 	}
 
 	installDeps := []string{}
-	vendor, found := FindVendor(pkgDir, strings.Count(importPath, "/")+1)
-	if found {
+	if hasVendor {
 		for _, dep := range deps {
 			if _, err := os.Stat(filepath.Join(vendor, dep)); err == nil {
 				// ignore
@@ -45,6 +44,10 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		installDeps = deps
 	}
 
+	if IsBuildableFileSet(fset) {
+		installDeps = append(installDeps, "./...")
+	}
+
 	if len(installDeps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
@@ -60,24 +63,8 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(installDeps, " "), buf.String())
 		}
 	}
-	if IsBuildableFileSet(fset) {
-		install := exec.Command("go", "install")
-		install.Dir = pkgDir
-		install.Stdout = os.Stdout
-		b := []byte{}
-		buf := bytes.NewBuffer(b)
-		install.Stderr = buf
-		if Verbose || true {
-			install.Args = append(install.Args, "-v")
-		}
-		install.Args = append(install.Args, "./...")
-		if err := install.Run(); err != nil {
-			return nil, fmt.Errorf("[ERROR] go install .\n\n%s", buf.String())
-		}
-	}
 
-	if found {
-		// FIXME: arch/os
+	if hasVendor {
 		// NOTE: move pkg/$importpath/vendor/$v-importpath to pkg/$v-importpath
 		pd := filepath.Join(os.Getenv("GOPATH"), "pkg", runtime.GOOS+"_"+runtime.GOARCH)
 		err := filepath.Walk(pd, func(path string, finfo os.FileInfo, err error) error {
@@ -85,39 +72,34 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 				return nil
 			}
 
-			// FIXME
-			// if !filepath.HasPrefix(path, importPath) {
-			// 	return filepath.SkipDir
-			// }
-
-			if !strings.Contains(path, "vendor") {
+			vimportpath, found := RetrieveImportpathFromVendorDir(path)
+			if !found {
 				return nil
-			} else {
-				vimportpath := strings.Split(path, "vendor")[1]
-				outpath := filepath.Join(pd, vimportpath)
+			}
 
-				if finfo.IsDir() {
-					return os.MkdirAll(outpath, 0755)
-				}
+			outpath := filepath.Join(pd, vimportpath)
 
-				if finfo.IsDir() {
-					return os.MkdirAll(outpath, finfo.Mode())
-				}
+			if finfo.IsDir() {
+				return os.MkdirAll(outpath, 0755)
+			}
 
-				out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
-				if err != nil {
-					return err
-				}
-				defer out.Close()
-				in, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-				defer in.Close()
+			if finfo.IsDir() {
+				return os.MkdirAll(outpath, finfo.Mode())
+			}
 
-				_, err = io.Copy(out, in)
+			out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
+			if err != nil {
 				return err
 			}
+			defer out.Close()
+			in, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer in.Close()
+
+			_, err = io.Copy(out, in)
+			return err
 		})
 		if err != nil {
 			return nil, err
