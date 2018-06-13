@@ -42,10 +42,6 @@ func IsTestdata(fpath string) bool {
 	return false
 }
 
-func IsVendor(fpath string) bool {
-	return strings.Split(fpath, string(filepath.Separator))[0] == "vendor"
-}
-
 func FindVendor(fpath string, nest int) (string, bool) {
 	vdir := fpath
 	n := 0
