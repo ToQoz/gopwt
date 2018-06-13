@@ -1,4 +1,4 @@
-// https://github.com/ToQoz/gopwt/issues/33
+// https://github.com/ToQoz/gopwt/issues/40
 package main
 
 import (
