@@ -35,5 +35,8 @@ cd "$workspace"
   dep ensure
   rm -rf "vendor/github.com/ToQoz/gopwt"
   cp -r "$ORIGINAL_GOPATH/src/github.com/ToQoz/gopwt" "vendor/github.com/ToQoz/"
+
+  # for go1.8-
+  find vendor -type f | grep '_test.go$' | xargs rm
   go test ./...
 )
