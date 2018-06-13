@@ -15,3 +15,8 @@ script:
   - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then GOPWT_OFF=1 go test -race -coverprofile=coverage.txt -covermode=atomic ./...; fi
 after_success:
   - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then bash <(curl -s https://codecov.io/bash); fi
+branches:
+  only:
+    # branchs through PR are built
+    - master
+    - travis-debug
