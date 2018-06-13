@@ -55,7 +55,7 @@ func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir
 		b := []byte{}
 		buf := bytes.NewBuffer(b)
 		install.Stderr = buf
-		if Verbose || true {
+		if Verbose {
 			install.Args = append(install.Args, "-v")
 		}
 		install.Args = append(install.Args, installDeps...)
