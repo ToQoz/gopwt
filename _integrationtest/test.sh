@@ -25,6 +25,8 @@ cd "$workspace"
 (
   cd "$workspace/regression/issue33"
   go test
+  go test
+  go test
 )
 
 (
@@ -38,5 +40,7 @@ cd "$workspace"
 
   # for go1.8-
   find vendor -type f | grep '_test.go$' | xargs rm
+  go test ./...
+  go test ./...
   go test ./...
 )
