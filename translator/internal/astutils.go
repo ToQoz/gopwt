@@ -221,11 +221,6 @@ func DropGopwtEmpower(a *ast.File) (dropped bool) {
 			}
 
 			if gopwtImport != nil {
-				sel, ok := callexpr.Fun.(*ast.SelectorExpr)
-				if !ok {
-					continue
-				}
-
 				// For tests in other packages
 				//
 				// package foopkg
@@ -238,10 +233,25 @@ func DropGopwtEmpower(a *ast.File) (dropped bool) {
 				if gopwtImport.Name != nil {
 					gopwtImportName = gopwtImport.Name.Name
 				}
-				if sel.X.(*ast.Ident).Name == gopwtImportName && sel.Sel.Name == "Empower" {
-					gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
-					dropped = true
-					return
+
+				// drop gopwt.Empower()
+				if sel, ok := callexpr.Fun.(*ast.SelectorExpr); ok {
+					if sel.X.(*ast.Ident).Name == gopwtImportName && sel.Sel.Name == "Empower" {
+						gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
+						dropped = true
+						return
+					}
+				}
+
+				// drop Empower() * with dot import
+				if name, ok := callexpr.Fun.(*ast.Ident); ok {
+					if gopwtImportName == "." {
+						if name.Name == "Empower" {
+							gen.Body.List = append(gen.Body.List[:i], gen.Body.List[i+1:]...)
+							dropped = true
+							return
+						}
+					}
 				}
 			} else {
 				// For tests in this package(= gopwt)
@@ -270,6 +280,11 @@ func IsAssert(x *ast.Ident, c *ast.CallExpr) bool {
 	if s, ok := c.Fun.(*ast.SelectorExpr); ok {
 		if xident, ok := s.X.(*ast.Ident); ok {
 			return xident.Name == x.Name && (s.Sel.Name == "OK" || s.Sel.Name == "Require")
+		}
+	}
+	if x.Name == "." {
+		if fn, ok := c.Fun.(*ast.Ident); ok {
+			return fn.Name == "OK" || fn.Name == "Require"
 		}
 	}
 

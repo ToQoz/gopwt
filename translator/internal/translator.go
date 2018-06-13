@@ -377,7 +377,17 @@ func RewriteAssert(ctx *Context, typesInfo *types.Info, position token.Position,
 	// pos-value pairs
 	extractedPrintExprs := ExtractPrintExprs(ctx, typesInfo, position.Filename, position.Line, posOffset, n, n.Args[1])
 	n.Args = append(n.Args, CreatePosValuePairExpr(ctx, extractedPrintExprs)...)
-	n.Fun.(*ast.SelectorExpr).X = &ast.Ident{Name: "translatedassert"}
+	// assert.OK -> translatedassert.OK
+	if sel, ok := n.Fun.(*ast.SelectorExpr); ok {
+		sel.X = ctx.TranslatedassertImport
+	}
+	// OK -> translatedassert.OK
+	if name, ok := n.Fun.(*ast.Ident); ok {
+		n.Fun = &ast.SelectorExpr{
+			X:   ctx.TranslatedassertImport,
+			Sel: name,
+		}
+	}
 }
 
 type printExpr struct {

@@ -30,6 +30,13 @@ cd "$workspace"
 )
 
 (
+  cd "$workspace/regression/issue40"
+  go test
+  go test
+  go test
+)
+
+(
   GOPATH=$(dirname $workspace)
   export GOPATH
 
