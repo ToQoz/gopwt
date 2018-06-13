@@ -195,24 +195,15 @@ func copyPackage(vendor string, hasVendor bool, pkgDir, importPath string, tempG
 			}
 
 			outpath := filepath.Join(tempGoSrcDir, importPath, rel)
-
 			if finfo.IsDir() {
 				return os.Mkdir(outpath, finfo.Mode())
 			}
-
-			out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
+			out, err := os.OpenFile(outpath, os.O_WRONLY|os.O_CREATE, finfo.Mode())
 			if err != nil {
 				return err
 			}
 			defer out.Close()
-			in, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer in.Close()
-
-			_, err = io.Copy(out, in)
-			return err
+			return CopyFile(path, out)
 		})
 		if err != nil {
 			return err
@@ -300,17 +291,13 @@ func copyPackage(vendor string, hasVendor bool, pkgDir, importPath string, tempG
 }
 
 func CopyFile(path string, out io.Writer) error {
-	filedata, err := ioutil.ReadFile(path)
+	in, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-
-	_, err = out.Write(filedata)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	defer in.Close()
+	_, err = io.Copy(out, in)
+	return err
 }
 
 func RewriteFile(typesInfo *types.Info, fset, originalFset *token.FileSet, file, origFile *ast.File, out io.Writer) error {

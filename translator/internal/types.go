@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/importer"
-	"io"
 	"path/filepath"
 	"runtime"
 	// "go/internal/gcimporter"
@@ -78,28 +77,15 @@ func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir
 			}
 
 			outpath := filepath.Join(pd, vimportpath)
-
-			if finfo.IsDir() {
-				return os.MkdirAll(outpath, 0755)
-			}
-
 			if finfo.IsDir() {
 				return os.MkdirAll(outpath, finfo.Mode())
 			}
-
-			out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
+			out, err := os.OpenFile(outpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, finfo.Mode())
 			if err != nil {
 				return err
 			}
 			defer out.Close()
-			in, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer in.Close()
-
-			_, err = io.Copy(out, in)
-			return err
+			return CopyFile(path, out)
 		})
 		if err != nil {
 			return nil, err
