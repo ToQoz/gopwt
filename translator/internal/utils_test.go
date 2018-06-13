@@ -35,14 +35,6 @@ func TestMust(t *testing.T) {
 	}()
 }
 
-func TestIsVendor(t *testing.T) {
-	assert.OK(t, IsVendor(filepath.Join("vendor", "x", "a", "a.go")) == true)
-	assert.OK(t, IsVendor(filepath.Join("vendor", "x", "a", "a.txt")) == true)
-	assert.OK(t, IsVendor(filepath.Join("vendor", "x", "a", "a")) == true)
-	assert.OK(t, IsVendor(filepath.Join("vendor", "x.go")) == true)
-	assert.OK(t, IsVendor(filepath.Join("not_vendor", "x.go")) == false)
-}
-
 func TestIsTestdata(t *testing.T) {
 	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a.go")) == true)
 	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a.txt")) == true)

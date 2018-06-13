@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -ex
+set -e
+
+ORIGINAL_GOPATH=$GOPATH
 
 # dep is not working with  _ prefiexed ( like a `_integrationtest` ) dir
 workspace="/tmp/gopath-gopwt-integrationtest-$$/src"
@@ -23,18 +25,22 @@ cd "$workspace"
 (
   cd "$workspace/regression/issue33"
   go test
+  go test
+  go test
 )
 
 (
+  GOPATH=$(dirname $workspace)
+  export GOPATH
+
   cd "$workspace/regression/issue36"
-  go get -v github.com/bmuschko/go-testing-frameworks/calc
-  if ! /usr/bin/which -s dep; then
-    if [ ! -e "$workspace/dep"  ]; then
-      curl https://raw.githubusercontent.com/golang/dep/master/install.sh | INSTALL_DIRECTORY="$workspace" sh
-    fi
-    "$workspace/dep" ensure
-  else
-    dep ensure
-  fi
-  go test
+  dep ensure
+  rm -rf "vendor/github.com/ToQoz/gopwt"
+  cp -r "$ORIGINAL_GOPATH/src/github.com/ToQoz/gopwt" "vendor/github.com/ToQoz/"
+
+  # for go1.8-
+  find vendor -type f | grep '_test.go$' | xargs rm
+  go test ./...
+  go test ./...
+  go test ./...
 )

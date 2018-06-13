@@ -13,6 +13,14 @@ func Must(err error) {
 	}
 }
 
+func RetrieveImportpathFromVendorDir(path string) (string, bool) {
+	segs := strings.SplitN(path, string(filepath.Separator)+"vendor"+string(filepath.Separator), 2)
+	if len(segs) < 2 {
+		return "", false
+	}
+	return segs[1], true
+}
+
 func ContainsDirectory(files []os.FileInfo) bool {
 	for _, f := range files {
 		if f.IsDir() {
@@ -42,8 +50,22 @@ func IsTestdata(fpath string) bool {
 	return false
 }
 
-func IsVendor(fpath string) bool {
-	return strings.Split(fpath, string(filepath.Separator))[0] == "vendor"
+func FindVendor(fpath string, nest int) (string, bool) {
+	vdir := fpath
+	n := 0
+	for {
+		v := filepath.Join(vdir, "vendor")
+		_, err := os.Stat(v)
+		if err == nil {
+			return v, true
+		}
+		n++
+		if n > nest {
+			break
+		}
+		vdir = filepath.Dir(fpath)
+	}
+	return "", false
 }
 
 func isGoFile(f os.FileInfo) bool {

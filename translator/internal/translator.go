@@ -21,6 +21,7 @@ var (
 	Testdata                    = "testdata"
 	TermWidth                   = 0
 	WorkingDir                  = ""
+	GopwtDir                    = ""
 	Verbose                     = false
 )
 
@@ -76,7 +77,8 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 			return err
 		}
 
-		err = rewritePackage(path, importpath, srcDir)
+		vendor, found := FindVendor(path, strings.Count(importpath, "/")+1)
+		err = rewritePackage(vendor, found, path, importpath, srcDir)
 		if err != nil {
 			return err
 		}
@@ -91,9 +93,9 @@ func Rewrite(gopath string, importpath, _filepath string, recursive bool) error 
 	return nil
 }
 
-func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
+func rewritePackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) error {
 	// Copy to tempdir
-	err := copyPackage(pkgDir, importPath, tempGoSrcDir)
+	err := copyPackage(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir)
 	if err != nil {
 		return err
 	}
@@ -138,7 +140,7 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 		return err
 	}
 
-	typesInfo, err := GetTypeInfo(pkgDir, importPath, tempGoSrcDir, fset, files)
+	typesInfo, err := GetTypeInfo(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir, fset, files)
 	if err != nil {
 		return err
 	}
@@ -184,7 +186,29 @@ func rewritePackage(pkgDir, importPath string, tempGoSrcDir string) error {
 	return nil
 }
 
-func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
+func copyPackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) error {
+	if hasVendor {
+		err := filepath.Walk(vendor, func(path string, finfo os.FileInfo, err error) error {
+			rel, err := filepath.Rel(pkgDir, path)
+			if err != nil {
+				return err
+			}
+
+			outpath := filepath.Join(tempGoSrcDir, importPath, rel)
+			if finfo.IsDir() {
+				return os.Mkdir(outpath, finfo.Mode())
+			}
+			out, err := os.OpenFile(outpath, os.O_WRONLY|os.O_CREATE, finfo.Mode())
+			if err != nil {
+				return err
+			}
+			defer out.Close()
+			return CopyFile(path, out)
+		})
+		if err != nil {
+			return err
+		}
+	}
 	err := filepath.Walk(pkgDir, func(path string, fInfo os.FileInfo, err error) error {
 		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 			return nil
@@ -203,8 +227,7 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 
 			// copy all files in
 			//   - <pkgDir>/testdata/**/*
-			//   - <pkgDir>/vendor/**/*
-			if IsVendor(pathFromImportDir) || IsTestdata(pathFromImportDir) {
+			if IsTestdata(pathFromImportDir) {
 				di, err := os.Stat(filepath.Dir(path))
 				if err != nil {
 					return err
@@ -268,17 +291,13 @@ func copyPackage(pkgDir, importPath string, tempGoSrcDir string) error {
 }
 
 func CopyFile(path string, out io.Writer) error {
-	filedata, err := ioutil.ReadFile(path)
+	in, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-
-	_, err = out.Write(filedata)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	defer in.Close()
+	_, err = io.Copy(out, in)
+	return err
 }
 
 func RewriteFile(typesInfo *types.Info, fset, originalFset *token.FileSet, file, origFile *ast.File, out io.Writer) error {
