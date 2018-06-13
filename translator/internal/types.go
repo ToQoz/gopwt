@@ -7,6 +7,7 @@ import (
 	"go/importer"
 	"io"
 	"path/filepath"
+	"runtime"
 	// "go/internal/gcimporter"
 	"go/token"
 	"go/types"
@@ -16,34 +17,6 @@ import (
 )
 
 func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
-	typesConfig := types.Config{}
-	// I gave up to loading pkg from source.(by using "code.google.com/p/go.tools/go/loader")
-	// 	typesConfig.Import = func(imports map[string]*types.Package, path string) (*types.Package, error) {
-	// 		// Import from source if fail to import from binary
-	// 		pkg, err := gcimporter.Import(imports, path)
-	// 		if err == nil {
-	// 			return pkg, nil
-	// 		}
-	//
-	// 		lConfig := loader.Config{}
-	// 		lConfig.TypeChecker = typesConfig
-	// 		lConfig.Build = &build.Default
-	// 		lConfig.SourceImports = true
-	// 		lConfig.Import(path)
-	//
-	// 		prog, err := lConfig.Load()
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		fmt.Println(prog.Imported[path].Types)
-	// 		return prog.Imported[path].Pkg, nil
-	// 	}
-	// Because
-	//   - it is slow.
-	//   - i met strange errors.
-	//       (e.g. github.com/ToQoz/gopwt/translator.go:201:29: cannot pass argument token.NewFileSet() (value of type *go/token.FileSet) to parameter of type *go/token.FileSet)
-
-	// Install binaries
 	deps, err := findDeps(importPath, tempGoSrcDir)
 	if err != nil {
 		return nil, err
@@ -63,16 +36,15 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		if err != nil {
 			return nil, err
 		}
-		installDeps = append(installDeps, "./"+filepath.Join(pkgToVendor, "..."))
+		p := filepath.Join(pkgToVendor, "...")
+		if !strings.HasPrefix(p, ".") {
+			p = "./" + p
+		}
+		installDeps = append(installDeps, p)
 	} else {
 		installDeps = deps
 	}
-	if IsBuildableFileSet(fset) {
-		// install self
-		installDeps = append(installDeps, "./...")
-	}
 
-	pkgdir := filepath.Join(GopwtDir, "pkg")
 	if len(installDeps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
@@ -80,7 +52,6 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 		b := []byte{}
 		buf := bytes.NewBuffer(b)
 		install.Stderr = buf
-		install.Args = append(install.Args, "-a", "-pkgdir", pkgdir)
 		if Verbose || true {
 			install.Args = append(install.Args, "-v")
 		}
@@ -89,19 +60,73 @@ func GetTypeInfo(pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, f
 			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(installDeps, " "), buf.String())
 		}
 	}
-
-	// Assume types from ast.Node
-	// typesConfig.Import = gcimporter.Import
-	typesConfig.Importer = importer.For("gc", func(path string) (io.ReadCloser, error) {
-		if pkg, err := os.Open(filepath.Join(pkgdir, path) + ".a"); err == nil {
-			return pkg, nil
+	if IsBuildableFileSet(fset) {
+		install := exec.Command("go", "install")
+		install.Dir = pkgDir
+		install.Stdout = os.Stdout
+		b := []byte{}
+		buf := bytes.NewBuffer(b)
+		install.Stderr = buf
+		if Verbose || true {
+			install.Args = append(install.Args, "-v")
 		}
-		rel, err := filepath.Rel(pkgDir, vendor)
+		install.Args = append(install.Args, "./...")
+		if err := install.Run(); err != nil {
+			return nil, fmt.Errorf("[ERROR] go install .\n\n%s", buf.String())
+		}
+	}
+
+	if found {
+		// FIXME: arch/os
+		// NOTE: move pkg/$importpath/vendor/$v-importpath to pkg/$v-importpath
+		pd := filepath.Join(os.Getenv("GOPATH"), "pkg", runtime.GOOS+"_"+runtime.GOARCH)
+		err := filepath.Walk(pd, func(path string, finfo os.FileInfo, err error) error {
+			if path == pd {
+				return nil
+			}
+
+			// FIXME
+			// if !filepath.HasPrefix(path, importPath) {
+			// 	return filepath.SkipDir
+			// }
+
+			if !strings.Contains(path, "vendor") {
+				return nil
+			} else {
+				vimportpath := strings.Split(path, "vendor")[1]
+				outpath := filepath.Join(pd, vimportpath)
+
+				if finfo.IsDir() {
+					return os.MkdirAll(outpath, 0755)
+				}
+
+				if finfo.IsDir() {
+					return os.MkdirAll(outpath, finfo.Mode())
+				}
+
+				out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
+				if err != nil {
+					return err
+				}
+				defer out.Close()
+				in, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer in.Close()
+
+				_, err = io.Copy(out, in)
+				return err
+			}
+		})
 		if err != nil {
 			return nil, err
 		}
-		return os.Open(filepath.Join(pkgdir, importPath, rel, path) + ".a")
-	})
+	}
+
+	// Assume types from ast.Node
+	typesConfig := types.Config{}
+	typesConfig.Importer = importer.Default()
 	pkg := types.NewPackage(importPath, "")
 	info := &types.Info{
 		Types:      map[ast.Expr]types.TypeAndValue{},

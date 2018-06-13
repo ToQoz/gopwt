@@ -7,7 +7,6 @@ import (
 
 	"github.com/ToQoz/gopwt"
 	"github.com/ToQoz/gopwt/assert"
-	. "github.com/bmuschko/go-testing-frameworks/calc"
 )
 
 func TestMain(m *testing.M) {
@@ -19,4 +18,8 @@ func TestMain(m *testing.M) {
 func TestAdd(t *testing.T) {
 	result := Add(1, 2)
 	assert.OK(t, 3 == result)
+}
+
+func Add(a, b int) int {
+	return a + b
 }

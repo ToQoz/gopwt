@@ -13,8 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var (
@@ -26,17 +24,6 @@ var (
 	GopwtDir                    = ""
 	Verbose                     = false
 )
-
-func init() {
-	GopwtDir = func() string {
-		dir, err := homedir.Dir()
-		if err != nil {
-			panic(err)
-		}
-		return filepath.Join(dir, ".gopwt")
-	}()
-	os.MkdirAll(filepath.Join(GopwtDir, "pkg"), 0755)
-}
 
 func Rewrite(gopath string, importpath, _filepath string, recursive bool) error {
 	srcDir := filepath.Join(gopath, "src")
