@@ -1,17 +1,35 @@
+.DEFAULT_GOAL := test
+
 TESTPKG = ./...
 VERBOSE_FLAG = $(if $(VERBOSE),-v)
 
+# lint
+lint-deps:
+	/bin/which -s golint || go get golang.org/x/lint/golint
+lint: lint-deps
+	go vet ./...
+	rm -f .golint.txt
+	golint ./... | grep -v 'internal.*exported\|translatedassert.*\(package comment\|exported\|underscores\)' | tee .golint.txt
+	test ! -s .golint.txt
+
+# test
+test-deps:
+	/bin/which -s dep || curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+test: test-deps
+	go test $(VERBOSE_FLAG) $(TESTPKG)
+test-integration: test
+	cd _integrationtest && ./test.sh
+
+# build gopwt binary
 gopwt:
 	go build
-test:
-	go test $(VERBOSE_FLAG) $(TESTPKG)
-	cd _integrationtest && ./test.sh
-test-all: gopwt
-	_misc/test-all
+
+# run example
 example: gopwt
 	go test ./_example
-readme: gopwt
+# generate
+gen-readme: gopwt
 	_misc/gen-readme.bash
-op:
+gen-op:
 	_misc/gen-op.bash
-gen: op readme
+gen: gen-op gen-readme
