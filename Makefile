@@ -5,6 +5,7 @@ gopwt:
 	go build
 test:
 	go test $(VERBOSE_FLAG) $(TESTPKG)
+test-integration: test
 	cd _integrationtest && ./test.sh
 example: gopwt
 	go test ./_example
