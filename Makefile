@@ -5,7 +5,7 @@ VERBOSE_FLAG = $(if $(VERBOSE),-v)
 
 # lint
 lint-deps:
-	which -s golint || go get golang.org/x/lint/golint
+	/bin/which -s golint || go get golang.org/x/lint/golint
 lint: lint-deps
 	go vet ./...
 	rm -f .golint.txt
@@ -14,7 +14,7 @@ lint: lint-deps
 
 # test
 test-deps:
-	which -s dep || curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+	/bin/which -s dep || curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 test: test-deps
 	go test $(VERBOSE_FLAG) $(TESTPKG)
 test-integration: test
