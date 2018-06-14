@@ -22,24 +22,23 @@ trap cleanup INT QUIT TERM EXIT
 echo "workspace = $workspace"
 cd "$workspace"
 
-(
-  cd "$workspace/regression/issue33"
-  go test
-  go test
-  go test
-)
+for issue in issue33 issue40 issue44
+do
+  (
+    echo "test $issue"
+    cd "$workspace/regression/$issue"
+    go test
+    go test
+    go test
+  )
+done
 
-(
-  cd "$workspace/regression/issue40"
-  go test
-  go test
-  go test
-)
-
+# test vendoring
 (
   GOPATH=$(dirname $workspace)
   export GOPATH
 
+  echo "test issue36"
   cd "$workspace/regression/issue36"
   dep ensure
   rm -rf "vendor/github.com/ToQoz/gopwt"
