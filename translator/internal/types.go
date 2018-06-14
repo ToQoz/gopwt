@@ -44,7 +44,7 @@ func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir
 	}
 
 	if IsBuildableFileSet(fset) {
-		installDeps = append(installDeps, "./...")
+		installDeps = append(installDeps, ".")
 	}
 
 	if len(installDeps) > 0 {
