@@ -9,6 +9,7 @@ go:
 sudo: false
 before_script:
   - go get -v ./...
+    go get golang.org/x/lint/golint
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 script:
   - make test-integration
