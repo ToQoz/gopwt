@@ -2,8 +2,6 @@
 
 set -e
 
-ORIGINAL_GOPATH=$GOPATH
-
 # dep is not working with  _ prefiexed ( like a `_integrationtest` ) dir
 workspace="/tmp/gopath-gopwt-integrationtest-$$/src"
 mkdir -p "$workspace"
@@ -14,7 +12,7 @@ export GOPATH
 
 cleanup() {
   retval=$?
-  #rm -rf "$workspace"
+  rm -rf "$(dirname $workspace)"
   exit $retval
 }
 trap cleanup INT QUIT TERM EXIT
@@ -25,6 +23,8 @@ cd "$workspace"
 echo "test dont_parse_testdata"
 cd "$workspace/dont_parse_testdata"
 go test
+
+# Regression tests
 
 for issue in issue33 issue40 issue44
 do
