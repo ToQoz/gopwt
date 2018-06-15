@@ -22,6 +22,10 @@ trap cleanup INT QUIT TERM EXIT
 echo "workspace = $workspace"
 cd "$workspace"
 
+echo "test dont_parse_testdata"
+cd "$workspace/dont_parse_testdata"
+go test
+
 for issue in issue33 issue40 issue44
 do
   (

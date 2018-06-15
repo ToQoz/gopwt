@@ -132,7 +132,8 @@ func CopyPackage(pkgCtx *PackageContext, pkgDir string, importPath string, tempG
 		}
 		defer in.Close()
 
-		if !IsGoFileName(path) {
+		// NOTE: Don't parse & rewrite gofiles under testdata. It is test data.
+		if !IsGoFileName(path) || IsTestdata(pathFromPkgDir) {
 			_, err := io.Copy(out, in)
 			out.Close()
 			return err
