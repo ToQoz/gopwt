@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"go/types"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -45,42 +46,36 @@ func rewritePackage(vendor string, hasVendor bool, pkgDir, importPath string, te
 
 	// Collect fset(*token.FileSet) and files([]*ast.File)
 	fset := token.NewFileSet()
-	files := []*ast.File{}
 	originalFset := token.NewFileSet()
-	origFiles := []*ast.File{}
 	root := filepath.Join(tempGoSrcDir, importPath)
 
-	err = filepath.Walk(root, func(path string, fInfo os.FileInfo, err error) error {
-		if fInfo.IsDir() {
-			if path == root {
-				return nil
-			}
+	fs, err := ioutil.ReadDir(root)
+	if err != nil {
+		return err
+	}
 
-			return filepath.SkipDir
-		}
-
+	var files []*ast.File
+	var origFiles []*ast.File
+	// Parse *.go and *_test.go
+	for _, finfo := range fs {
+		path := filepath.Join(root, finfo.Name())
 		if !IsGoFileName(path) {
-			return nil
+			continue
 		}
 
-		// parse copyed & normalized file. e.g. multi-line CompositeLit -> single-line
+		// Parse copied & normalized file. e.g. multi-line CompositeLit -> single-line
 		a, err := parser.ParseFile(fset, path, nil, 0)
 		if err != nil {
 			return err
 		}
 		files = append(files, a)
 
-		// parse original file
-		o, err := parser.ParseFile(originalFset, filepath.Join(pkgDir, filepath.Base(path)), nil, 0)
+		// Parse original file
+		o, err := parser.ParseFile(originalFset, filepath.Join(pkgDir, finfo.Name()), nil, 0)
 		if err != nil {
 			return err
 		}
 		origFiles = append(origFiles, o)
-
-		return nil
-	})
-	if err != nil {
-		return err
 	}
 
 	typesInfo, err := GetTypeInfo(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir, fset, files)
