@@ -107,15 +107,23 @@ func TestExtractPrintExprs_MultiLineStringLit(t *testing.T) {
 }
 
 func TestExtractPrintExprs_UnaryExpr(t *testing.T) {
-	// FIXME
-	// !a -> !translatedassert.RVBool(translatedassert.RVOf(a))
-	//ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("!a"))
-	//assert.OK(t, len(ps) == 2)
-	//assert.OK(t, ps[0].Pos == 1)
-	//assert.OK(t, ps[0].Expr.(*ast.UnaryExpr).X.(*ast.CallExpr).Fun.(*ast.SelectorExpr).X.(*ast.Ident).Name == "translatedassert")
-	//assert.OK(t, ps[0].Expr.(*ast.UnaryExpr).X.(*ast.CallExpr).Fun.(*ast.SelectorExpr).Sel.Name == "RVBool")
-	//assert.OK(t, ps[1].Pos == 2)
-	//assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("!a"))
+	assert.OK(t, len(ps) == 2)
+	assert.OK(t, ps[0].Pos == 1)
+	assert.OK(t, ps[0].Expr.(*ast.UnaryExpr).Op == token.NOT)
+	assert.OK(t, ps[1].Pos == 2)
+	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
+
+	// untyped
+	{
+		p := MustParseExpr("(+a)")
+		ps := ExtractPrintExprs(ctx, nil, "", 0, 0, p, p.(*ast.ParenExpr).X)
+		assert.OK(t, len(ps) == 2)
+		assert.OK(t, ps[0].Pos == len("(+"))
+		assert.OK(t, astToCode(ps[0].Expr) == `translatedassert.FRVInterface(translatedassert.MFCall("", 0, 2, translatedassert.RVOf(translatedassert.UnaryOpADD), translatedassert.RVOf(a)))`)
+		assert.OK(t, ps[1].Pos == len(`(+a`))
+		assert.OK(t, astToCode(ps[1].Expr) == "a")
+	}
 }
 
 func TestExtractPrintExprs_StarExpr(t *testing.T) {

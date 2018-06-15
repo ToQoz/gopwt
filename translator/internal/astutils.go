@@ -80,7 +80,7 @@ func ReplaceUnaryExpr(parent ast.Node, oldExpr *ast.UnaryExpr, newExpr ast.Expr)
 		}
 	}
 
-	panic("[gopwt]Unexpected Error on replacing *ast.UnaryExpr by translatedassert.OpUnary*()")
+	panic("[gopwt] unexpected error on replacing *ast.UnaryExpr by translatedassert.OpUnary*()")
 }
 
 // ReplaceBinaryExpr replace oldExpr by newExpr in parent
@@ -128,7 +128,7 @@ func ReplaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Exp
 		}
 	}
 
-	panic("[gopwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+	panic("[gopwt] unexpected error on replacing *ast.BinaryExpr by translatedassert.Op*()")
 }
 
 // ReplaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
