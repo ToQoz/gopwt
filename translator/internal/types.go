@@ -108,8 +108,8 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 		InitOrder:  []*types.Initializer{},
 	}
 
-	// WORKARROUND(xtest): if the tests is xtest like a `{pkg}_test`, check types only in `{pkg}_test`
-	// NOTE: if your check types `package {pkg}_test` and `package {pkg}`, you'll get `package {pkg}_test; expected {pkg}`
+	// WORKARROUND(xtest): if the tests is xtest like `{pkg}_test`, check types only in `{pkg}_test`
+	// NOTE: if you check types both `package {pkg}_test` and `package {pkg}`, you'll get `package {pkg}_test; expected {pkg}`
 	isXtest := false
 	xtests := []*ast.File{}
 	for _, f := range pkgCtx.NormalizedFiles {
