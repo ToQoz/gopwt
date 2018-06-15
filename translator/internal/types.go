@@ -8,29 +8,29 @@ import (
 	"path/filepath"
 	"runtime"
 	// "go/internal/gcimporter"
-	"go/token"
+
 	"go/types"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir string, fset *token.FileSet, files []*ast.File) (*types.Info, error) {
-	deps, err := findDeps(importPath, tempGoSrcDir)
+func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string) (*types.Info, error) {
+	deps, err := FindDeps(importPath, tempGoSrcDir)
 	if err != nil {
 		return nil, err
 	}
 
 	installDeps := []string{}
-	if hasVendor {
+	if pkgCtx.HasVendor {
 		for _, dep := range deps {
-			if _, err := os.Stat(filepath.Join(vendor, dep)); err == nil {
+			if _, err := os.Stat(filepath.Join(pkgCtx.Vendor, dep)); err == nil {
 				// ignore
 				continue
 			}
 			installDeps = append(installDeps, dep)
 		}
-		pkgToVendor, err := filepath.Rel(pkgDir, vendor)
+		pkgToVendor, err := filepath.Rel(pkgDir, pkgCtx.Vendor)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir
 		installDeps = deps
 	}
 
-	if IsBuildableFileSet(fset) {
+	if IsBuildableFileSet(pkgCtx.NormalizedFset) {
 		installDeps = append(installDeps, ".")
 	}
 
@@ -63,7 +63,7 @@ func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir
 		}
 	}
 
-	if hasVendor {
+	if pkgCtx.HasVendor {
 		// NOTE: move pkg/$importpath/vendor/$v-importpath to pkg/$v-importpath
 		pd := filepath.Join(os.Getenv("GOPATH"), "pkg", runtime.GOOS+"_"+runtime.GOARCH)
 		err := filepath.Walk(pd, func(path string, finfo os.FileInfo, err error) error {
@@ -110,17 +110,17 @@ func GetTypeInfo(vendor string, hasVendor bool, pkgDir, importPath, tempGoSrcDir
 	// NOTE: if your check types `package {pkg}_test` and `package {pkg}`, you'll get `package {pkg}_test; expected {pkg}`
 	isXtest := false
 	xtests := []*ast.File{}
-	for _, f := range files {
+	for _, f := range pkgCtx.NormalizedFiles {
 		if strings.HasSuffix(f.Name.Name, "_test") {
 			xtests = append(xtests, f)
 		}
 	}
-	isXtest = len(xtests) > 0 && len(xtests) != len(files)
+	isXtest = len(xtests) > 0 && len(xtests) != len(pkgCtx.NormalizedFiles)
 
 	if isXtest {
-		err = types.NewChecker(&typesConfig, fset, pkg, info).Files(xtests)
+		err = types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, info).Files(xtests)
 	} else {
-		err = types.NewChecker(&typesConfig, fset, pkg, info).Files(files)
+		err = types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, info).Files(pkgCtx.NormalizedFiles)
 	}
 	if err != nil {
 		return nil, err

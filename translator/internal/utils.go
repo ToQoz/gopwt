@@ -1,7 +1,9 @@
 package internal
 
 import (
+	"go/ast"
 	"go/token"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +13,29 @@ func Must(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func MustParse(file *ast.File, err error) *ast.File {
+	if err != nil {
+		panic(err)
+	}
+	return file
+}
+
+func Assert(condition bool, msg string) {
+	if !condition {
+		panic("[assert] " + msg)
+	}
+}
+
+func CopyFile(path string, out io.Writer) error {
+	in, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	_, err = io.Copy(out, in)
+	return err
 }
 
 func RetrieveImportpathFromVendorDir(path string) (string, bool) {
@@ -33,7 +58,7 @@ func ContainsDirectory(files []os.FileInfo) bool {
 
 func ContainsGoFile(files []os.FileInfo) bool {
 	for _, f := range files {
-		if isGoFile(f) {
+		if IsGoFile(f) {
 			return true
 		}
 	}
@@ -68,12 +93,12 @@ func FindVendor(fpath string, nest int) (string, bool) {
 	return "", false
 }
 
-func isGoFile(f os.FileInfo) bool {
+func IsGoFile(f os.FileInfo) bool {
 	name := f.Name()
 	return !f.IsDir() && IsGoFileName(name)
 }
 
-func isTestGoFile(f os.FileInfo) bool {
+func IsTestGoFile(f os.FileInfo) bool {
 	name := f.Name()
 	return !f.IsDir() && IsTestGoFileName(name)
 }

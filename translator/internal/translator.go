@@ -15,6 +15,8 @@ import (
 )
 
 type PackageContext struct {
+	Vendor          string
+	HasVendor       bool
 	OriginalFset    *token.FileSet
 	NormalizedFset  *token.FileSet
 	OriginalFiles   []*ast.File
@@ -41,24 +43,153 @@ func Rewrite(gopath string, importpath, fpath string) error {
 	if err != nil {
 		return err
 	}
-	vendor, found := FindVendor(fpath, strings.Count(importpath, "/")+1)
-	return rewritePackage(vendor, found, fpath, importpath, srcDir)
+
+	pkgCtx := &PackageContext{}
+	pkgCtx.Vendor, pkgCtx.HasVendor = FindVendor(fpath, strings.Count(importpath, "/")+1)
+
+	// Copy pkg/vendor to tempdir
+	if pkgCtx.HasVendor {
+		if err := CopyPackageVendor(pkgCtx.Vendor, fpath, importpath, srcDir); err != nil {
+			return err
+		}
+	}
+
+	// Copy pkg to tempdir
+	err = CopyPackage(pkgCtx, fpath, importpath, srcDir)
+	if err != nil {
+		return err
+	}
+
+	// Check pkg types
+	typesInfo, err := GetTypeInfo(pkgCtx, fpath, importpath, srcDir)
+	if err != nil {
+		return err
+	}
+
+	// Rewrite pkg
+	return RewritePackage(pkgCtx, typesInfo, fpath, importpath, srcDir)
 }
 
-func rewritePackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) error {
-	// Copy to tempdir
-	pkgCtx, err := copyPackage(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir)
-	if err != nil {
-		return err
-	}
+func CopyPackageVendor(vendor, pkgDir, importPath, tempGoSrcDir string) error {
+	return filepath.Walk(vendor, func(path string, finfo os.FileInfo, err error) error {
+		pathFromPkgDir, err := filepath.Rel(pkgDir, path)
+		if err != nil {
+			return err
+		}
 
-	typesInfo, err := GetTypeInfo(vendor, hasVendor, pkgDir, importPath, tempGoSrcDir, pkgCtx.NormalizedFset, pkgCtx.NormalizedFiles)
-	if err != nil {
-		return err
-	}
+		outpath := filepath.Join(tempGoSrcDir, importPath, pathFromPkgDir)
+		if finfo.IsDir() {
+			return os.Mkdir(outpath, finfo.Mode())
+		}
+		out, err := os.OpenFile(outpath, os.O_WRONLY|os.O_CREATE, finfo.Mode())
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+		return CopyFile(path, out)
+	})
+}
 
-	assert(len(pkgCtx.NormalizedFiles) == len(pkgCtx.OriginalFiles), "normalized files count should be equals to original files count.")
+func CopyPackage(pkgCtx *PackageContext, pkgDir string, importPath string, tempGoSrcDir string) (err error) {
+	pkgCtx.OriginalFset = token.NewFileSet()
+	pkgCtx.NormalizedFset = token.NewFileSet()
+
+	err = filepath.Walk(pkgDir, func(path string, finfo os.FileInfo, err error) error {
+		if path == pkgDir {
+			return nil
+		}
+
+		if finfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+			return nil
+		}
+
+		pathFromPkgDir, err := filepath.Rel(pkgDir, path)
+		if err != nil {
+			return err
+		}
+		outpath := filepath.Join(tempGoSrcDir, importPath, pathFromPkgDir)
+
+		if finfo.IsDir() {
+			// copy all files in
+			//   - <pkgDir>/testdata/**/*
+			if IsTestdata(pathFromPkgDir) {
+				return os.Mkdir(outpath, finfo.Mode())
+			}
+
+			return filepath.SkipDir
+		}
+
+		out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
+		if err != nil {
+			return err
+		}
+		// NOTE: Don't close
+		// defer out.Close()
+
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+
+		if !IsGoFileName(path) {
+			_, err := io.Copy(out, in)
+			out.Close()
+			return err
+		}
+
+		file, err := parser.ParseFile(pkgCtx.OriginalFset, path, in, 0)
+		if err != nil {
+			return err
+		}
+		pkgCtx.Mode = append(pkgCtx.Mode, finfo.Mode())
+		pkgCtx.OriginalFiles = append(pkgCtx.OriginalFiles, file)
+
+		defer func() {
+			// Parse copied & normalized file. e.g. multi-line CompositeLit -> single-line
+			out.Seek(0, io.SeekStart)
+			// NOTE: printer.Fprint-ed output is should be valid
+			pkgCtx.NormalizedFiles = append(pkgCtx.NormalizedFiles, MustParse(parser.ParseFile(pkgCtx.NormalizedFset, outpath, out, 0)))
+			out.Seek(0, io.SeekStart)
+			pkgCtx.OutFiles = append(pkgCtx.OutFiles, out)
+		}()
+
+		if !IsTestGoFileName(path) {
+			return CopyFile(path, out)
+		}
+
+		ctx := &Context{
+			AssertImport:           &ast.Ident{Name: "assert"},
+			TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
+		}
+		assertImport := GetAssertImport(file)
+		if assertImport == nil {
+			return CopyFile(path, out)
+		}
+		if assertImport.Name != nil {
+			ctx.AssertImport = assertImport.Name
+		}
+
+		// Format and copy file
+		//   - 1. replace rawStringLit to stringLit
+		//   - 2. replace multiline compositLit to singleline one.
+		//   - 3. copy
+		InspectAssert(ctx, file, func(n *ast.CallExpr) {
+			// 1. replace rawStringLit to stringLit
+			ReplaceAllRawStringLitByStringLit(n)
+		})
+
+		// 2. replace multiline-compositLit by singleline-one by passing empty token.FileSet
+		// 3. copy
+		return printer.Fprint(out, token.NewFileSet(), file)
+	})
+
+	return
+}
+
+func RewritePackage(pkgCtx *PackageContext, typesInfo *types.Info, pkgDir, importPath string, tempGoSrcDir string) error {
 	// Rewrite files
+	Assert(len(pkgCtx.NormalizedFiles) == len(pkgCtx.OriginalFiles), "normalized files count should be equals to original files count.")
 	for i := 0; i < len(pkgCtx.NormalizedFiles); i++ {
 		err := func() error {
 			defer pkgCtx.OutFiles[i].Close()
@@ -99,139 +230,6 @@ func rewritePackage(vendor string, hasVendor bool, pkgDir, importPath string, te
 	}
 
 	return nil
-}
-
-func copyPackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) (pkgCtx *PackageContext, err error) {
-	pkgCtx = &PackageContext{}
-	pkgCtx.OriginalFset = token.NewFileSet()
-	pkgCtx.NormalizedFset = token.NewFileSet()
-
-	if hasVendor {
-		if err := copyPackageVendor(vendor, pkgDir, importPath, tempGoSrcDir); err != nil {
-			return nil, err
-		}
-	}
-	err = filepath.Walk(pkgDir, func(path string, finfo os.FileInfo, err error) error {
-		if path == pkgDir {
-			return nil
-		}
-
-		if finfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-			return nil
-		}
-
-		pathFromPkgDir, err := filepath.Rel(pkgDir, path)
-		if err != nil {
-			return err
-		}
-		outpath := filepath.Join(tempGoSrcDir, importPath, pathFromPkgDir)
-
-		if finfo.IsDir() {
-			// copy all files in
-			//   - <pkgDir>/testdata/**/*
-			if IsTestdata(pathFromPkgDir) {
-				return os.Mkdir(outpath, finfo.Mode())
-			}
-
-			return filepath.SkipDir
-		}
-
-		out, err := os.OpenFile(outpath, os.O_RDWR|os.O_CREATE, finfo.Mode())
-		if err != nil {
-			return err
-		}
-		// Don't close
-		// defer out.Close()
-
-		in, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer in.Close()
-
-		if !IsGoFileName(path) {
-			_, err := io.Copy(out, in)
-			out.Close()
-			return err
-		}
-
-		file, err := parser.ParseFile(pkgCtx.OriginalFset, path, in, 0)
-		if err != nil {
-			return err
-		}
-		pkgCtx.Mode = append(pkgCtx.Mode, finfo.Mode())
-		pkgCtx.OriginalFiles = append(pkgCtx.OriginalFiles, file)
-
-		defer func() {
-			// Parse copied & normalized file. e.g. multi-line CompositeLit -> single-line
-			out.Seek(0, io.SeekStart)
-			// NOTE: printer.Fprint-ed output is should be valid
-			pkgCtx.NormalizedFiles = append(pkgCtx.NormalizedFiles, mustParse(parser.ParseFile(pkgCtx.NormalizedFset, outpath, out, 0)))
-			out.Seek(0, io.SeekStart)
-			pkgCtx.OutFiles = append(pkgCtx.OutFiles, out)
-		}()
-
-		if !IsTestGoFileName(path) {
-			return CopyFile(path, out)
-		}
-
-		ctx := &Context{
-			AssertImport:           &ast.Ident{Name: "assert"},
-			TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
-		}
-		assertImport := GetAssertImport(file)
-		if assertImport == nil {
-			return CopyFile(path, out)
-		}
-		if assertImport.Name != nil {
-			ctx.AssertImport = assertImport.Name
-		}
-
-		// Format and copy file
-		//   - 1. replace rawStringLit to stringLit
-		//   - 2. replace multiline compositLit to singleline one.
-		//   - 3. copy
-		InspectAssert(ctx, file, func(n *ast.CallExpr) {
-			// 1. replace rawStringLit to stringLit
-			ReplaceAllRawStringLitByStringLit(n)
-		})
-
-		// 2. replace multiline-compositLit by singleline-one by passing empty token.FileSet
-		// 3. copy
-		return printer.Fprint(out, token.NewFileSet(), file)
-	})
-
-	return
-}
-
-func copyPackageVendor(vendor, pkgDir, importPath, tempGoSrcDir string) error {
-	return filepath.Walk(vendor, func(path string, finfo os.FileInfo, err error) error {
-		pathFromPkgDir, err := filepath.Rel(pkgDir, path)
-		if err != nil {
-			return err
-		}
-
-		outpath := filepath.Join(tempGoSrcDir, importPath, pathFromPkgDir)
-		if finfo.IsDir() {
-			return os.Mkdir(outpath, finfo.Mode())
-		}
-		out, err := os.OpenFile(outpath, os.O_WRONLY|os.O_CREATE, finfo.Mode())
-		if err != nil {
-			return err
-		}
-		defer out.Close()
-		return CopyFile(path, out)
-	})
-}
-
-func CopyFile(path string, out io.Writer) error {
-	in, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	_, err = io.Copy(out, in)
-	return err
 }
 
 func RewriteFile(pkgCtx *PackageContext, fileIndex int, ctx *Context, typesInfo *types.Info, out io.Writer) error {
@@ -330,7 +328,7 @@ type printExpr struct {
 	OriginalExpr string
 }
 
-func newPrintExpr(pos token.Pos, newExpr ast.Expr, originalExpr string) printExpr {
+func NewPrintExpr(pos token.Pos, newExpr ast.Expr, originalExpr string) printExpr {
 	return printExpr{Pos: int(pos), Expr: newExpr, OriginalExpr: originalExpr}
 }
 
@@ -342,11 +340,11 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 	switch n.(type) {
 	case *ast.BasicLit:
 		n := n.(*ast.BasicLit)
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
+		ps = append(ps, NewPrintExpr(n.Pos()-offset, n, original))
 	case *ast.CompositeLit:
 		n := n.(*ast.CompositeLit)
 
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
+		ps = append(ps, NewPrintExpr(n.Pos()-offset, n, original))
 		for _, elt := range n.Elts {
 			ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, elt)...)
 		}
@@ -369,13 +367,13 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 				return ps
 			}
 		}
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
+		ps = append(ps, NewPrintExpr(n.Pos()-offset, n, original))
 	case *ast.ParenExpr:
 		n := n.(*ast.ParenExpr)
 		ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, n.X)...)
 	case *ast.StarExpr:
 		n := n.(*ast.StarExpr)
-		ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
+		ps = append(ps, NewPrintExpr(n.Pos()-offset, n, original))
 		ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, n.X)...)
 	// "+" | "-" | "!" | "^" | "*" | "&" | "<-" .
 	case *ast.UnaryExpr:
@@ -387,9 +385,9 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 		if ok {
 			newExpr := CreateMemorizedFuncCall(ctx, filename, line, n.Pos(), untyped, "Interface")
 			ReplaceUnaryExpr(parent, n, newExpr)
-			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr, original))
+			ps = append(ps, NewPrintExpr(n.Pos()-offset, newExpr, original))
 		} else {
-			ps = append(ps, newPrintExpr(n.Pos()-offset, n, original))
+			ps = append(ps, NewPrintExpr(n.Pos()-offset, n, original))
 		}
 
 		ps = append(ps, x...)
@@ -407,7 +405,7 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 		}
 
 		ps = append(ps, x...)
-		ps = append(ps, newPrintExpr(n.OpPos-offset, newExpr, original))
+		ps = append(ps, NewPrintExpr(n.OpPos-offset, newExpr, original))
 		ps = append(ps, y...)
 	case *ast.IndexExpr:
 		n := n.(*ast.IndexExpr)
@@ -418,18 +416,18 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 		//   | "b"
 		//   ["a", "b"]
 		ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, n.X)...)
-		ps = append(ps, newPrintExpr(n.Index.Pos()-1-offset, n, original))
+		ps = append(ps, NewPrintExpr(n.Index.Pos()-1-offset, n, original))
 		ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, n.Index)...)
 	case *ast.SelectorExpr:
 		n := n.(*ast.SelectorExpr)
 		ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, n.X)...)
-		ps = append(ps, newPrintExpr(n.Sel.Pos()-offset, n, original))
+		ps = append(ps, NewPrintExpr(n.Sel.Pos()-offset, n, original))
 	case *ast.CallExpr:
 		n := n.(*ast.CallExpr)
 		if IsBuiltinFunc(n) { // don't memorize buildin methods
 			newExpr := CreateUntypedCallExprFromBuiltinCallExpr(ctx, n)
 
-			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr, original))
+			ps = append(ps, NewPrintExpr(n.Pos()-offset, newExpr, original))
 			for _, arg := range n.Args {
 				ps = append(ps, ExtractPrintExprs(ctx, typesInfo, filename, line, offset, n, arg)...)
 			}
@@ -455,7 +453,7 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 				},
 			})
 
-			ps = append(ps, newPrintExpr(n.Pos()-offset, newExpr, original))
+			ps = append(ps, NewPrintExpr(n.Pos()-offset, newExpr, original))
 			ps = append(ps, argsPrints...)
 
 			*n = *newExpr
@@ -473,7 +471,7 @@ func ExtractPrintExprs(ctx *Context, typesInfo *types.Info, filename string, lin
 				memorized = CreateMemorizedFuncCall(ctx, filename, line, n.Pos(), n, "Interface")
 			}
 
-			ps = append(ps, newPrintExpr(n.Pos()-offset, memorized, original))
+			ps = append(ps, NewPrintExpr(n.Pos()-offset, memorized, original))
 			ps = append(ps, argsPrints...)
 
 			*n = *memorized
@@ -511,18 +509,5 @@ func ResultPosOf(n ast.Expr) token.Pos {
 		return ResultPosOf(n.X)
 	default:
 		return n.Pos()
-	}
-}
-
-func mustParse(file *ast.File, err error) *ast.File {
-	if err != nil {
-		panic(err)
-	}
-	return file
-}
-
-func assert(condition bool, msg string) {
-	if !condition {
-		panic("[assert] " + msg)
 	}
 }

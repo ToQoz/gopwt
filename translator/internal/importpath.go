@@ -25,14 +25,14 @@ func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, 
 			return
 		}
 
-		importpath, err = findImportPathByPath(_filepath)
+		importpath, err = FindImportPathByPath(_filepath)
 		if err != nil {
 			return
 		}
 	} else {
 		importpath = globalOrLocalImportPath
 
-		_filepath, err = findPathByImportPath(importpath)
+		_filepath, err = FindPathByImportPath(importpath)
 		if err != nil {
 			return
 		}
@@ -41,7 +41,7 @@ func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, 
 	return
 }
 
-func findImportPathByPath(path string) (string, error) {
+func FindImportPathByPath(path string) (string, error) {
 	for _, srcDir := range build.Default.SrcDirs() {
 		if path, err := filepath.EvalSymlinks(path); err == nil {
 			if srcDir, err := filepath.EvalSymlinks(srcDir); err == nil {
@@ -58,7 +58,7 @@ func findImportPathByPath(path string) (string, error) {
 	return "", fmt.Errorf("%s is not found in $GOPATH/src(%q)", path, build.Default.SrcDirs())
 }
 
-func findPathByImportPath(importPath string) (string, error) {
+func FindPathByImportPath(importPath string) (string, error) {
 	for _, srcDir := range build.Default.SrcDirs() {
 		if _, err := os.Stat(filepath.Join(srcDir, importPath)); err == nil {
 			return filepath.Join(srcDir, importPath), nil
@@ -68,7 +68,7 @@ func findPathByImportPath(importPath string) (string, error) {
 	return "", fmt.Errorf("package %s is not found in $GOPATH/src(%q)", importPath, build.Default.SrcDirs())
 }
 
-func findDeps(importPath, srcDir string) ([]string, error) {
+func FindDeps(importPath, srcDir string) ([]string, error) {
 	deps := []string{}
 
 	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
