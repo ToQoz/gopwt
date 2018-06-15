@@ -126,6 +126,13 @@ func TestExtractPrintExprs_UnaryExpr(t *testing.T) {
 	}
 }
 
+func TestExtractPrintExprs_ParenExpr(t *testing.T) {
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("(a)"))
+	assert.OK(t, len(ps) == 1)
+	assert.OK(t, ps[0].Pos == 2)
+	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "a")
+}
+
 func TestExtractPrintExprs_StarExpr(t *testing.T) {
 	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("*a"))
 	assert.OK(t, len(ps) == 2)
