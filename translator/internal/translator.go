@@ -181,12 +181,6 @@ func copyPackage(vendor string, hasVendor bool, pkgDir, importPath string, tempG
 		}
 		defer out.Close()
 
-		outOrig, err := os.OpenFile(outPath+".orig", os.O_RDWR|os.O_CREATE, fInfo.Mode())
-		if err != nil {
-			return err
-		}
-		defer outOrig.Close()
-
 		if !IsTestGoFileName(path) {
 			return CopyFile(path, out)
 		}
