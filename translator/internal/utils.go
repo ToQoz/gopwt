@@ -28,6 +28,32 @@ func Assert(condition bool, msg string) {
 	}
 }
 
+func RetrieveImportpathFromVendorDir(path string) (string, bool) {
+	segs := strings.SplitN(path, string(filepath.Separator)+"vendor"+string(filepath.Separator), 2)
+	if len(segs) < 2 {
+		return "", false
+	}
+	return segs[1], true
+}
+
+func FindVendor(fpath string, nest int) (string, bool) {
+	vdir := fpath
+	n := 0
+	for {
+		v := filepath.Join(vdir, "vendor")
+		_, err := os.Stat(v)
+		if err == nil {
+			return v, true
+		}
+		n++
+		if n > nest {
+			break
+		}
+		vdir = filepath.Dir(vdir)
+	}
+	return "", false
+}
+
 func CopyFile(path string, out io.Writer) error {
 	in, err := os.Open(path)
 	if err != nil {
@@ -36,14 +62,6 @@ func CopyFile(path string, out io.Writer) error {
 	defer in.Close()
 	_, err = io.Copy(out, in)
 	return err
-}
-
-func RetrieveImportpathFromVendorDir(path string) (string, bool) {
-	segs := strings.SplitN(path, string(filepath.Separator)+"vendor"+string(filepath.Separator), 2)
-	if len(segs) < 2 {
-		return "", false
-	}
-	return segs[1], true
 }
 
 func ContainsDirectory(files []os.FileInfo) bool {
@@ -73,24 +91,6 @@ func IsTestdata(fpath string) bool {
 		}
 	}
 	return false
-}
-
-func FindVendor(fpath string, nest int) (string, bool) {
-	vdir := fpath
-	n := 0
-	for {
-		v := filepath.Join(vdir, "vendor")
-		_, err := os.Stat(v)
-		if err == nil {
-			return v, true
-		}
-		n++
-		if n > nest {
-			break
-		}
-		vdir = filepath.Dir(fpath)
-	}
-	return "", false
 }
 
 func IsGoFile(f os.FileInfo) bool {

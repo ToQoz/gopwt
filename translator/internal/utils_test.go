@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/ToQoz/gopwt/assert"
@@ -33,6 +35,118 @@ func TestMust(t *testing.T) {
 
 		Must(nil)
 	}()
+}
+
+func TestMustParse(t *testing.T) {
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Must panic if err is given")
+			}
+		}()
+
+		MustParse(nil, fmt.Errorf("error"))
+	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("Must not panic if err is not given")
+			}
+		}()
+
+		MustParse(nil, nil)
+	}()
+}
+
+func TestAssert(t *testing.T) {
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Must panic if false is given")
+			}
+		}()
+
+		Assert(false, "")
+	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("Must not panic if true is given")
+			}
+		}()
+
+		Assert(true, "")
+	}()
+}
+
+func TestRetrieveImportpathFromVendorDir(t *testing.T) {
+	{
+		vpkg, hasVendor := RetrieveImportpathFromVendorDir(filepath.Join("pkg", "path"))
+		assert.OK(t, hasVendor == false)
+		assert.OK(t, vpkg == "")
+	}
+
+	{
+		vpkg, hasVendor := RetrieveImportpathFromVendorDir(filepath.Join("pkg", "vendor", "v-pkg", "sub"))
+		assert.OK(t, hasVendor == true)
+		assert.OK(t, vpkg == filepath.Join("v-pkg", "sub"))
+	}
+}
+
+func TestFindVendor(t *testing.T) {
+	tests := []struct {
+		pkg            string
+		vendor         string
+		expectedVendor string
+	}{
+		{
+			pkg:            filepath.Join("a", "b", "c", "d"),
+			vendor:         filepath.Join("a", "b", "c", "d", "vendor"),
+			expectedVendor: filepath.Join("a", "b", "c", "d", "vendor"),
+		},
+		{
+			pkg:            filepath.Join("a", "b", "c", "d"),
+			vendor:         filepath.Join("a", "b", "c", "vendor"),
+			expectedVendor: filepath.Join("a", "b", "c", "vendor"),
+		},
+		{
+			pkg:            filepath.Join("a", "b", "c", "d"),
+			vendor:         filepath.Join("a", "b", "vendor"),
+			expectedVendor: filepath.Join("a", "b", "vendor"),
+		},
+		{
+			pkg:            filepath.Join("a", "b", "c", "d"),
+			vendor:         filepath.Join("a", "vendor"),
+			expectedVendor: filepath.Join("a", "vendor"),
+		},
+		{
+			pkg:            filepath.Join("a", "b", "c", "d"),
+			vendor:         filepath.Join("vendor"),
+			expectedVendor: "",
+		},
+	}
+	root, err := ioutil.TempDir(os.TempDir(), "")
+	for i, test := range tests {
+		src := filepath.Join(root, "src-test-find-vendor-"+strconv.Itoa(i))
+
+		assert.Require(t, err == nil)
+		if test.vendor != "" {
+			os.MkdirAll(filepath.Join(src, test.vendor), 0755)
+		}
+
+		vendor, hasVendor := FindVendor(filepath.Join(src, test.pkg), strings.Count(test.pkg, string(filepath.Separator)))
+		assert.OK(t, hasVendor == (test.expectedVendor != ""))
+		if test.expectedVendor != "" {
+			rel, err := filepath.Rel(src, vendor)
+			assert.Require(t, err == nil)
+			assert.OK(t, rel == test.expectedVendor)
+		}
+
+		err = os.RemoveAll(src)
+		assert.Require(t, err == nil)
+	}
 }
 
 func TestIsTestdata(t *testing.T) {
