@@ -127,6 +127,15 @@ func TestExtractPrintExprs_StarExpr(t *testing.T) {
 	assert.OK(t, ps[1].Expr.(*ast.Ident).Name == "a")
 }
 
+func TestExtractPrintExprs_CallExpr(t *testing.T) {
+	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr("r.Field"))
+	assert.OK(t, len(ps) == 2)
+	assert.OK(t, ps[0].Pos == 1)
+	assert.OK(t, ps[0].Expr.(*ast.Ident).Name == "r")
+	assert.OK(t, ps[1].Pos == 3)
+	assert.OK(t, ps[1].Expr.(*ast.SelectorExpr).Sel.Name == "Field")
+}
+
 func TestExtractPrintExprs_SliceExpr(t *testing.T) {
 	ps := ExtractPrintExprs(ctx, nil, "", 0, 0, nil, MustParseExpr(`"foo"[a1:a2]`))
 	assert.OK(t, len(ps) == 2)
