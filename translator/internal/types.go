@@ -27,33 +27,29 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 		return nil, err
 	}
 
-	installDeps := []string{}
-	if pkgCtx.HasVendor {
-		for _, dep := range deps {
+	for i, dep := range deps {
+		// NOTE: rewrite $dep to $importpath/vendor/$dep if $dep is found in vendor dir
+		if pkgCtx.HasVendor {
 			if _, err := os.Stat(filepath.Join(pkgCtx.Vendor, dep)); err == nil {
-				// ignore vendering deps
-				continue
+				pkgToVendor, err := filepath.Rel(pkgDir, pkgCtx.Vendor)
+				if err != nil {
+					return nil, err
+				}
+				dep = filepath.Join(pkgToVendor, dep)
+				if !strings.HasPrefix(dep, ".") {
+					dep = "./" + dep
+				}
 			}
-			installDeps = append(installDeps, dep)
 		}
-		pkgToVendor, err := filepath.Rel(pkgDir, pkgCtx.Vendor)
-		if err != nil {
-			return nil, err
-		}
-		p := filepath.Join(pkgToVendor, "...")
-		if !strings.HasPrefix(p, ".") {
-			p = "./" + p
-		}
-		installDeps = append(installDeps, p)
-	} else {
-		installDeps = deps
+
+		deps[i] = dep
 	}
 
 	if IsBuildableFileSet(pkgCtx.NormalizedFset) {
-		installDeps = append(installDeps, ".")
+		deps = append(deps, ".")
 	}
 
-	if len(installDeps) > 0 {
+	if len(deps) > 0 {
 		install := exec.Command("go", "install")
 		install.Dir = pkgDir
 		install.Stdout = os.Stdout
@@ -63,9 +59,9 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 		if Verbose {
 			install.Args = append(install.Args, "-v")
 		}
-		install.Args = append(install.Args, installDeps...)
+		install.Args = append(install.Args, deps...)
 		if err := install.Run(); err != nil {
-			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(installDeps, " "), buf.String())
+			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
 		}
 	}
 
