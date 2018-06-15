@@ -124,11 +124,7 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 	} else {
 		err = types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, info).Files(pkgCtx.NormalizedFiles)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	return info, nil
+	return info, err
 }
 
 func DeterminantExprOfIsTypeConversion(e ast.Expr) ast.Expr {
