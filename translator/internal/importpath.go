@@ -68,53 +68,25 @@ func FindPathByImportPath(importPath string) (string, error) {
 	return "", fmt.Errorf("package %s is not found in $GOPATH/src(%q)", importPath, build.Default.SrcDirs())
 }
 
-func FindDeps(importPath, srcDir string) ([]string, error) {
-	deps := []string{}
-
-	pkg, err := build.Import(importPath, srcDir, build.AllowBinary)
-	if err != nil {
-		return nil, err
-	}
+func FindDeps(pkg *build.Package) ([]string, error) {
+	depmap := map[string]bool{}
 
 	for _, imp := range pkg.Imports {
-		if imp == importPath {
-			continue
-		}
-		deps = append(deps, imp)
+		depmap[imp] = true
 	}
-
 	for _, imp := range pkg.TestImports {
-		if imp == importPath {
-			continue
-		}
-
-		f := false
-		for _, arg := range deps {
-			if arg == imp {
-				f = true
-			}
-		}
-
-		if !f {
-			deps = append(deps, imp)
-		}
+		depmap[imp] = true
 	}
-
 	for _, imp := range pkg.XTestImports {
-		if imp == importPath {
-			continue
-		}
+		depmap[imp] = true
+	}
+	delete(depmap, pkg.ImportPath) // delete self
 
-		f := false
-		for _, arg := range deps {
-			if arg == imp {
-				f = true
-			}
-		}
-
-		if !f {
-			deps = append(deps, imp)
-		}
+	deps := make([]string, len(depmap))
+	i := 0
+	for dep := range depmap {
+		deps[i] = dep
+		i++
 	}
 	return deps, nil
 }

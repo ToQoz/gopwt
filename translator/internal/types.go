@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/ast"
+	"go/build"
 	"go/importer"
 	"path/filepath"
 	"runtime"
@@ -16,7 +17,12 @@ import (
 )
 
 func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string) (*types.Info, error) {
-	deps, err := FindDeps(importPath, tempGoSrcDir)
+	buildPackage, err := build.Import(importPath, tempGoSrcDir, build.AllowBinary)
+	if err != nil {
+		return nil, err
+	}
+
+	deps, err := FindDeps(buildPackage)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +31,7 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 	if pkgCtx.HasVendor {
 		for _, dep := range deps {
 			if _, err := os.Stat(filepath.Join(pkgCtx.Vendor, dep)); err == nil {
-				// ignore
+				// ignore vendering deps
 				continue
 			}
 			installDeps = append(installDeps, dep)
