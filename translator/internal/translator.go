@@ -8,7 +8,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,64 +26,14 @@ var (
 	Verbose    = false
 )
 
-func Rewrite(gopath string, importpath, fpath string, recursive bool) error {
+func Rewrite(gopath string, importpath, fpath string) error {
 	srcDir := filepath.Join(gopath, "src")
-
-	return filepath.Walk(fpath, func(path string, fInfo os.FileInfo, err error) error {
-		if fInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
-			return nil
-		}
-
-		if !fInfo.IsDir() {
-			return nil
-		}
-
-		files, err := ioutil.ReadDir(path)
-		if err != nil {
-			return err
-		}
-		if !ContainsGoFile(files) {
-			// sub-packages maybe have gofiles, even if itself don't has gofiles
-			if ContainsDirectory(files) {
-				return nil
-			}
-			return filepath.SkipDir
-		}
-
-		rel, err := filepath.Rel(fpath, path)
-		if err != nil {
-			return err
-		}
-
-		if IsTestdata(rel) {
-			return filepath.SkipDir
-		}
-
-		if rel != "." {
-			if filepath.HasPrefix(rel, ".") {
-				return filepath.SkipDir
-			}
-
-			if !recursive {
-				return filepath.SkipDir
-			}
-		}
-
-		importpath := filepath.Join(importpath, rel)
-
-		err = os.MkdirAll(filepath.Join(srcDir, importpath), os.ModePerm)
-		if err != nil {
-			return err
-		}
-
-		vendor, found := FindVendor(path, strings.Count(importpath, "/")+1)
-		err = rewritePackage(vendor, found, path, importpath, srcDir)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
+	err := os.MkdirAll(filepath.Join(srcDir, importpath), os.ModePerm)
+	if err != nil {
+		return err
+	}
+	vendor, found := FindVendor(fpath, strings.Count(importpath, "/")+1)
+	return rewritePackage(vendor, found, fpath, importpath, srcDir)
 }
 
 func rewritePackage(vendor string, hasVendor bool, pkgDir, importPath string, tempGoSrcDir string) error {
