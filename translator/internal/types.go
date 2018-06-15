@@ -171,5 +171,5 @@ func IsTypeConversion(info *types.Info, e *ast.CallExpr) bool {
 		}
 	}
 
-	panic("unexpected error")
+	return false
 }
