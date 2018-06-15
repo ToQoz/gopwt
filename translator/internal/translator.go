@@ -147,10 +147,10 @@ func CopyPackage(pkgCtx *PackageContext, pkgDir string, importPath string, tempG
 
 		defer func() {
 			// Parse copied & normalized file. e.g. multi-line CompositeLit -> single-line
-			out.Seek(0, io.SeekStart)
+			out.Seek(0, SeekStart)
 			// NOTE: printer.Fprint-ed output is should be valid
 			pkgCtx.NormalizedFiles = append(pkgCtx.NormalizedFiles, MustParse(parser.ParseFile(pkgCtx.NormalizedFset, outpath, out, 0)))
-			out.Seek(0, io.SeekStart)
+			out.Seek(0, SeekStart)
 			pkgCtx.OutFiles = append(pkgCtx.OutFiles, out)
 		}()
 
