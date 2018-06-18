@@ -62,7 +62,7 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 		}
 		install.Args = append(install.Args, deps...)
 		if err := install.Run(); err != nil {
-			pkgCtx.Error = fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
+			pkgCtx.Error = fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(install.Args, " "), buf.String())
 			return
 		}
 	}
@@ -125,12 +125,13 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 	isXtest = len(xtests) > 0 && len(xtests) != len(tests)
 
 	checker := types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, pkgCtx.TypeInfo)
+	var files []*ast.File
 	if isXtest {
-		err = checker.Files(xtests)
+		files = xtests
 	} else {
-		err = checker.Files(tests)
+		files = tests
 	}
-	if err != nil {
+	if err := checker.Files(files); err != nil {
 		pkgCtx.Error = err
 	}
 	return

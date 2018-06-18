@@ -10,17 +10,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 // Rewrite rewrites assert to translatedassert in the given package
 func (pkgCtx *PackageContext) RewritePackage() {
-	wg := &sync.WaitGroup{}
 	// Rewrite pkg files
 	for _, file := range pkgCtx.GoFiles {
-		wg.Add(1)
+		pkgCtx.Wg.Add(1)
 		go func(file *GoFile) {
-			defer wg.Done()
+			defer pkgCtx.Wg.Done()
 			ctx := &Context{
 				AssertImport:           &ast.Ident{Name: "assert"},
 				TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
@@ -48,8 +46,6 @@ func (pkgCtx *PackageContext) RewritePackage() {
 			return
 		}(file)
 	}
-
-	wg.Wait()
 }
 
 // RewriteFile rewrites assert to translatedassert in the given file
