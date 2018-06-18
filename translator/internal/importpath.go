@@ -8,36 +8,28 @@ import (
 	"strings"
 )
 
-func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, _filepath string, err error) {
+func HandleGlobalOrLocalImportPath(globalOrLocalImportPath string) (importpath, fpath string, err error) {
 	if globalOrLocalImportPath == "" {
 		globalOrLocalImportPath = "."
 	}
 
 	if strings.HasPrefix(globalOrLocalImportPath, ".") {
-		wd, e := os.Getwd()
-		if e != nil {
-			err = e
-			return
-		}
-
-		_filepath = filepath.Join(wd, globalOrLocalImportPath)
-		if _, err = os.Stat(_filepath); err != nil {
-			return
-		}
-
-		importpath, err = FindImportPathByPath(_filepath)
+		var wd string
+		wd, err = os.Getwd()
 		if err != nil {
 			return
 		}
-	} else {
-		importpath = globalOrLocalImportPath
 
-		_filepath, err = FindPathByImportPath(importpath)
-		if err != nil {
+		fpath = filepath.Join(wd, globalOrLocalImportPath)
+		if _, err = os.Stat(fpath); err != nil {
 			return
 		}
+		importpath, err = FindImportPathByPath(fpath)
+		return
 	}
 
+	importpath = globalOrLocalImportPath
+	fpath, err = FindPathByImportPath(importpath)
 	return
 }
 
@@ -69,22 +61,22 @@ func FindPathByImportPath(importPath string) (string, error) {
 }
 
 func FindDeps(pkg *build.Package) ([]string, error) {
-	depmap := map[string]bool{}
+	depMap := map[string]bool{}
 
 	for _, imp := range pkg.Imports {
-		depmap[imp] = true
+		depMap[imp] = true
 	}
 	for _, imp := range pkg.TestImports {
-		depmap[imp] = true
+		depMap[imp] = true
 	}
 	for _, imp := range pkg.XTestImports {
-		depmap[imp] = true
+		depMap[imp] = true
 	}
-	delete(depmap, pkg.ImportPath) // delete self
+	delete(depMap, pkg.ImportPath) // delete self
 
-	deps := make([]string, len(depmap))
+	deps := make([]string, len(depMap))
 	i := 0
-	for dep := range depmap {
+	for dep := range depMap {
 		deps[i] = dep
 		i++
 	}

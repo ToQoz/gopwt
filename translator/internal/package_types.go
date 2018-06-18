@@ -16,22 +16,25 @@ import (
 	"strings"
 )
 
-func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string) (*types.Info, error) {
-	buildPackage, err := build.Import(importPath, tempGoSrcDir, build.AllowBinary)
+func (pkgCtx *PackageContext) TypecheckPackage() {
+	buildPackage, err := build.Import(pkgCtx.Importpath, pkgCtx.SrcDir, build.AllowBinary)
 	if err != nil {
-		return nil, err
+		pkgCtx.Error = err
+		return
 	}
 
 	deps, err := FindDeps(buildPackage)
 	if err != nil {
-		return nil, err
+		pkgCtx.Error = err
+		return
 	}
 
 	// NOTE: rewrite $importpath to ./vendor/$importpath if $importpath is found in vendor dir
 	if pkgCtx.HasVendor {
-		pkgToVendor, err := filepath.Rel(pkgDir, pkgCtx.Vendor)
+		pkgToVendor, err := filepath.Rel(pkgCtx.Filepath, pkgCtx.Vendor)
 		if err != nil {
-			return nil, err
+			pkgCtx.Error = err
+			return
 		}
 		if !strings.HasPrefix(pkgToVendor, ".") {
 			pkgToVendor = "./" + pkgToVendor
@@ -50,7 +53,7 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 
 	if len(deps) > 0 {
 		install := exec.Command("go", "install")
-		install.Dir = pkgDir
+		install.Dir = pkgCtx.Filepath
 		install.Stdout = os.Stdout
 		buf := bytes.NewBuffer([]byte{})
 		install.Stderr = buf
@@ -59,7 +62,8 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 		}
 		install.Args = append(install.Args, deps...)
 		if err := install.Run(); err != nil {
-			return nil, fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
+			pkgCtx.Error = fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(deps, " "), buf.String())
+			return
 		}
 	}
 
@@ -88,15 +92,16 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 			return CopyFile(path, out)
 		})
 		if err != nil {
-			return nil, err
+			pkgCtx.Error = err
+			return
 		}
 	}
 
 	// Assume types from ast.Node
 	typesConfig := types.Config{}
 	typesConfig.Importer = importer.Default()
-	pkg := types.NewPackage(importPath, "")
-	info := &types.Info{
+	pkg := types.NewPackage(pkgCtx.Importpath, "")
+	pkgCtx.TypeInfo = &types.Info{
 		Types:      map[ast.Expr]types.TypeAndValue{},
 		Defs:       map[*ast.Ident]types.Object{},
 		Uses:       map[*ast.Ident]types.Object{},
@@ -109,35 +114,26 @@ func GetTypeInfo(pkgCtx *PackageContext, pkgDir, importPath, tempGoSrcDir string
 	// WORKARROUND(xtest): if the tests is xtest like `{pkg}_test`, check types only in `{pkg}_test`
 	// NOTE: if you check types both `package {pkg}_test` and `package {pkg}`, you'll get `package {pkg}_test; expected {pkg}`
 	isXtest := false
+	tests := []*ast.File{}
 	xtests := []*ast.File{}
-	for _, f := range pkgCtx.NormalizedFiles {
-		if strings.HasSuffix(f.Name.Name, "_test") {
-			xtests = append(xtests, f)
+	for _, f := range pkgCtx.GoFiles {
+		tests = append(tests, f.Normalized)
+		if strings.HasSuffix(f.Normalized.Name.Name, "_test") {
+			xtests = append(xtests, f.Normalized)
 		}
 	}
-	isXtest = len(xtests) > 0 && len(xtests) != len(pkgCtx.NormalizedFiles)
+	isXtest = len(xtests) > 0 && len(xtests) != len(tests)
 
+	checker := types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, pkgCtx.TypeInfo)
 	if isXtest {
-		err = types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, info).Files(xtests)
+		err = checker.Files(xtests)
 	} else {
-		err = types.NewChecker(&typesConfig, pkgCtx.NormalizedFset, pkg, info).Files(pkgCtx.NormalizedFiles)
+		err = checker.Files(tests)
 	}
-	return info, err
-}
-
-func DeterminantExprOfIsTypeConversion(e ast.Expr) ast.Expr {
-	switch e.(type) {
-	case *ast.ParenExpr:
-		return DeterminantExprOfIsTypeConversion(e.(*ast.ParenExpr).X)
-	case *ast.StarExpr:
-		return DeterminantExprOfIsTypeConversion(e.(*ast.StarExpr).X)
-	case *ast.CallExpr:
-		return DeterminantExprOfIsTypeConversion(e.(*ast.CallExpr).Fun)
-	case *ast.SelectorExpr:
-		return e.(*ast.SelectorExpr).Sel
-	default:
-		return e
+	if err != nil {
+		pkgCtx.Error = err
 	}
+	return
 }
 
 func IsTypeConversion(info *types.Info, e *ast.CallExpr) bool {

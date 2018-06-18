@@ -68,8 +68,9 @@ func TestRewriteFile(t *testing.T) {
 	assert.Require(t, err == nil)
 
 	buf := bytes.NewBuffer([]byte{})
-	pkgCtx := &PackageContext{NormalizedFset: fset, OriginalFset: fset, NormalizedFiles: []*ast.File{f}, OriginalFiles: []*ast.File{f}}
-	RewriteFile(pkgCtx, 0, ctx, nil, buf)
+	gf := &GoFile{Normalized: f, Original: f}
+	pkgCtx := &PackageContext{NormalizedFset: fset, OriginalFset: fset, GoFiles: []*GoFile{gf}}
+	RewriteFile(pkgCtx, gf, ctx, nil, buf)
 	got := buf.String()
 
 	assert.OK(t, got == expected)

@@ -41,6 +41,6 @@ func Translate(path string) (gopath, importpath string, err error) {
 		return
 	}
 
-	err = internal.Rewrite(gopath, importpath, fpath)
+	err = internal.Translate(gopath, importpath, fpath)
 	return
 }

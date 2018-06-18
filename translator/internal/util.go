@@ -16,9 +16,7 @@ func Must(err error) {
 }
 
 func MustParse(file *ast.File, err error) *ast.File {
-	if err != nil {
-		panic(err)
-	}
+	Must(err)
 	return file
 }
 
@@ -26,32 +24,6 @@ func Assert(condition bool, msg string) {
 	if !condition {
 		panic("[assert] " + msg)
 	}
-}
-
-func RetrieveImportpathFromVendorDir(path string) (string, bool) {
-	segs := strings.SplitN(path, string(filepath.Separator)+"vendor"+string(filepath.Separator), 2)
-	if len(segs) < 2 {
-		return "", false
-	}
-	return segs[1], true
-}
-
-func FindVendor(fpath string, nest int) (string, bool) {
-	vdir := fpath
-	n := 0
-	for {
-		v := filepath.Join(vdir, "vendor")
-		_, err := os.Stat(v)
-		if err == nil {
-			return v, true
-		}
-		n++
-		if n > nest {
-			break
-		}
-		vdir = filepath.Dir(vdir)
-	}
-	return "", false
 }
 
 func CopyFile(path string, out io.Writer) error {
@@ -62,35 +34,6 @@ func CopyFile(path string, out io.Writer) error {
 	defer in.Close()
 	_, err = io.Copy(out, in)
 	return err
-}
-
-func ContainsDirectory(files []os.FileInfo) bool {
-	for _, f := range files {
-		if f.IsDir() {
-			return true
-		}
-	}
-
-	return false
-}
-
-func ContainsGoFile(files []os.FileInfo) bool {
-	for _, f := range files {
-		if IsGoFile(f) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func IsTestdata(fpath string) bool {
-	for _, tdata := range strings.Split(Testdata, ",") {
-		if strings.Split(fpath, string(filepath.Separator))[0] == tdata {
-			return true
-		}
-	}
-	return false
 }
 
 func IsGoFile(f os.FileInfo) bool {
