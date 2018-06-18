@@ -46,6 +46,8 @@ done
   GOPATH=$(dirname $workspace)
   export GOPATH
 
+  go get golang.org/x/tools/go/loader
+
   echo "test issue36"
   cd "$workspace/regression/issue36"
   dep ensure
