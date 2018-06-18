@@ -139,3 +139,9 @@ func TestCallWithNonIdempotentFunc(t *testing.T) {
 func TestPkgValue(t *testing.T) {
 	assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
 }
+
+func TestSelectorExpr(t *testing.T) {
+	type user struct{ name string }
+	u := user{"gopwt"}
+	assert.OK(t, u.name == "no-name")
+}

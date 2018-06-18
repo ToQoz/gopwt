@@ -86,10 +86,10 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.008s
+FAIL	github.com/gopwter/gopwtexample	0.047s
 exit status 1
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.869s
+FAIL	github.com/gopwter/gopwtexample	1.027s
 ```
 
 ## Example
@@ -235,6 +235,12 @@ func TestCallWithNonIdempotentFunc(t *testing.T) {
 func TestPkgValue(t *testing.T) {
 	assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
 }
+
+func TestSelectorExpr(t *testing.T) {
+	type user struct{ name string }
+	u := user{"gopwt"}
+	assert.OK(t, u.name == "no-name")
+}
 ```
 
 ```
@@ -342,10 +348,10 @@ $ go test
 		assert.OK(t, &a == &b)
 		             || |  ||
 		             || |  |"a"
-		             || |  (*string)(0xc42008f0c0)
+		             || |  (*string)(0xc42000f0e0)
 		             || false
 		             |"a"
-		             (*string)(0xc42008f0b0)
+		             (*string)(0xc42000f0d0)
 		
 		--- [*string] &b
 		+++ [*string] &a
@@ -356,7 +362,7 @@ $ go test
 		assert.OK(t, <-ch == 0)
 		             | |  |
 		             | |  false
-		             | (chan int)(0xc42008c600)
+		             | (chan int)(0xc420026660)
 		             1
 		
 		--- [int] 0
@@ -433,8 +439,8 @@ $ go test
 		--- [map[string]string] map[string]string{"a": "a", k: v}
 		+++ [map[string]string] map[string]string{}
 		@@ -1,3 +1,1@@
-		-map[string]string{ "a":            "a",
-		-                   "b--------key": "b------value",
+		-map[string]string{ "b--------key": "b------value",
+		-                   "a":            "a",
 		-}
 		+map[string]string{}
 		
@@ -607,12 +613,27 @@ $ go test
 		 }
 		
 		
+--- FAIL: TestSelectorExpr (0.00s)
+	assert.go:85: FAIL main_test.go:146
+		assert.OK(t, u.name == "no-name")
+		             | |    |
+		             | |    false
+		             | "gopwt"
+		             main.user{name:"gopwt"}
+		
+		--- [string] "no-name"
+		+++ [string] u.name
+		@@ -1,1 +1,1@@
+		-no-name
+		+gopwt
+		
+		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.009s
+FAIL	github.com/ToQoz/gopwt/_example	0.010s
 exit status 1
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.990s
+FAIL	github.com/ToQoz/gopwt/_example	1.012s
 ```
 
 ## Tips

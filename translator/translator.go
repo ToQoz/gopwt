@@ -3,7 +3,6 @@ package translator
 import (
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/ToQoz/gopwt/translator/internal"
 )
@@ -30,28 +29,18 @@ func Verbose(v bool) {
 
 // Translate tlanslates package in given path
 func Translate(path string) (gopath, importpath string, err error) {
-	var _filepath string
-
-	recursive := false
-	if strings.HasSuffix(path, "/...") {
-		path = strings.TrimSuffix(path, "/...")
-		recursive = true
-	}
+	var fpath string
 
 	gopath, err = ioutil.TempDir(os.TempDir(), "")
 	if err != nil {
 		return
 	}
 
-	importpath, _filepath, err = internal.HandleGlobalOrLocalImportPath(path)
+	importpath, fpath, err = internal.HandleGlobalOrLocalImportPath(path)
 	if err != nil {
 		return
 	}
 
-	err = internal.Rewrite(gopath, importpath, _filepath, recursive)
-	if err != nil {
-		return
-	}
-
+	err = internal.Translate(gopath, importpath, fpath)
 	return
 }

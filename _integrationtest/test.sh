@@ -14,13 +14,21 @@ export GOPATH
 
 cleanup() {
   retval=$?
-  #rm -rf "$workspace"
+  rm -rf "$(dirname $workspace)"
   exit $retval
 }
 trap cleanup INT QUIT TERM EXIT
 
 echo "workspace = $workspace"
 cd "$workspace"
+
+(
+  echo "test dont_parse_testdata"
+  cd "$workspace/dont_parse_testdata"
+  go test
+)
+
+# Regression tests
 
 for issue in issue33 issue40 issue44
 do

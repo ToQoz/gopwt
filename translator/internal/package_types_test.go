@@ -79,8 +79,18 @@ func TestIsTypeConversion(t *testing.T) {
 	fset := token.NewFileSet()
 	f, err := parser.ParseFile(fset, filepath.Join("tdata", "is_type_conversion_test", "main.go"), nil, 0)
 	assert.Require(t, err == nil)
-	types, err := GetTypeInfo("", false, filepath.Join("tdata", "is_type_conversion_test"), "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test", strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0]+"/src", fset, []*ast.File{f})
-	assert.Require(t, err == nil)
+	pkgCtx := &PackageContext{
+		Vendor:         "",
+		HasVendor:      false,
+		GoFiles:        []*GoFile{&GoFile{Normalized: f}},
+		NormalizedFset: fset,
+		Filepath:       filepath.Join("tdata", "is_type_conversion_test"),
+		Importpath:     "github.com/ToQoz/gopwt/translator/internal/tdata/is_type_conversion_test",
+		SrcDir:         strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))[0] + "/src",
+	}
+	pkgCtx.TypecheckPackage()
+	assert.Require(t, pkgCtx.Error == nil)
+	types := pkgCtx.TypeInfo
 
 	// fmt.Println(string([]byte(hello())))
 	expr := f.Decls[1].(*ast.FuncDecl).Body.List[0].(*ast.ExprStmt).X

@@ -35,12 +35,48 @@ func TestMust(t *testing.T) {
 	}()
 }
 
-func TestIsTestdata(t *testing.T) {
-	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a.go")) == true)
-	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a.txt")) == true)
-	assert.OK(t, IsTestdata(filepath.Join("testdata", "x", "a", "a")) == true)
-	assert.OK(t, IsTestdata(filepath.Join("testdata", "x.go")) == true)
-	assert.OK(t, IsTestdata(filepath.Join("not_testdata", "x.go")) == false)
+func TestMustParse(t *testing.T) {
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Must panic if err is given")
+			}
+		}()
+
+		MustParse(nil, fmt.Errorf("error"))
+	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("Must not panic if err is not given")
+			}
+		}()
+
+		MustParse(nil, nil)
+	}()
+}
+
+func TestAssert(t *testing.T) {
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Must panic if false is given")
+			}
+		}()
+
+		Assert(false, "")
+	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("Must not panic if true is given")
+			}
+		}()
+
+		Assert(true, "")
+	}()
 }
 
 func TestIsGoFileName(t *testing.T) {
@@ -103,30 +139,4 @@ func TestContainsBuildable(t *testing.T) {
 	fset = token.NewFileSet()
 	parse(dir, fset)
 	assert.OK(t, IsBuildableFileSet(fset) == false, "testdata/no_go_files contains go files")
-}
-
-func TestContainsGoFile(t *testing.T) {
-	var files []os.FileInfo
-	var err error
-
-	files, err = ioutil.ReadDir(filepath.Join("testdata", "go_files"))
-	assert.Require(t, err == nil)
-	assert.OK(t, ContainsGoFile(files) == true, "./testdata/go_files contains go files")
-
-	files, err = ioutil.ReadDir(filepath.Join("testdata", "no_go_files"))
-	assert.Require(t, err == nil)
-	assert.OK(t, ContainsGoFile(files) == false, "./testdata/no_go_files don't contains go files")
-}
-
-func TestContainDirectory(t *testing.T) {
-	var files []os.FileInfo
-	var err error
-
-	files, err = ioutil.ReadDir(filepath.Join("testdata", "dirs"))
-	assert.Require(t, err == nil)
-	assert.OK(t, ContainsDirectory(files) == true, "./testdata/dirs contains directories")
-
-	files, err = ioutil.ReadDir(filepath.Join("testdata", "no_dirs"))
-	assert.Require(t, err == nil)
-	assert.OK(t, ContainsDirectory(files) == false, "./testdata/no_go_files don't contains directories")
 }

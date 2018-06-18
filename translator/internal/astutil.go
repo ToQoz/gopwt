@@ -7,6 +7,7 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -30,6 +31,52 @@ var (
 		"recover",
 	}
 )
+
+// NormalizeFile normalize file.
+// e.g. multi-line CompositeLit -> single-line in gopwt/assert.{OK, Require}
+func NormalizeFile(file *ast.File, in *os.File, out io.Writer) error {
+	ctx := &Context{
+		AssertImport:           &ast.Ident{Name: "assert"},
+		TranslatedassertImport: &ast.Ident{Name: "translatedassert"},
+	}
+	assertImport := GetAssertImport(file)
+	if assertImport == nil {
+		in.Seek(0, SeekStart)
+		_, err := io.Copy(out, in)
+		return err
+	}
+	if assertImport.Name != nil {
+		ctx.AssertImport = assertImport.Name
+	}
+
+	// Format and copy file
+	//   - 1. replace rawStringLit to stringLit
+	//   - 2. replace multiline compositLit to singleline one.
+	//   - 3. copy
+	InspectAssert(ctx, file, func(n *ast.CallExpr) {
+		// 1. replace rawStringLit to stringLit
+		ReplaceAllRawStringLitByStringLit(n)
+	})
+
+	// 2. replace multiline-compositLit by singleline-one by passing empty token.FileSet
+	// 3. copy
+	return printer.Fprint(out, token.NewFileSet(), file)
+}
+
+func DeterminantExprOfIsTypeConversion(e ast.Expr) ast.Expr {
+	switch e.(type) {
+	case *ast.ParenExpr:
+		return DeterminantExprOfIsTypeConversion(e.(*ast.ParenExpr).X)
+	case *ast.StarExpr:
+		return DeterminantExprOfIsTypeConversion(e.(*ast.StarExpr).X)
+	case *ast.CallExpr:
+		return DeterminantExprOfIsTypeConversion(e.(*ast.CallExpr).Fun)
+	case *ast.SelectorExpr:
+		return e.(*ast.SelectorExpr).Sel
+	default:
+		return e
+	}
+}
 
 // ReplaceUnaryExpr replace oldExpr by newExpr in parent
 func ReplaceUnaryExpr(parent ast.Node, oldExpr *ast.UnaryExpr, newExpr ast.Expr) {
@@ -80,7 +127,7 @@ func ReplaceUnaryExpr(parent ast.Node, oldExpr *ast.UnaryExpr, newExpr ast.Expr)
 		}
 	}
 
-	panic("[gopwt]Unexpected Error on replacing *ast.UnaryExpr by translatedassert.OpUnary*()")
+	panic("[gopwt] unexpected error on replacing *ast.UnaryExpr by translatedassert.OpUnary*()")
 }
 
 // ReplaceBinaryExpr replace oldExpr by newExpr in parent
@@ -128,7 +175,7 @@ func ReplaceBinaryExpr(parent ast.Node, oldExpr *ast.BinaryExpr, newExpr ast.Exp
 		}
 	}
 
-	panic("[gopwt]Unexpected Error on replacing *ast.BinaryExpr by translatedassert.Op*()")
+	panic("[gopwt] unexpected error on replacing *ast.BinaryExpr by translatedassert.Op*()")
 }
 
 // ReplaceAllRawStringLitByStringLit replaces all raw string literals in root by string literals.
