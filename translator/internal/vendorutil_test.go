@@ -12,20 +12,6 @@ import (
 	. "github.com/ToQoz/gopwt/translator/internal"
 )
 
-func TestRetrieveImportpathFromVendorDir(t *testing.T) {
-	{
-		vpkg, hasVendor := RetrieveImportpathFromVendorDir(filepath.Join("pkg", "path"))
-		assert.OK(t, hasVendor == false)
-		assert.OK(t, vpkg == "")
-	}
-
-	{
-		vpkg, hasVendor := RetrieveImportpathFromVendorDir(filepath.Join("pkg", "vendor", "v-pkg", "sub"))
-		assert.OK(t, hasVendor == true)
-		assert.OK(t, vpkg == filepath.Join("v-pkg", "sub"))
-	}
-}
-
 func TestFindVendor(t *testing.T) {
 	tests := []struct {
 		pkg            string

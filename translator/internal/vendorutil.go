@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // ListVendor lists all vendored files
@@ -31,14 +30,6 @@ func ListVendorFiles(vendor, pkgDir, importPath, tempGoSrcDir string) []File {
 		return nil
 	})
 	return targets
-}
-
-func RetrieveImportpathFromVendorDir(path string) (string, bool) {
-	segs := strings.SplitN(path, string(filepath.Separator)+"vendor"+string(filepath.Separator), 2)
-	if len(segs) < 2 {
-		return "", false
-	}
-	return segs[1], true
 }
 
 func FindVendor(fpath string, nest int) (string, bool) {
