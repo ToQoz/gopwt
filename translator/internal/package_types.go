@@ -55,7 +55,7 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 		deps = append(deps, ".")
 	}
 
-	pkgCacheDir := filepath.Join(cacheDir, "pkg")
+	pkgCacheDir := filepath.Join(CacheDir, "pkg")
 	os.MkdirAll(pkgCacheDir, 0755)
 
 	caches := make([]*Pkgcache, len(deps))
@@ -76,6 +76,10 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 			for i, dep := range deps {
 				if dep == "." {
 					dep = pkgCtx.Importpath
+				}
+				vimportpath, v := RetrieveImportpathFromVendorDir(dep)
+				if v {
+					dep = vimportpath
 				}
 				if dep == c.Importpath {
 					deps = append(deps[:i], deps[i+1:]...)

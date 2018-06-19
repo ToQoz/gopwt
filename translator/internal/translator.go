@@ -13,7 +13,7 @@ type Context struct {
 }
 
 var (
-	cacheDir   = filepath.Join(os.Getenv(homeEnv), ".gopwtcache")
+	CacheDir   = filepath.Join(os.Getenv(homeEnv), ".gopwtcache")
 	Testdata   = "testdata"
 	TermWidth  = 0
 	WorkingDir = ""

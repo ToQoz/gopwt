@@ -13,13 +13,13 @@ import (
 )
 
 type Pkgcache struct {
-	PkgRoot       string
-	SrcRoot       string
-	Importpath    string
-	PkgcacheExist bool
+	PkgRoot    string
+	SrcRoot    string
+	Importpath string
 
-	Path         string
-	PkgcachePath string
+	PkgPath       string
+	PkgcachePath  string
+	PkgcacheExist bool
 }
 
 // PkgcacheFor returns Pkgcache for given importpath
@@ -35,7 +35,6 @@ func PkgcacheFor(hasVendor bool, vendorDir string, importpath string) *Pkgcache 
 	if hasVendor {
 		if importpath, ok := RetrieveImportpathFromVendorDir(importpath); ok {
 			path := filepath.Join(vendorDir, importpath)
-			fmt.Println("vendor", path)
 			if _, err := os.Stat(path); err == nil {
 				return newPkgcache(filepath.Join(gopathList[0], "pkg"), vendorDir, importpath)
 			}
@@ -60,7 +59,7 @@ func PkgcacheFor(hasVendor bool, vendorDir string, importpath string) *Pkgcache 
 }
 
 func newPkgcache(pkgRoot, srcRoot string, importpath string) *Pkgcache {
-	pkgcacheDir := filepath.Join(cacheDir, importpath)
+	pkgCacheDir := filepath.Join(CacheDir, importpath)
 	c := &Pkgcache{PkgRoot: pkgRoot, SrcRoot: srcRoot, Importpath: importpath}
 	pkgDir := filepath.Join(c.SrcRoot, c.Importpath)
 	files, err := ioutil.ReadDir(pkgDir)
@@ -93,10 +92,10 @@ func newPkgcache(pkgRoot, srcRoot string, importpath string) *Pkgcache {
 	h.Write(hash)
 	rehash := fmt.Sprintf("%x", h.Sum(nil))
 
-	c.Path = filepath.Join(c.PkgRoot, runtime.GOOS+"_"+runtime.GOARCH, c.Importpath+".a")
-	c.PkgcachePath = filepath.Join(pkgcacheDir, rehash+".a")
+	c.PkgPath = filepath.Join(c.PkgRoot, runtime.GOOS+"_"+runtime.GOARCH, c.Importpath+".a")
+	c.PkgcachePath = filepath.Join(pkgCacheDir, rehash+".a")
 
-	pkgcache := filepath.Join(pkgcacheDir, rehash+".a")
+	pkgcache := filepath.Join(pkgCacheDir, rehash+".a")
 	_, err = os.Stat(pkgcache)
 	c.PkgcacheExist = err == nil
 
@@ -112,10 +111,13 @@ func (c *Pkgcache) Load() error {
 	}
 	defer in.Close()
 
-	if _, err := os.Stat(filepath.Dir(c.Path)); err != nil {
-		os.MkdirAll(filepath.Dir(c.Path), 0755)
+	if _, err := os.Stat(filepath.Dir(c.PkgPath)); err != nil {
+		err = os.MkdirAll(filepath.Dir(c.PkgPath), 0755)
+		if err != nil {
+			return err
+		}
 	}
-	out, err := os.OpenFile(c.Path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	out, err := os.OpenFile(c.PkgPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}
@@ -128,7 +130,7 @@ func (c *Pkgcache) Load() error {
 // Save saves cache
 // cp <GOROOT|GOPATH>/pkg/<GOOS>_<GOARCH>/<importpath>.a ~/.gopwtcache/pkg/<GOOS>_<GOARCH>/<importpath>/<hash>.a
 func (c *Pkgcache) Save() error {
-	in, err := os.Open(c.Path)
+	in, err := os.Open(c.PkgPath)
 	if err != nil {
 		return err
 	}
