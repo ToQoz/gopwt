@@ -12,6 +12,25 @@ import (
 	. "github.com/ToQoz/gopwt/translator/internal"
 )
 
+func TestListVendorFiles(t *testing.T) {
+	root, err := ioutil.TempDir(os.TempDir(), "")
+	assert.Require(t, err == nil)
+
+	tempsrc := filepath.Join(root, "test-list-testdata-files")
+	os.MkdirAll(filepath.Join(tempsrc, "github.com", "ToQoz", "gopwt", "translator", "internal", "testdata", "with_vendor"), 0755)
+
+	gopaths := strings.Split(os.Getenv("GOPATH"), string(filepath.ListSeparator))
+	gopath := gopaths[len(gopaths)-1]
+
+	var files []string
+	pkgdir := filepath.Join(gopath, "src", "github.com", "ToQoz", "gopwt", "translator", "internal", "testdata", "with_vendor")
+	vendor := filepath.Join(pkgdir, "vendor")
+	for _, f := range ListVendorFiles(vendor, pkgdir, "github.com/ToQoz/gopwt/translator/internal/testdata/with_vendor", tempsrc) {
+		files = append(files, f.Path)
+	}
+	assert.OK(t, len(files) == 6)
+}
+
 func TestRetrieveImportpathFromVendorDir(t *testing.T) {
 	{
 		vpkg, hasVendor := RetrieveImportpathFromVendorDir(filepath.Join("pkg", "path"))
