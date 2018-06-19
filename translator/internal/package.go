@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 )
 
 type GoFile struct {
@@ -30,23 +31,27 @@ type PackageContext struct {
 	NormalizedFset *token.FileSet
 	GoFiles        []*GoFile
 
+	Wg    *sync.WaitGroup
 	Error error
 }
 
 func NewPackageContext(fpath, importpath, srcDir string) *PackageContext {
-	return &PackageContext{
+	pkgCtx := &PackageContext{
 		Filepath:       fpath,
 		Importpath:     importpath,
 		SrcDir:         srcDir,
 		OriginalFset:   token.NewFileSet(),
 		NormalizedFset: token.NewFileSet(),
+		Wg:             &sync.WaitGroup{},
 	}
+	pkgCtx.Vendor, pkgCtx.HasVendor = FindVendor(pkgCtx.Filepath, strings.Count(pkgCtx.Importpath, "/")+1)
+	return pkgCtx
 }
 
 func (pkgCtx *PackageContext) Translate() error {
-	pkgCtx.Vendor, pkgCtx.HasVendor = FindVendor(pkgCtx.Filepath, strings.Count(pkgCtx.Importpath, "/")+1)
-
 	pkgCtx.CopyPackage()
+	pkgCtx.ReadPackage()
+	pkgCtx.Wg.Wait()
 	if pkgCtx.Error != nil {
 		return pkgCtx.Error
 	}
@@ -57,5 +62,6 @@ func (pkgCtx *PackageContext) Translate() error {
 	}
 
 	pkgCtx.RewritePackage()
+	pkgCtx.Wg.Wait()
 	return pkgCtx.Error
 }
