@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,13 +20,7 @@ func ListVendorFiles(vendor, pkgDir, importPath, tempGoSrcDir string) []File {
 		outpath := filepath.Join(tempGoSrcDir, importPath, pathFromPkgDir)
 
 		if finfo.IsDir() {
-			err := os.Mkdir(outpath, finfo.Mode())
-			if err != nil {
-				if debugLog {
-					log.Println(err)
-				}
-			}
-			return err
+			return os.Mkdir(outpath, finfo.Mode())
 		}
 
 		targets = append(targets, File{
