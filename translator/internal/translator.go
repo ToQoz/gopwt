@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 type Context struct {
@@ -13,7 +14,7 @@ type Context struct {
 }
 
 var (
-	CacheDir   = filepath.Join(os.Getenv(homeEnv), ".gopwtcache")
+	CacheDir   = filepath.Join(os.Getenv(homeEnv), ".gopwtcache", runtime.Version())
 	Testdata   = "testdata"
 	TermWidth  = 0
 	WorkingDir = ""
