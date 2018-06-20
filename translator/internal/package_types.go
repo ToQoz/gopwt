@@ -70,8 +70,8 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 		if c.PkgcacheExist {
 			err := c.Load()
 			if err != nil {
-				pkgCtx.Error = err
-				return
+				log.Printf("[WARNING] fail to load cache(%s->%s): %s\n", c.PkgcachePath, c.PkgPath, err)
+				continue
 			}
 			for i, dep := range deps {
 				if dep == "." {
@@ -150,10 +150,13 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 		if !c.PkgcacheExist {
 			err := c.Save()
 			if err != nil {
-				pkgCtx.Error = err
-				return
+				log.Printf("[WARNING] fail to save cache(%s->%s): %s\n", c.PkgPath, c.PkgcachePath, err)
 			}
 		}
+	}
+
+	if err := RemoveOldCache(); err != nil {
+		log.Printf("[WARNING] fail to remove old cache: %s\n", err)
 	}
 
 	// Assume types from ast.Node

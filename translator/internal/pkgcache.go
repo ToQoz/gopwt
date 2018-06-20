@@ -6,10 +6,16 @@ import (
 	"go/build"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
+)
+
+const (
+	CacheSize = 100
 )
 
 type Pkgcache struct {
@@ -20,6 +26,50 @@ type Pkgcache struct {
 	PkgPath       string
 	PkgcachePath  string
 	PkgcacheExist bool
+}
+
+func RemoveOldCache() error {
+	type fileInfo struct {
+		os.FileInfo
+		Path string
+	}
+	var files []fileInfo
+	filepath.Walk(CacheDir, func(path string, finfo os.FileInfo, err error) error {
+		if finfo.IsDir() {
+			return nil
+		}
+
+		f := fileInfo{finfo, path}
+		modTime := finfo.ModTime()
+		inserted := false
+		for i, fi := range files {
+			if modTime.UnixNano() > fi.ModTime().UnixNano() {
+				inserted = true
+				files = append(files[:i], append([]fileInfo{f}, files[i:]...)...)
+				break
+			}
+		}
+		if !inserted {
+			files = append(files, f)
+		}
+		return nil
+	})
+	for i, fi := range files {
+		p := fi.Path
+		if i >= CacheSize {
+			if debugLog {
+				log.Printf("Delete cache: (%v) %s\n", fi.ModTime(), p)
+			}
+			if err := os.Remove(p); err != nil {
+				return err
+			}
+		} else {
+			if debugLog {
+				log.Printf("Keep cache: (%v) %s\n", fi.ModTime(), p)
+			}
+		}
+	}
+	return nil
 }
 
 // PkgcacheFor returns Pkgcache for given importpath
@@ -98,6 +148,16 @@ func newPkgcache(pkgRoot, srcRoot string, importpath string) *Pkgcache {
 	pkgcache := filepath.Join(pkgCacheDir, rehash+".a")
 	_, err = os.Stat(pkgcache)
 	c.PkgcacheExist = err == nil
+
+	if c.PkgcacheExist {
+		now := time.Now()
+		if debugLog {
+			log.Printf("Chtimes: (%v) %s", now, c.PkgcachePath)
+		}
+		if err := os.Chtimes(c.PkgcachePath, now, now); err != nil {
+			log.Printf("[WARNING] fail to chtimes cache: (%v) %s", now, c.PkgcachePath)
+		}
+	}
 
 	return c
 }
