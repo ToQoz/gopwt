@@ -20,15 +20,11 @@ test: test-deps
 test-integration: test
 	cd _integrationtest && ./test.sh
 
-# build gopwt binary
-gopwt:
-	go build
-
 # run example
-example: gopwt
+example:
 	go test ./_example
 # generate
-gen-readme: gopwt
+gen-readme:
 	_misc/gen-readme.bash
 gen-op:
 	_misc/gen-op.bash
