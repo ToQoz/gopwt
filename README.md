@@ -86,10 +86,10 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	0.047s
+FAIL	github.com/gopwter/gopwtexample	0.050s
 exit status 1
 exit status 1
-FAIL	github.com/gopwter/gopwtexample	1.027s
+FAIL	github.com/gopwter/gopwtexample	1.060s
 ```
 
 ## Example
@@ -119,6 +119,15 @@ func TestWithMessage(t *testing.T) {
 	var receiver *struct{}
 	receiver = nil
 	assert.OK(t, receiver != nil, "receiver should not be nil")
+}
+
+func TestWithTestingRun(t *testing.T) {
+	t.Run("A", func(t *testing.T) {
+		assert.OK(t, 1 == 2)
+	})
+	t.Run("B", func(t *testing.T) {
+		assert.OK(t, 3 == 4)
+	})
 }
 
 func TestBasicLit(t *testing.T) {
@@ -256,8 +265,35 @@ $ go test
 		Assertion messages:
 			- receiver should not be nil
 		
+--- FAIL: TestWithTestingRun (0.00s)
+    --- FAIL: TestWithTestingRun/A (0.00s)
+    	assert.go:85: FAIL main_test.go:30
+    		assert.OK(t, 1 == 2)
+    		               |
+    		               false
+    		
+    		--- [int] 2
+    		+++ [int] 1
+    		@@ -1,1 +1,1@@
+    		-2
+    		+1
+    		
+    		
+    --- FAIL: TestWithTestingRun/B (0.00s)
+    	assert.go:85: FAIL main_test.go:33
+    		assert.OK(t, 3 == 4)
+    		               |
+    		               false
+    		
+    		--- [int] 4
+    		+++ [int] 3
+    		@@ -1,1 +1,1@@
+    		-4
+    		+3
+    		
+    		
 --- FAIL: TestBasicLit (0.00s)
-	assert.go:85: FAIL main_test.go:29
+	assert.go:85: FAIL main_test.go:38
 		assert.OK(t, "a" == "b")
 		                 |
 		                 false
@@ -269,7 +305,7 @@ $ go test
 		+a
 		
 		
-	assert.go:85: FAIL main_test.go:30
+	assert.go:85: FAIL main_test.go:39
 		assert.OK(t, 1 == 2)
 		               |
 		               false
@@ -281,7 +317,7 @@ $ go test
 		+1
 		
 		
-	assert.go:85: FAIL main_test.go:35
+	assert.go:85: FAIL main_test.go:44
 		assert.OK(t, a+c == b)
 		             ||| |  |
 		             ||| |  2
@@ -297,7 +333,7 @@ $ go test
 		+4
 		
 		
-	assert.go:85: FAIL main_test.go:36
+	assert.go:85: FAIL main_test.go:45
 		assert.OK(t, (a+c)+a == b)
 		              ||| || |  |
 		              ||| || |  2
@@ -315,7 +351,7 @@ $ go test
 		+5
 		
 		
-	assert.go:85: FAIL main_test.go:37
+	assert.go:85: FAIL main_test.go:46
 		assert.OK(t, "foo\nbar" == "bar")
 		             |          |
 		             |          false
@@ -330,7 +366,7 @@ $ go test
 		
 		
 --- FAIL: TestUnaryExpr (0.00s)
-	assert.go:85: FAIL main_test.go:42
+	assert.go:85: FAIL main_test.go:51
 		assert.OK(t, +1 == -1)
 		             |  |  |
 		             |  |  -1
@@ -344,25 +380,25 @@ $ go test
 		+1
 		
 		
-	assert.go:85: FAIL main_test.go:46
+	assert.go:85: FAIL main_test.go:55
 		assert.OK(t, &a == &b)
 		             || |  ||
 		             || |  |"a"
-		             || |  (*string)(0xc42000f0e0)
+		             || |  (*string)(0xc42008f450)
 		             || false
 		             |"a"
-		             (*string)(0xc42000f0d0)
+		             (*string)(0xc42008f440)
 		
 		--- [*string] &b
 		+++ [*string] &a
 		@@ -1,1 +1,1@@
 		&"a"
 		
-	assert.go:85: FAIL main_test.go:53
+	assert.go:85: FAIL main_test.go:62
 		assert.OK(t, <-ch == 0)
 		             | |  |
 		             | |  false
-		             | (chan int)(0xc420026660)
+		             | (chan int)(0xc42008c8a0)
 		             1
 		
 		--- [int] 0
@@ -373,7 +409,7 @@ $ go test
 		
 		
 --- FAIL: TestStringDiff (0.00s)
-	assert.go:85: FAIL main_test.go:62
+	assert.go:85: FAIL main_test.go:71
 		assert.OK(t, "supersoper" == "supersuper")
 		                          |
 		                          false
@@ -383,7 +419,7 @@ $ go test
 		@@ -1,1 +1,1@@
 		supers[-u-]{+o+}per
 		
-	assert.go:85: FAIL main_test.go:72
+	assert.go:85: FAIL main_test.go:81
 		assert.OK(t, got == expected)
 		             |   |  |
 		             |   |  "foo
@@ -404,7 +440,7 @@ $ go test
 		bar[-2-]
 		bar
 		
-	assert.go:85: FAIL main_test.go:82
+	assert.go:85: FAIL main_test.go:91
 		assert.OK(t, got == expected)
 		             |   |  |
 		             |   |  "<div>
@@ -429,7 +465,7 @@ $ go test
 		
 		
 --- FAIL: TestMapType (0.00s)
-	assert.go:85: FAIL main_test.go:88
+	assert.go:85: FAIL main_test.go:97
 		assert.OK(t, reflect.DeepEqual(map[string]string{}, map[string]string{"a": "a", k: v}))
 		             |                                                                  |  |
 		             |                                                                  |  "b------value"
@@ -439,14 +475,14 @@ $ go test
 		--- [map[string]string] map[string]string{"a": "a", k: v}
 		+++ [map[string]string] map[string]string{}
 		@@ -1,3 +1,1@@
-		-map[string]string{ "b--------key": "b------value",
-		-                   "a":            "a",
+		-map[string]string{ "a":            "a",
+		-                   "b--------key": "b------value",
 		-}
 		+map[string]string{}
 		
 		
 --- FAIL: TestArrayType (0.00s)
-	assert.go:85: FAIL main_test.go:96
+	assert.go:85: FAIL main_test.go:105
 		assert.OK(t, []int{1, 2}[index] == 3)
 		                        ||      |
 		                        ||      false
@@ -461,7 +497,7 @@ $ go test
 		
 		
 --- FAIL: TestStructType (0.00s)
-	assert.go:85: FAIL main_test.go:104
+	assert.go:85: FAIL main_test.go:113
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{foox}, struct{ Name string }{"foo"}))
 		             |                                       |
 		             |                                       "foo------x"
@@ -474,7 +510,7 @@ $ go test
 		  Name: "foo{+------x+}",
 		}
 		
-	assert.go:85: FAIL main_test.go:105
+	assert.go:85: FAIL main_test.go:114
 		assert.OK(t, reflect.DeepEqual(struct{ Name string }{Name: foox}, struct{ Name string }{Name: "foo"}))
 		             |                                             |
 		             |                                             "foo------x"
@@ -488,7 +524,7 @@ $ go test
 		}
 		
 --- FAIL: TestNestedCallExpr (0.00s)
-	assert.go:85: FAIL main_test.go:113
+	assert.go:85: FAIL main_test.go:122
 		assert.OK(t, rev(rev(rev(true))))
 		             |   |   |   |
 		             |   |   |   true
@@ -497,7 +533,7 @@ $ go test
 		             false
 		
 --- FAIL: TestCallWithNonIdempotentFunc (0.00s)
-	assert.go:85: FAIL main_test.go:123
+	assert.go:85: FAIL main_test.go:132
 		assert.OK(t, incl()+incl() == incl()+incl())
 		             |     ||      |  |     ||
 		             |     ||      |  |     |4
@@ -515,7 +551,7 @@ $ go test
 		+3
 		
 		
-	assert.go:85: FAIL main_test.go:124
+	assert.go:85: FAIL main_test.go:133
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  6
@@ -529,7 +565,7 @@ $ go test
 		+5
 		
 		
-	assert.go:85: FAIL main_test.go:125
+	assert.go:85: FAIL main_test.go:134
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  8
@@ -543,7 +579,7 @@ $ go test
 		+7
 		
 		
-	assert.go:85: FAIL main_test.go:126
+	assert.go:85: FAIL main_test.go:135
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  10
@@ -557,7 +593,7 @@ $ go test
 		+9
 		
 		
-	assert.go:85: FAIL main_test.go:127
+	assert.go:85: FAIL main_test.go:136
 		assert.OK(t, incl() == incl())
 		             |      |  |
 		             |      |  12
@@ -571,7 +607,7 @@ $ go test
 		+11
 		
 		
-	assert.go:85: FAIL main_test.go:128
+	assert.go:85: FAIL main_test.go:137
 		assert.OK(t, (incl() == incl()) != (incl() == incl()))
 		              |      |  |       |   |      |  |
 		              |      |  |       |   |      |  16
@@ -582,7 +618,7 @@ $ go test
 		              |      false
 		              13
 		
-	assert.go:85: FAIL main_test.go:136
+	assert.go:85: FAIL main_test.go:145
 		assert.OK(t, incl2(incl2(2)) == 10)
 		             |     |         |
 		             |     |         false
@@ -597,7 +633,7 @@ $ go test
 		
 		
 --- FAIL: TestPkgValue (0.00s)
-	assert.go:85: FAIL main_test.go:140
+	assert.go:85: FAIL main_test.go:149
 		assert.OK(t, sql.ErrNoRows == fmt.Errorf("error"))
 		                 |         |  |
 		                 |         |  &errors.errorString{s:"error"}
@@ -614,7 +650,7 @@ $ go test
 		
 		
 --- FAIL: TestSelectorExpr (0.00s)
-	assert.go:85: FAIL main_test.go:146
+	assert.go:85: FAIL main_test.go:155
 		assert.OK(t, u.name == "no-name")
 		             | |    |
 		             | |    false
@@ -630,10 +666,10 @@ $ go test
 		
 FAIL
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	0.010s
+FAIL	github.com/ToQoz/gopwt/_example	0.059s
 exit status 1
 exit status 1
-FAIL	github.com/ToQoz/gopwt/_example	1.012s
+FAIL	github.com/ToQoz/gopwt/_example	1.211s
 ```
 
 ## Tips

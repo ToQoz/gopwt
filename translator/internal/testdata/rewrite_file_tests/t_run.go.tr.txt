@@ -1,0 +1,14 @@
+package main
+
+import (
+	"testing"
+
+	"github.com/ToQoz/gopwt/translatedassert"
+)
+
+func TestTestingRun(t *testing.T) {
+	t.Run("t-run", func(tt *testing.T) {
+		translatedassert.
+			OK(tt, 1 == 1, []string{"1 is 1"}, `FAIL`, `./testdata/rewrite_file_tests/t_run.go`, 11, `assert.OK(tt, 1 == 1, "1 is 1")`, 0, 20, 15, translatedassert.NewPosValuePair(15, 1, false, `1`), translatedassert.NewPosValuePair(17, 1 == 1, true, `1 == 1`), translatedassert.NewPosValuePair(20, 1, false, `1`))
+	})
+}

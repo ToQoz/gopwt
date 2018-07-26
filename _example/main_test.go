@@ -25,6 +25,15 @@ func TestWithMessage(t *testing.T) {
 	assert.OK(t, receiver != nil, "receiver should not be nil")
 }
 
+func TestWithTestingRun(t *testing.T) {
+	t.Run("A", func(t *testing.T) {
+		assert.OK(t, 1 == 2)
+	})
+	t.Run("B", func(t *testing.T) {
+		assert.OK(t, 3 == 4)
+	})
+}
+
 func TestBasicLit(t *testing.T) {
 	assert.OK(t, "a" == "b")
 	assert.OK(t, 1 == 2)
