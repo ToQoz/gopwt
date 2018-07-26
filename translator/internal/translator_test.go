@@ -57,23 +57,44 @@ func TestSimple(t *testing.T) {
 }
 
 func TestRewriteFile(t *testing.T) {
-	var file string
+	t.Run("Simple", func(t *testing.T) {
+		var file string
 
-	file = "./testdata/rewrite_file_tests/simple.go"
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, file, nil, 0)
-	assert.Require(t, err == nil)
+		file = "./testdata/rewrite_file_tests/simple.go"
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, file, nil, 0)
+		assert.Require(t, err == nil)
 
-	expected, err := readFileString(file + ".tr.txt")
-	assert.Require(t, err == nil)
+		expected, err := readFileString(file + ".tr.txt")
+		assert.Require(t, err == nil)
 
-	buf := bytes.NewBuffer([]byte{})
-	gf := &GoFile{Normalized: f, Original: f}
-	pkgCtx := &PackageContext{NormalizedFset: fset, OriginalFset: fset, GoFiles: []*GoFile{gf}}
-	RewriteFile(pkgCtx, gf, ctx, nil, buf)
-	got := buf.String()
+		buf := bytes.NewBuffer([]byte{})
+		gf := &GoFile{Normalized: f, Original: f}
+		pkgCtx := &PackageContext{NormalizedFset: fset, OriginalFset: fset, GoFiles: []*GoFile{gf}}
+		RewriteFile(pkgCtx, gf, ctx, nil, buf)
+		got := buf.String()
 
-	assert.OK(t, got == expected)
+		assert.OK(t, got == expected)
+	})
+	t.Run("t.Run", func(t *testing.T) {
+		var file string
+
+		file = "./testdata/rewrite_file_tests/t_run.go"
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, file, nil, 0)
+		assert.Require(t, err == nil)
+
+		expected, err := readFileString(file + ".tr.txt")
+		assert.Require(t, err == nil)
+
+		buf := bytes.NewBuffer([]byte{})
+		gf := &GoFile{Normalized: f, Original: f}
+		pkgCtx := &PackageContext{NormalizedFset: fset, OriginalFset: fset, GoFiles: []*GoFile{gf}}
+		RewriteFile(pkgCtx, gf, ctx, nil, buf)
+		got := buf.String()
+
+		assert.OK(t, got == expected)
+	})
 }
 
 func TestCreateReflectTypeExprFromTypeExpr(t *testing.T) {

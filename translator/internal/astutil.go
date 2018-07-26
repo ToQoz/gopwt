@@ -734,11 +734,12 @@ func InspectAssert(ctx *Context, root ast.Node, fn func(*ast.CallExpr)) {
 			}
 
 			if !IsAssert(ctx.AssertImport, n) {
-				// skip inspecting children in assert.OK
-				return false
+				// NOTE: inspect children for t.Run like helpers
+				return true
 			}
 
 			fn(n)
+			// NOTE: skip inspecting children in assert.OK
 			return false
 		}
 
