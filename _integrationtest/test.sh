@@ -2,7 +2,8 @@
 
 set -e
 
-ORIGINAL_GOPATH=$GOPATH
+export GOPWT_DEBUG=1
+ORIGINAL_GOPATH=${GOPATH:-$HOME/go}
 
 # dep is not working with  _ prefiexed ( like a `_integrationtest` ) dir
 workspace="/tmp/gopath-gopwt-integrationtest-$$/src"
@@ -19,13 +20,19 @@ cleanup() {
 }
 trap cleanup INT QUIT TERM EXIT
 
+go_test() {
+  echo "> go test $*"
+  go test "$@"
+}
+
 echo "workspace = $workspace"
 cd "$workspace"
 
 (
-  echo "test dont_parse_testdata"
+  echo
+  echo "[test dont_parse_testdata]"
   cd "$workspace/dont_parse_testdata"
-  go test
+  go_test
 )
 
 # Regression tests
@@ -33,11 +40,13 @@ cd "$workspace"
 for issue in issue33 issue40 issue44
 do
   (
-    echo "test $issue"
+    echo
+    echo "[test $issue]"
+    rm -rf "$HOME/.gopwtcache"
     cd "$workspace/regression/$issue"
-    go test
-    go test
-    go test
+    go_test
+    go_test
+    go_test
   )
 done
 
@@ -46,15 +55,17 @@ done
   GOPATH=$(dirname $workspace)
   export GOPATH
 
-  echo "test issue36"
+  echo
+  echo "[test issue36]"
+  rm -rf "$HOME/.gopwtcache"
   cd "$workspace/regression/issue36"
-  dep ensure
+  dep ensure -v -vendor-only
   rm -rf "vendor/github.com/ToQoz/gopwt"
   cp -r "$ORIGINAL_GOPATH/src/github.com/ToQoz/gopwt" "vendor/github.com/ToQoz/"
 
   # for go1.8-
   find vendor -type f | grep '_test.go$' | xargs rm
-  go test ./...
-  go test ./...
-  go test ./...
+  go_test -v ./...
+  go_test -v ./...
+  go_test -v ./...
 )

@@ -6,9 +6,9 @@ import (
 	"go/ast"
 	"go/build"
 	"go/importer"
+	"log"
 	"path/filepath"
 	"runtime"
-	// "go/internal/gcimporter"
 
 	"go/types"
 	"os"
@@ -27,6 +27,9 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 	if err != nil {
 		pkgCtx.Error = err
 		return
+	}
+	if debugLog {
+		log.Printf("deps: %q\n", deps)
 	}
 
 	// NOTE: rewrite $importpath to ./vendor/$importpath if $importpath is found in vendor dir
@@ -47,8 +50,42 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 		}
 	}
 
-	if IsBuildableFileSet(pkgCtx.NormalizedFset) {
+	// NOTE: go install <main pkg> doesn't create <main pkg>.a
+	if IsBuildableFileSet(pkgCtx.NormalizedFset) && buildPackage.Name != "main" {
 		deps = append(deps, ".")
+	}
+
+	pkgCacheDir := filepath.Join(CacheDir, "pkg")
+	os.MkdirAll(pkgCacheDir, 0755)
+
+	caches := make([]*Pkgcache, len(deps))
+	for i, dep := range deps {
+		if dep == "." {
+			dep = pkgCtx.Importpath
+		}
+		caches[i] = PkgcacheFor(pkgCtx.HasVendor, pkgCtx.Vendor, dep)
+	}
+
+	for _, c := range caches {
+		if c.PkgcacheExist {
+			err := c.Load()
+			if err != nil {
+				log.Printf("[WARNING] fail to load cache(%s->%s): %s\n", c.PkgcachePath, c.PkgPath, err)
+				continue
+			}
+			for i, dep := range deps {
+				if dep == "." {
+					dep = pkgCtx.Importpath
+				}
+				vimportpath, v := RetrieveImportpathFromVendorDir(dep)
+				if v {
+					dep = vimportpath
+				}
+				if dep == c.Importpath {
+					deps = append(deps[:i], deps[i+1:]...)
+				}
+			}
+		}
 	}
 
 	if len(deps) > 0 {
@@ -61,15 +98,27 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 			install.Args = append(install.Args, "-v")
 		}
 		install.Args = append(install.Args, deps...)
+		if debugLog {
+			log.Println(strings.Join(install.Args, " "))
+		}
 		if err := install.Run(); err != nil {
-			pkgCtx.Error = fmt.Errorf("[ERROR] go install %s\n\n%s", strings.Join(install.Args, " "), buf.String())
+			pkgCtx.Error = fmt.Errorf("[ERROR] %s\n\n%s", strings.Join(install.Args, " "), buf.String())
 			return
+		}
+	} else {
+		if debugLog {
+			log.Printf("no need to go install")
 		}
 	}
 
 	if pkgCtx.HasVendor {
 		// NOTE: move pkg/$importpath/vendor/$v-importpath to pkg/$v-importpath
-		pd := filepath.Join(os.Getenv("GOPATH"), "pkg", runtime.GOOS+"_"+runtime.GOARCH)
+		gopath := os.Getenv("GOPATH")
+		if gopath == "" {
+			gopath = build.Default.GOPATH
+		}
+		gopath = strings.Split(gopath, string(filepath.ListSeparator))[0]
+		pd := filepath.Join(gopath, "pkg", runtime.GOOS+"_"+runtime.GOARCH)
 		err := filepath.Walk(pd, func(path string, finfo os.FileInfo, err error) error {
 			if path == pd {
 				return nil
@@ -95,6 +144,19 @@ func (pkgCtx *PackageContext) TypecheckPackage() {
 			pkgCtx.Error = err
 			return
 		}
+	}
+
+	for _, c := range caches {
+		if !c.PkgcacheExist {
+			err := c.Save()
+			if err != nil {
+				log.Printf("[WARNING] fail to save cache(%s->%s): %s\n", c.PkgPath, c.PkgcachePath, err)
+			}
+		}
+	}
+
+	if err := RemoveOldCache(); err != nil {
+		log.Printf("[WARNING] fail to remove old cache: %s\n", err)
 	}
 
 	// Assume types from ast.Node

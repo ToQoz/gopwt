@@ -15,7 +15,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestAdd(t *testing.T) {
+func TestCalcAdd(t *testing.T) {
 	result := Add(1, 2)
 	assert.OK(t, 3 == result)
 }
