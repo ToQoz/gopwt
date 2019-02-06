@@ -9,7 +9,7 @@ sudo: false
 before_script:
   - go get -v ./...
   # skip lint on go1.6. go get golint on go1.6 will be failed.
-  - if [[ ! "$TRAVIS_GO_VERSION" =~ ^1\.6 ]]; then go get github.com/golang/lint/golint; fi
+  - if [[ ! "$TRAVIS_GO_VERSION" =~ ^1\.6 ]]; then go get -u golang.org/x/lint/golint; fi
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 script:
   - make test-integration
