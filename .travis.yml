@@ -8,13 +8,10 @@ go:
 sudo: false
 before_script:
   - go get -v ./...
-  # skip lint on go1.6. go get golint on go1.6 will be failed.
-  - if [[ ! "$TRAVIS_GO_VERSION" =~ ^1\.6 ]]; then go get -u golang.org/x/lint/golint; fi
   - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 script:
   - make test-integration
-  # skip lint on go1.6. go get golint on go1.6 will be failed.
-  - if [[ ! "$TRAVIS_GO_VERSION" =~ ^1\.6 ]]; then make lint; fi
+  - if go get -u golang.org/x/lint/golint; then make lint; fi
   - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then GOPWT_OFF=1 go test -race -coverprofile=coverage.txt -covermode=atomic ./...; fi
 after_success:
   - if [[ "$TRAVIS_GO_VERSION" =~ ^1\.10 ]]; then bash <(curl -s https://codecov.io/bash); fi
